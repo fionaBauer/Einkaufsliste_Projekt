@@ -1,0 +1,158 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Zutaten</title>
+    <link rel="stylesheet" href="{% static 'ingredients/css/ingredient_list.css' %}">
+</head>
+<body>
+    <div class="page">
+        <div class="page-header">
+            <h1 class="page-title">Zutaten</h1>
+            <button class="add-button" id="openCreateModalBtn" type="button">+</button>
+        </div>
+        <form method="get" class="filter-bar">
+            <div class="filter-group search-group">
+                <input
+                    type="text"
+                    name="q"
+                    placeholder="Zutat suchen..."
+                    value="{{ search_query }}"
+                    class="search-input"
+                >
+            </div>
+
+            <div class="filter-group">
+                <select name="sort" class="sort-select">
+                    {% for value, label in sort_options %}
+                        <option value="{{ value }}" {% if sort == value %}selected{% endif %}>
+                            {{ label }}
+                        </option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <button type="submit" class="filter-btn">Anwenden</button>
+
+            {% if search_query or sort != "name_asc" %}
+                <a href="{% url 'ingredients:list' %}" class="reset-link">Zurücksetzen</a>
+            {% endif %}
+        </form>
+
+        {% if ingredients %}
+            <ul class="ingredient-list">
+                {% for ingredient in ingredients %}
+                    <li class="ingredient-item">
+                        <div class="ingredient-main">
+                            <span class="ingredient-name">{{ ingredient.name }}</span>
+                            <span class="ingredient-unit">{{ ingredient.get_default_unit_display }}</span>
+                        </div>
+
+                        <div class="ingredient-actions">
+                            <button
+                                type="button"
+                                class="action-btn edit-btn open-edit-modal-btn"
+                                data-id="{{ ingredient.id }}"
+                                data-name="{{ ingredient.name }}"
+                                data-unit="{{ ingredient.default_unit }}"
+                            >
+                                Bearbeiten
+                            </button>
+
+                            <form method="post" class="delete-form" onsubmit="return confirm('Möchtest du diese Zutat wirklich löschen?');">
+                                {% csrf_token %}
+                                <input type="hidden" name="action" value="delete">
+                                <input type="hidden" name="ingredient_id" value="{{ ingredient.id }}">
+                                <button type="submit" class="action-btn delete-btn">Löschen</button>
+                            </form>
+                        </div>
+                    </li>
+                {% endfor %}
+            </ul>
+        {% else %}
+            <div class="empty-state">
+                {% if search_query %}
+                    Keine Zutaten für „{{ search_query }}“ gefunden.
+                {% else %}
+                    Noch keine Zutaten gespeichert.
+                {% endif %}
+            </div>
+        {% endif %}
+    </div>
+
+    <!-- CREATE MODAL -->
+    <div class="modal-overlay {% if create_modal_open %}active{% endif %}" id="createModal">
+        <div class="modal">
+            <h2>Neue Zutat hinzufügen</h2>
+
+            <form method="post">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="create">
+
+                <div class="form-group">
+                    <label for="create_name">Name</label>
+                    <input type="text" name="name" id="create_name" value="{{ create_form.name.value|default:'' }}" required>
+                    {{ create_form.name.errors }}
+                </div>
+
+                <div class="form-group">
+                    <label for="create_default_unit">Standard-Einheit</label>
+                    <select name="default_unit" id="create_default_unit" required>
+                        {% for value, label in create_form.fields.default_unit.choices %}
+                            <option value="{{ value }}" {% if create_form.default_unit.value == value %}selected{% endif %}>
+                                {{ label }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                    {{ create_form.default_unit.errors }}
+                </div>
+
+                <div class="modal-actions">
+                    <button type="button" class="btn btn-secondary" id="closeCreateModalBtn">Abbrechen</button>
+                    <button type="submit" class="btn btn-primary">Speichern</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- EDIT MODAL -->
+    <div class="modal-overlay {% if edit_modal_open %}active{% endif %}" id="editModal">
+        <div class="modal">
+            <h2>Zutat bearbeiten</h2>
+
+            <form method="post">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="edit">
+                <input type="hidden" name="ingredient_id" id="editIngredientId" value="{{ edit_ingredient_id|default:'' }}">
+
+                <div class="form-group">
+                    <label for="edit_name">Name</label>
+                    <input type="text" name="name" id="edit_name" value="{{ edit_form.name.value|default:'' }}" required>
+                    {{ edit_form.name.errors }}
+                </div>
+
+                <div class="form-group">
+                    <label for="edit_default_unit">Standard-Einheit</label>
+                    <select name="default_unit" id="edit_default_unit" required>
+                        {% for value, label in edit_form.fields.default_unit.choices %}
+                            <option value="{{ value }}" {% if edit_form.default_unit.value == value %}selected{% endif %}>
+                                {{ label }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                    {{ edit_form.default_unit.errors }}
+                </div>
+
+                <div class="modal-actions">
+                    <button type="button" class="btn btn-secondary" id="closeEditModalBtn">Abbrechen</button>
+                    <button type="submit" class="btn btn-primary">Änderungen speichern</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script src="{% static 'ingredients/js/ingredient_list.js' %}"></script>
+</body>
+</html>

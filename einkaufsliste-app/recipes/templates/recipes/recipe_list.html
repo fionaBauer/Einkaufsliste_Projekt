@@ -1,0 +1,86 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <title>Rezepte</title>
+    <link rel="stylesheet" href="{% static 'recipes/css/recipe_list.css' %}">
+</head>
+<body>
+    <div class="page">
+        <div class="page-header">
+            <h1 class="page-title">Rezepte</h1>
+            <button
+                id="open-create-modal"
+                class="add-button"
+                data-url="{% url 'recipes:recipe_create' %}">
+                +
+            </button>
+        </div>
+
+        <form method="get" class="filter-bar">
+            <div class="filter-group search-group">
+                <input
+                    type="text"
+                    name="search"
+                    value="{{ search }}"
+                    placeholder="Rezept suchen..."
+                    class="search-input">
+            </div>
+
+            <div class="filter-group">
+                <select name="sort" class="sort-select">
+                    <option value="name" {% if sort == "name" %}selected{% endif %}>Name A–Z</option>
+                    <option value="-name" {% if sort == "-name" %}selected{% endif %}>Name Z–A</option>
+                    <option value="created_at" {% if sort == "created_at" %}selected{% endif %}>Älteste zuerst</option>
+                    <option value="-created_at" {% if sort == "-created_at" %}selected{% endif %}>Neueste zuerst</option>
+                </select>
+            </div>
+
+            <button type="submit" class="filter-btn">Anwenden</button>
+
+            <a href="{% url 'recipes:recipe_list' %}" class="reset-link">Zurücksetzen</a>
+        </form>
+
+        <div class="recipe-list">
+            {% for recipe in recipes %}
+                <div class="recipe-item">
+                    <div class="recipe-main">
+                        <a href="{% url 'recipes:recipe_detail' recipe.pk %}" class="recipe-name">
+                            {{ recipe.name }}
+                        </a>
+                        <span class="recipe-meta">
+                            {{ recipe.servings }} Portion(en)
+                        </span>
+                    </div>
+
+                    <div class="recipe-actions">
+                        <button
+                            type="button"
+                            class="action-btn edit-btn open-edit-modal"
+                            data-url="{% url 'recipes:recipe_edit' recipe.pk %}">
+                            Bearbeiten
+                        </button>
+                        <button
+                            type="button"
+                            class="action-btn delete-btn open-delete-modal"
+                            data-url="{% url 'recipes:recipe_delete' recipe.pk %}">
+                            Löschen
+                        </button>
+                    </div>
+                </div>
+            {% empty %}
+                <p class="empty-state">Es sind noch keine Rezepte vorhanden.</p>
+            {% endfor %}
+        </div>
+    </div>
+
+    <div id="modal-overlay" class="modal-overlay">
+        <div class="modal">
+            <div id="modal-body"></div>
+        </div>
+    </div>
+
+    <script src="{% static 'recipes/js/recipe_list.js' %}"></script>
+</body>
+</html>

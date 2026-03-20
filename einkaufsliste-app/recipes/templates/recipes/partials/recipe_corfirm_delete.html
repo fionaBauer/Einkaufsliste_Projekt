@@ -1,0 +1,10 @@
+<h2>Rezept löschen</h2>
+<p>Möchtest du das Rezept <strong>{{ object.name }}</strong> wirklich löschen?</p>
+
+<form method="post" action="{{ request.path }}">
+    {% csrf_token %}
+    <div class="modal-actions">
+        <button type="button" class="btn btn-secondary modal-close-btn">Abbrechen</button>
+        <button type="submit" class="btn btn-primary">Ja, löschen</button>
+    </div>
+</form>

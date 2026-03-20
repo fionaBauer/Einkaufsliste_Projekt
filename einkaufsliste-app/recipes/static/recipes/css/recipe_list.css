@@ -1,0 +1,240 @@
+body {
+    font-family: Arial, sans-serif;
+    background: #f7f7f7;
+    margin: 0;
+    padding: 0;
+}
+
+.page {
+    max-width: 900px;
+    margin: 40px auto;
+    background: white;
+    border-radius: 16px;
+    padding: 24px;
+    box-shadow: 0 4px 18px rgba(0, 0, 0, 0.08);
+}
+
+.page-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 24px;
+}
+
+.page-title {
+    margin: 0;
+    font-size: 28px;
+}
+
+.add-button {
+    width: 44px;
+    height: 44px;
+    border: none;
+    border-radius: 50%;
+    background: black;
+    color: white;
+    font-size: 28px;
+    cursor: pointer;
+}
+
+.filter-bar {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin-bottom: 24px;
+    align-items: center;
+}
+
+.filter-group {
+    display: flex;
+    align-items: center;
+}
+
+.search-group {
+    flex: 1;
+    min-width: 220px;
+}
+
+.search-input,
+.sort-select,
+input,
+select,
+textarea {
+    width: 100%;
+    padding: 10px 12px;
+    border: 1px solid #ccc;
+    border-radius: 10px;
+    font-size: 15px;
+    box-sizing: border-box;
+}
+
+.sort-select {
+    min-width: 180px;
+}
+
+.filter-btn {
+    padding: 10px 16px;
+    border: none;
+    border-radius: 10px;
+    background: black;
+    color: white;
+    cursor: pointer;
+    font-size: 15px;
+}
+
+.reset-link {
+    color: #555;
+    text-decoration: none;
+    font-size: 14px;
+}
+
+.reset-link:hover {
+    text-decoration: underline;
+}
+
+.recipe-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.recipe-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 14px 16px;
+    border-bottom: 1px solid #eaeaea;
+    gap: 16px;
+}
+
+.recipe-item:last-child {
+    border-bottom: none;
+}
+
+.recipe-main {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    min-width: 0;
+}
+
+.recipe-name {
+    font-size: 18px;
+    color: black;
+    text-decoration: none;
+    font-weight: bold;
+}
+
+.recipe-name:hover {
+    text-decoration: underline;
+}
+
+.recipe-meta {
+    color: #666;
+    font-size: 14px;
+}
+
+.recipe-actions {
+    display: flex;
+    gap: 8px;
+    flex-shrink: 0;
+}
+
+.action-btn {
+    border: none;
+    border-radius: 8px;
+    padding: 8px 12px;
+    cursor: pointer;
+    font-size: 14px;
+}
+
+.edit-btn {
+    background: #eaeaea;
+}
+
+.delete-btn {
+    background: #ffd9d9;
+}
+
+.empty-state {
+    color: #777;
+    text-align: center;
+    padding: 32px 0;
+}
+
+.modal-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.45);
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+}
+
+.modal-overlay.active {
+    display: flex;
+}
+
+.modal {
+    background: white;
+    width: 90%;
+    max-width: 420px;
+    border-radius: 16px;
+    padding: 24px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+}
+
+.modal h2 {
+    margin-top: 0;
+    margin-bottom: 20px;
+}
+
+.form-group {
+    margin-bottom: 16px;
+}
+
+label {
+    display: block;
+    margin-bottom: 6px;
+    font-weight: bold;
+}
+
+.modal-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    margin-top: 20px;
+}
+
+.btn {
+    padding: 10px 16px;
+    border: none;
+    border-radius: 10px;
+    cursor: pointer;
+    font-size: 15px;
+}
+
+.btn-secondary {
+    background: #eaeaea;
+}
+
+.btn-primary {
+    background: black;
+    color: white;
+}
+
+.errorlist {
+    color: #c00000;
+    padding-left: 18px;
+    margin-top: 6px;
+    margin-bottom: 0;
+}
+
+.hidden {
+    display: none;
+}
+
+.delete-form {
+    display: inline;
+}
