@@ -1,0 +1,24 @@
+.shopping-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.shopping-item {
+    display: flex;
+    justify-content: space-between;
+    padding: 14px 16px;
+    border-bottom: 1px solid #eaeaea;
+}
+
+.shopping-item:last-child {
+    border-bottom: none;
+}
+
+.shopping-name {
+    font-weight: 500;
+}
+
+.shopping-quantity {
+    color: #444;
+}

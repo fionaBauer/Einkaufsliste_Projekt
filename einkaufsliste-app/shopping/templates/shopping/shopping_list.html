@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Einkaufsliste{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'shopping/css/shopping_list.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="page">
+
+    <div class="page-header">
+        <h1 class="page-title">Einkaufsliste</h1>
+    </div>
+
+    {% if shopping_list %}
+        <ul class="shopping-list">
+            {% for item in shopping_list %}
+                <li class="shopping-item">
+                    <span class="shopping-name">{{ item.name }}</span>
+                    <span class="shopping-quantity">
+                        {{ item.quantity|floatformat:2 }} {{ item.unit }}
+                    </span>
+                </li>
+            {% endfor %}
+        </ul>
+    {% else %}
+        <p class="empty-state">Keine Zutaten ausgewählt.</p>
+    {% endif %}
+
+</div>
+{% endblock %}

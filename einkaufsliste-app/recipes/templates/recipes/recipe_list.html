@@ -8,44 +8,56 @@
 {% endblock %}
 
 {% block content %}
-    <div class="page">
-        <div class="page-header">
-            <h1 class="page-title">Rezepte</h1>
-            <button
-                id="open-create-modal"
-                class="add-button"
-                data-url="{% url 'recipes:recipe_create' %}">
-                +
-            </button>
+<div class="page">
+    <div class="page-header">
+        <h1 class="page-title">Rezepte</h1>
+        <button
+            id="open-create-modal"
+            class="add-button"
+            type="button"
+            data-url="{% url 'recipes:recipe_create' %}">
+            +
+        </button>
+    </div>
+
+    <form method="get" class="filter-bar">
+        <div class="filter-group search-group">
+            <input
+                type="text"
+                name="search"
+                value="{{ search }}"
+                placeholder="Rezept suchen..."
+                class="search-input">
         </div>
 
-        <form method="get" class="filter-bar">
-            <div class="filter-group search-group">
-                <input
-                    type="text"
-                    name="search"
-                    value="{{ search }}"
-                    placeholder="Rezept suchen..."
-                    class="search-input">
-            </div>
+        <div class="filter-group">
+            <select name="sort" class="sort-select">
+                <option value="name" {% if sort == "name" %}selected{% endif %}>Name A–Z</option>
+                <option value="-name" {% if sort == "-name" %}selected{% endif %}>Name Z–A</option>
+                <option value="created_at" {% if sort == "created_at" %}selected{% endif %}>Älteste zuerst</option>
+                <option value="-created_at" {% if sort == "-created_at" %}selected{% endif %}>Neueste zuerst</option>
+            </select>
+        </div>
 
-            <div class="filter-group">
-                <select name="sort" class="sort-select">
-                    <option value="name" {% if sort == "name" %}selected{% endif %}>Name A–Z</option>
-                    <option value="-name" {% if sort == "-name" %}selected{% endif %}>Name Z–A</option>
-                    <option value="created_at" {% if sort == "created_at" %}selected{% endif %}>Älteste zuerst</option>
-                    <option value="-created_at" {% if sort == "-created_at" %}selected{% endif %}>Neueste zuerst</option>
-                </select>
-            </div>
+        <button type="submit" class="filter-btn">Anwenden</button>
 
-            <button type="submit" class="filter-btn">Anwenden</button>
-
+        {% if search or sort != "name" %}
             <a href="{% url 'recipes:recipe_list' %}" class="reset-link">Zurücksetzen</a>
-        </form>
+        {% endif %}
+    </form>
 
+    <form method="get" action="{% url 'shopping:list' %}">
         <div class="recipe-list">
             {% for recipe in recipes %}
                 <div class="recipe-item">
+                    <div class="recipe-select">
+                        <input
+                            type="checkbox"
+                            name="recipes"
+                            value="{{ recipe.id }}"
+                            id="recipe-{{ recipe.id }}">
+                    </div>
+
                     <div class="recipe-main">
                         <a href="{% url 'recipes:recipe_detail' recipe.pk %}" class="recipe-name">
                             {{ recipe.name }}
@@ -62,6 +74,7 @@
                             data-url="{% url 'recipes:recipe_edit' recipe.pk %}">
                             Bearbeiten
                         </button>
+
                         <button
                             type="button"
                             class="action-btn delete-btn open-delete-modal"
@@ -74,13 +87,22 @@
                 <p class="empty-state">Es sind noch keine Rezepte vorhanden.</p>
             {% endfor %}
         </div>
-    </div>
 
-    <div id="modal-overlay" class="modal-overlay">
-        <div class="modal">
-            <div id="modal-body"></div>
-        </div>
+        {% if recipes %}
+            <div class="shopping-actions">
+                <button type="submit" class="btn btn-primary">
+                    Einkaufsliste erstellen
+                </button>
+            </div>
+        {% endif %}
+    </form>
+</div>
+
+<div id="modal-overlay" class="modal-overlay">
+    <div class="modal">
+        <div id="modal-body"></div>
     </div>
+</div>
 {% endblock %}
 
 {% block extra_js %}

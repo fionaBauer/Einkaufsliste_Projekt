@@ -17,6 +17,18 @@
                 class="sidebar-link {% if '/recipes' in request.path %}active{% endif %}">
                 Rezepte
             </a>
+
+            <a
+                href="{% url 'shopping:list' %}"
+                class="sidebar-link {% if '/shopping' in request.path %}active{% endif %}">
+                Einkaufsliste
+            </a>
+
+            <a
+                href="{% url 'inventory:list' %}"
+                class="sidebar-link {% if '/inventory' in request.path %}active{% endif %}">
+                Inventar
+            </a>
         </nav>
     </div>
 </aside>
