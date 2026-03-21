@@ -1,0 +1,25 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Meal Planning{% endblock %}</title>
+
+    <link rel="stylesheet" href="/static/global/css/layout.css">
+    {% block extra_css %}{% endblock %}
+</head>
+<body>
+    <div class="app-layout">
+        {% include "includes/sidebar.html" %}
+
+        <main class="app-content">
+            <div class="content-shell">
+                {% block content %}{% endblock %}
+            </div>
+        </main>
+    </div>
+
+    {% block extra_js %}{% endblock %}
+</body>
+</html>

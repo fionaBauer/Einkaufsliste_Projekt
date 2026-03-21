@@ -1,12 +1,13 @@
+{% extends "base.html" %}
 {% load static %}
-<!DOCTYPE html>
-<html lang="de">
-<head>
-    <meta charset="UTF-8">
-    <title>{{ recipe.name }}</title>
-    <link rel="stylesheet" href="{% static 'recipes/css/recipe_detail.css' %}">
-</head>
-<body>
+
+{% block title %}{{ recipe.name }}{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'recipes/css/recipe_detail.css' %}">
+{% endblock %}
+
+{% block content %}
     <div class="page">
         <div class="top-bar">
             <a href="{% url 'recipes:recipe_list' %}" class="back-link">← Zurück zur Übersicht</a>
@@ -109,11 +110,18 @@
         </div>
     </div>
 
-    <script>
-        window.recipeData = {
-            baseServings: parseInt("{{ recipe.servings }}", 10)
-        };
-    </script>
-    <script src="{% static 'recipes/js/recipe_detail.js' %}"></script>
-</body>
-</html>
+    <div id="ingredient-modal-overlay" class="modal-overlay">
+        <div class="modal">
+            <div id="ingredient-modal-body"></div>
+        </div>
+    </div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    window.recipeData = {
+        baseServings: parseInt("{{ recipe.servings }}", 10)
+    };
+</script>
+<script src="{% static 'recipes/js/recipe_detail.js' %}"></script>
+{% endblock %}

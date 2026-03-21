@@ -10,6 +10,10 @@ class IngredientForm(forms.ModelForm):
             "name": "Name",
             "default_unit": "Standard-Einheit",
         }
+        widgets = {
+            "name": forms.TextInput(attrs={"class": "form-control"}),
+            "default_unit": forms.Select(attrs={"class": "form-control"}),
+        }
 
     def clean_name(self):
         name = self.cleaned_data["name"].strip()

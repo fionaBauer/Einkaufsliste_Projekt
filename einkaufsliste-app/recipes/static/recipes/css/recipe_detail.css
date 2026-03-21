@@ -1,8 +1,6 @@
-body {
-    font-family: Arial, sans-serif;
-    background: #f7f7f7;
-    margin: 0;
-    padding: 0;
+.page {
+    max-width: 1000px;
+    margin: 0 auto;
 }
 
 .page {
@@ -309,6 +307,14 @@ label {
 
 .reset-servings-btn:hover {
     background: #dddddd;
+}
+
+.inline-helper {
+    margin-top: 10px;
+}
+
+.inline-helper .btn {
+    width: 100%;
 }
 
 @media (max-width: 700px) {

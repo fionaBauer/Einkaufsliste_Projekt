@@ -14,6 +14,17 @@
             {{ field.label_tag }}
             {{ field }}
             {{ field.errors }}
+
+            {% if field.name == "ingredient" %}
+                <div class="inline-helper">
+                    <button
+                        type="button"
+                        class="btn btn-secondary open-ingredient-create-btn"
+                        data-url="{% url 'ingredients:modal_create' %}">
+                        Neue Zutat anlegen
+                    </button>
+                </div>
+            {% endif %}
         </div>
     {% endfor %}
 

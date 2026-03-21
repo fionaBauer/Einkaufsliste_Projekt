@@ -1,0 +1,18 @@
+<h2>Neue Zutat hinzufügen</h2>
+
+<form method="post" action="{% url 'ingredients:modal_create' %}" id="ingredient-create-form">
+    {% csrf_token %}
+
+    {% for field in form %}
+        <div class="form-group">
+            {{ field.label_tag }}
+            {{ field }}
+            {{ field.errors }}
+        </div>
+    {% endfor %}
+
+    <div class="modal-actions">
+        <button type="button" class="btn btn-secondary ingredient-modal-close-btn">Abbrechen</button>
+        <button type="submit" class="btn btn-primary">Speichern</button>
+    </div>
+</form>

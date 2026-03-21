@@ -1,5 +1,8 @@
 from django.db.models import Case, When, Value, IntegerField
 from django.shortcuts import get_object_or_404, redirect, render
+from django.http import JsonResponse
+from django.template.loader import render_to_string
+from django.views.decorators.http import require_http_methods
 
 from .forms import IngredientForm
 from .models import Ingredient
@@ -76,3 +79,38 @@ def ingredient_list(request):
         ],
     }
     return render(request, "ingredients/ingredient_list.html", context)
+
+@require_http_methods(["GET", "POST"])
+def ingredient_create_modal(request):
+    if request.method == "GET":
+        form = IngredientForm()
+        html = render_to_string(
+            "ingredients/partials/ingredient_form.html",
+            {"form": form},
+            request=request,
+        )
+        return JsonResponse({"html": html})
+
+    form = IngredientForm(request.POST)
+
+    if form.is_valid():
+        ingredient = form.save()
+        return JsonResponse({
+            "success": True,
+            "ingredient": {
+                "id": ingredient.id,
+                "name": ingredient.name,
+                "default_unit": ingredient.default_unit,
+                "default_unit_display": ingredient.get_default_unit_display(),
+            }
+        })
+
+    html = render_to_string(
+        "ingredients/partials/ingredient_form.html",
+        {"form": form},
+        request=request,
+    )
+    return JsonResponse({
+        "success": False,
+        "html": html,
+    }, status=400)

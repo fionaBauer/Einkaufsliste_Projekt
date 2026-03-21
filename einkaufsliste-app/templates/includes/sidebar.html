@@ -1,0 +1,22 @@
+<aside class="sidebar">
+    <div class="sidebar-inner">
+        <div class="sidebar-brand">
+            <h2 class="sidebar-title">Meal Planner</h2>
+            <p class="sidebar-subtitle">Planen, kochen, organisieren</p>
+        </div>
+
+        <nav class="sidebar-nav">
+            <a
+                href="{% url 'ingredients:list' %}"
+                class="sidebar-link {% if '/ingredients' in request.path %}active{% endif %}">
+                Zutaten
+            </a>
+
+            <a
+                href="{% url 'recipes:recipe_list' %}"
+                class="sidebar-link {% if '/recipes' in request.path %}active{% endif %}">
+                Rezepte
+            </a>
+        </nav>
+    </div>
+</aside>

@@ -1,17 +1,6 @@
-body {
-    font-family: Arial, sans-serif;
-    background: #f7f7f7;
-    margin: 0;
-    padding: 0;
-}
-
 .page {
-    max-width: 900px;
-    margin: 40px auto;
-    background: white;
-    border-radius: 16px;
-    padding: 24px;
-    box-shadow: 0 4px 18px rgba(0, 0, 0, 0.08);
+    max-width: 1000px;
+    margin: 0 auto;
 }
 
 .page-header {
