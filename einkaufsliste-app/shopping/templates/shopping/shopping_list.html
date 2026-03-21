@@ -23,42 +23,21 @@
                     <ul class="shopping-list">
                         {% for item in to_buy %}
                             <li class="shopping-item">
-                                <label class="shopping-check">
+                                <label class="shopping-row">
                                     <input
                                         type="checkbox"
                                         name="checked_items"
                                         value="{{ item.id }}"
                                         {% if item.is_checked %}checked{% endif %}
                                     >
-                                </label>
-                                <span class="shopping-name">{{ item.ingredient.name }}</span>
-                                <span class="shopping-quantity">
-                                    {{ item.quantity|floatformat:2 }} {{ item.unit }}
-                                </span>
-                            </li>
-                        {% endfor %}
-                    </ul>
-                </section>
-            {% endif %}
 
-            {% if already_have %}
-                <section class="shopping-section">
-                    <h2 class="section-title">Schon vorhanden</h2>
-                    <ul class="shopping-list">
-                        {% for item in already_have %}
-                            <li class="shopping-item">
-                                <label class="shopping-check">
-                                    <input
-                                        type="checkbox"
-                                        name="checked_items"
-                                        value="{{ item.id }}"
-                                        {% if item.is_checked %}checked{% endif %}
-                                    >
+                                    <span class="shopping-content">
+                                        <span class="shopping-name">{{ item.ingredient.name }}</span>
+                                        <span class="shopping-quantity">
+                                            {{ item.quantity|floatformat:2 }} {{ item.unit }}
+                                        </span>
+                                    </span>
                                 </label>
-                                <span class="shopping-name">{{ item.ingredient.name }}</span>
-                                <span class="shopping-quantity">
-                                    {{ item.quantity|floatformat:2 }} {{ item.unit }}
-                                </span>
                             </li>
                         {% endfor %}
                     </ul>

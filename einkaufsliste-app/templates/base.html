@@ -6,7 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}Meal Planning{% endblock %}</title>
 
-    <link rel="stylesheet" href="/static/global/css/layout.css">
+    <link rel="stylesheet" href="{% static 'global/css/layout.css' %}?v=3">
     {% block extra_css %}{% endblock %}
 </head>
 <body>
@@ -20,6 +20,31 @@
         </main>
     </div>
 
+    <div class="toast-container">
+        {% for message in messages %}
+            <div class="toast {{ message.tags }}">
+                <span class="toast-icon">✔</span>
+                <span class="toast-text">{{ message }}</span>
+            </div>
+        {% endfor %}
+    </div>
+
     {% block extra_js %}{% endblock %}
+
+    <script>
+    document.addEventListener("DOMContentLoaded", () => {
+        const toasts = document.querySelectorAll(".toast");
+
+        toasts.forEach((toast) => {
+            setTimeout(() => {
+                toast.classList.add("hide");
+
+                setTimeout(() => {
+                    toast.remove();
+                }, 250);
+            }, 2000);
+        });
+    });
+    </script>
 </body>
 </html>

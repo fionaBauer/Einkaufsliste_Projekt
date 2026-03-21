@@ -2,6 +2,7 @@ from collections import defaultdict
 from decimal import Decimal
 
 from django.shortcuts import get_object_or_404, redirect, render
+from django.contrib import messages
 
 from inventory.models import InventoryItem
 from recipes.models import Recipe
@@ -41,6 +42,10 @@ def shopping_list_detail(request, pk):
             checked_items = shopping_list_obj.items.filter(id__in=checked_ids)
             _move_checked_items_to_inventory(checked_items)
 
+            count = checked_items.count()
+            if count > 0:
+                messages.success(request, f"{count} Einträge wurden ins Inventar übernommen.")
+
             shopping_list_obj.items.update(is_checked=False)
             return redirect("shopping:detail", pk=shopping_list_obj.pk)
 
@@ -52,17 +57,18 @@ def shopping_list_detail(request, pk):
             checked_items = shopping_list_obj.items.filter(is_checked=True)
             _move_checked_items_to_inventory(checked_items)
 
+            count = checked_items.count()
+            messages.success(request, f"{count} Einträge wurden ins Inventar übernommen.")
+
             checked_items.delete()
             return redirect("shopping:detail", pk=shopping_list_obj.pk)
 
     to_buy = shopping_list_obj.items.filter(status=ShoppingListItem.STATUS_TO_BUY)
-    already_have = shopping_list_obj.items.filter(status=ShoppingListItem.STATUS_HAVE)
     check_quantity = shopping_list_obj.items.filter(status=ShoppingListItem.STATUS_CHECK)
 
     return render(request, "shopping/shopping_list.html", {
         "shopping_list_obj": shopping_list_obj,
         "to_buy": to_buy,
-        "already_have": already_have,
         "check_quantity": check_quantity,
     })
 
@@ -131,15 +137,7 @@ def _create_or_replace_shopping_list(recipe_ids):
         inventory_quantity = inventory_item.quantity
 
         if inventory_quantity >= required_quantity:
-            items_to_create.append(
-                ShoppingListItem(
-                    shopping_list=shopping_list_obj,
-                    ingredient_id=ingredient_id,
-                    quantity=required_quantity,
-                    unit=unit,
-                    status=ShoppingListItem.STATUS_HAVE,
-                )
-            )
+            continue
         else:
             missing_quantity = required_quantity - inventory_quantity
             items_to_create.append(

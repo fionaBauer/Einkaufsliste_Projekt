@@ -116,6 +116,82 @@ body {
     padding: 28px;
 }
 
+.toast-container {
+    position: fixed;
+    top: 24px;
+    right: 24px;
+    z-index: 5000;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.toast {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+
+    background: #111;
+    color: white;
+    padding: 14px 18px;
+    border-radius: 14px;
+
+    font-size: 14px;
+    font-weight: 500;
+
+    box-shadow: 0 12px 30px rgba(0, 0, 0, 0.25);
+
+    opacity: 0;
+    transform: translateY(-10px) scale(0.98);
+    animation: toast-in 0.25s ease forwards;
+
+    min-width: 220px;
+    max-width: 320px;
+}
+
+/* verschiedene Typen */
+.toast.success {
+    background: #1f8a4c;
+}
+
+.toast.error {
+    background: #c0392b;
+}
+
+.toast.warning {
+    background: #e67e22;
+}
+
+/* Animation rein */
+@keyframes toast-in {
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+/* Animation raus */
+.toast.hide {
+    animation: toast-out 0.25s ease forwards;
+}
+
+@keyframes toast-out {
+    to {
+        opacity: 0;
+        transform: translateY(-10px) scale(0.98);
+    }
+}
+
+.toast-icon {
+    font-size: 16px;
+    line-height: 1;
+    flex-shrink: 0;
+}
+
+.toast-text {
+    flex: 1;
+}
+
 @media (max-width: 900px) {
     .app-layout {
         flex-direction: column;
