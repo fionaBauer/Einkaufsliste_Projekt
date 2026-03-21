@@ -9,25 +9,97 @@
 
 {% block content %}
 <div class="page">
-
     <div class="page-header">
         <h1 class="page-title">Einkaufsliste</h1>
     </div>
 
-    {% if shopping_list %}
-        <ul class="shopping-list">
-            {% for item in shopping_list %}
-                <li class="shopping-item">
-                    <span class="shopping-name">{{ item.name }}</span>
-                    <span class="shopping-quantity">
-                        {{ item.quantity|floatformat:2 }} {{ item.unit }}
-                    </span>
-                </li>
-            {% endfor %}
-        </ul>
-    {% else %}
-        <p class="empty-state">Keine Zutaten ausgewählt.</p>
-    {% endif %}
+    {% if shopping_list_obj %}
+        <form method="post" class="shopping-form">
+            {% csrf_token %}
 
+            {% if to_buy %}
+                <section class="shopping-section">
+                    <h2 class="section-title">Noch kaufen</h2>
+                    <ul class="shopping-list">
+                        {% for item in to_buy %}
+                            <li class="shopping-item">
+                                <label class="shopping-check">
+                                    <input
+                                        type="checkbox"
+                                        name="checked_items"
+                                        value="{{ item.id }}"
+                                        {% if item.is_checked %}checked{% endif %}
+                                    >
+                                </label>
+                                <span class="shopping-name">{{ item.ingredient.name }}</span>
+                                <span class="shopping-quantity">
+                                    {{ item.quantity|floatformat:2 }} {{ item.unit }}
+                                </span>
+                            </li>
+                        {% endfor %}
+                    </ul>
+                </section>
+            {% endif %}
+
+            {% if already_have %}
+                <section class="shopping-section">
+                    <h2 class="section-title">Schon vorhanden</h2>
+                    <ul class="shopping-list">
+                        {% for item in already_have %}
+                            <li class="shopping-item">
+                                <label class="shopping-check">
+                                    <input
+                                        type="checkbox"
+                                        name="checked_items"
+                                        value="{{ item.id }}"
+                                        {% if item.is_checked %}checked{% endif %}
+                                    >
+                                </label>
+                                <span class="shopping-name">{{ item.ingredient.name }}</span>
+                                <span class="shopping-quantity">
+                                    {{ item.quantity|floatformat:2 }} {{ item.unit }}
+                                </span>
+                            </li>
+                        {% endfor %}
+                    </ul>
+                </section>
+            {% endif %}
+
+            {% if check_quantity %}
+                <section class="shopping-section">
+                    <h2 class="section-title">Vorhanden, Menge prüfen</h2>
+                    <ul class="shopping-list">
+                        {% for item in check_quantity %}
+                            <li class="shopping-item">
+                                <label class="shopping-check">
+                                    <input
+                                        type="checkbox"
+                                        name="checked_items"
+                                        value="{{ item.id }}"
+                                        {% if item.is_checked %}checked{% endif %}
+                                    >
+                                </label>
+                                <span class="shopping-name">{{ item.ingredient.name }}</span>
+                                <span class="shopping-quantity">
+                                    {{ item.quantity|floatformat:2 }} {{ item.unit }}
+                                </span>
+                            </li>
+                        {% endfor %}
+                    </ul>
+                </section>
+            {% endif %}
+
+            <div class="shopping-actions">
+                <button type="submit" name="action" value="reset" class="btn btn-secondary">
+                    Reset
+                </button>
+                <button type="submit" name="action" value="clean" class="btn btn-danger">
+                    Abgehakte entfernen
+                </button>
+            </div>
+        </form>
+    {% else %}
+        <p class="empty-state">Noch keine Einkaufsliste vorhanden.</p>
+    {% endif %}
 </div>
 {% endblock %}

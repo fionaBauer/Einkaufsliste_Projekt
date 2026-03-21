@@ -1,3 +1,28 @@
+.page {
+    max-width: 1000px;
+    margin: 0 auto;
+}
+
+.page-header {
+    margin-bottom: 24px;
+}
+
+.page-title {
+    margin: 0;
+    font-size: 30px;
+    font-weight: 700;
+    letter-spacing: -0.3px;
+}
+
+.shopping-section {
+    margin-bottom: 32px;
+}
+
+.section-title {
+    margin: 0 0 14px 0;
+    font-size: 22px;
+}
+
 .shopping-list {
     list-style: none;
     padding: 0;
@@ -5,20 +30,71 @@
 }
 
 .shopping-item {
-    display: flex;
-    justify-content: space-between;
+    display: grid;
+    grid-template-columns: 32px 1fr auto;
+    align-items: center;
     padding: 14px 16px;
     border-bottom: 1px solid #eaeaea;
+    gap: 16px;
 }
 
 .shopping-item:last-child {
     border-bottom: none;
 }
 
+.shopping-check {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.shopping-check input[type="checkbox"] {
+    width: 18px;
+    height: 18px;
+    cursor: pointer;
+}
+
 .shopping-name {
     font-weight: 500;
+    font-size: 16px;
 }
 
 .shopping-quantity {
     color: #444;
+    font-size: 15px;
+    text-align: right;
+}
+
+.shopping-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin-top: 28px;
+}
+
+.btn {
+    padding: 10px 16px;
+    border: none;
+    border-radius: 10px;
+    cursor: pointer;
+    font-size: 15px;
+}
+
+.btn-primary {
+    background: black;
+    color: white;
+}
+
+.btn-secondary {
+    background: #eaeaea;
+}
+
+.btn-danger {
+    background: #ffd9d9;
+}
+
+.empty-state {
+    color: #777;
+    text-align: center;
+    padding: 32px 0;
 }
