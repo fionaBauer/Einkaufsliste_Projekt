@@ -11,6 +11,7 @@
 <div class="page">
     <div class="page-header">
         <h1 class="page-title">Einkaufsliste</h1>
+        <button class="add-button" id="openCreateModalBtn" type="button">+</button>
     </div>
 
     {% if shopping_list_obj %}
@@ -30,7 +31,6 @@
                                         value="{{ item.id }}"
                                         {% if item.is_checked %}checked{% endif %}
                                     >
-
                                     <span class="shopping-content">
                                         <span class="shopping-name">{{ item.ingredient.name }}</span>
                                         <span class="shopping-quantity">
@@ -50,18 +50,24 @@
                     <ul class="shopping-list">
                         {% for item in check_quantity %}
                             <li class="shopping-item">
-                                <label class="shopping-check">
+                                <label class="shopping-row">
                                     <input
                                         type="checkbox"
                                         name="checked_items"
                                         value="{{ item.id }}"
                                         {% if item.is_checked %}checked{% endif %}
                                     >
+                                    <span class="shopping-content">
+                                        <span class="shopping-name">{{ item.ingredient.name }}</span>
+                                        <span class="shopping-quantity">
+                                            {% if item.quantity %}
+                                                {{ item.quantity|floatformat:2 }} {{ item.unit }}
+                                            {% else %}
+                                                Menge prüfen
+                                            {% endif %}
+                                        </span>
+                                    </span>
                                 </label>
-                                <span class="shopping-name">{{ item.ingredient.name }}</span>
-                                <span class="shopping-quantity">
-                                    {{ item.quantity|floatformat:2 }} {{ item.unit }}
-                                </span>
                             </li>
                         {% endfor %}
                     </ul>
@@ -69,16 +75,46 @@
             {% endif %}
 
             <div class="shopping-actions">
-                <button type="submit" name="action" value="reset" class="btn btn-secondary">
-                    Reset
+                <button type="submit" name="action" value="delete_selected" class="btn btn-secondary">
+                    Ausgewählte löschen
                 </button>
                 <button type="submit" name="action" value="clean" class="btn btn-danger">
                     Abgehakte entfernen
                 </button>
             </div>
         </form>
-    {% else %}
+    {% endif %}
+
+    {% if not to_buy and not check_quantity %}
         <p class="empty-state">Noch keine Einkaufsliste vorhanden.</p>
     {% endif %}
 </div>
+
+<div class="modal-overlay {% if create_modal_open %}active{% endif %}" id="createModal">
+    <div class="modal">
+        <h2>Lebensmittel hinzufügen</h2>
+
+        <form method="post">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="create">
+
+            {% for field in create_form %}
+                <div class="form-group">
+                    {{ field.label_tag }}
+                    {{ field }}
+                    {{ field.errors }}
+                </div>
+            {% endfor %}
+
+            <div class="modal-actions">
+                <button type="button" class="btn btn-secondary" id="closeCreateModalBtn">Abbrechen</button>
+                <button type="submit" class="btn btn-primary">Speichern</button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'shopping/js/shopping_list.js' %}"></script>
 {% endblock %}

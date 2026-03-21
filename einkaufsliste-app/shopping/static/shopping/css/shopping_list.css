@@ -4,6 +4,9 @@
 }
 
 .page-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
     margin-bottom: 24px;
 }
 
@@ -12,6 +15,24 @@
     font-size: 30px;
     font-weight: 700;
     letter-spacing: -0.3px;
+}
+
+.add-button {
+    width: 46px;
+    height: 46px;
+    border: none;
+    border-radius: 50%;
+    background: black;
+    color: white;
+    font-size: 28px;
+    cursor: pointer;
+    box-shadow: 0 8px 18px rgba(0, 0, 0, 0.14);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.add-button:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 10px 22px rgba(0, 0, 0, 0.18);
 }
 
 .shopping-section {
@@ -38,30 +59,49 @@
     border-bottom: none;
 }
 
-.shopping-check {
-    display: flex;
+.shopping-row {
+    display: grid;
+    grid-template-columns: 24px 1fr;
     align-items: center;
-    justify-content: center;
+    gap: 12px;
+    cursor: pointer;
 }
 
-.shopping-check input[type="checkbox"] {
+.shopping-row input[type="checkbox"] {
     width: 18px;
     height: 18px;
     cursor: pointer;
+    transition: transform 0.15s ease;
+}
+
+.shopping-row input[type="checkbox"]:checked {
+    transform: scale(1.15);
+}
+
+.shopping-content {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 16px;
+}
+
+.shopping-row input:checked + .shopping-content {
+    opacity: 0.5;
+}
+
+.shopping-row input:checked + .shopping-content .shopping-name {
+    text-decoration: line-through;
 }
 
 .shopping-name {
     font-weight: 500;
     font-size: 16px;
-    min-width: 0;
 }
 
 .shopping-quantity {
     color: #444;
     font-size: 15px;
     text-align: right;
-    white-space: nowrap;
-    justify-self: end;
 }
 
 .shopping-actions {
@@ -69,6 +109,67 @@
     flex-wrap: wrap;
     gap: 12px;
     margin-top: 28px;
+}
+
+.empty-state {
+    color: #777;
+    text-align: center;
+    padding: 32px 0;
+}
+
+.form-group {
+    margin-bottom: 16px;
+}
+
+input,
+select {
+    width: 100%;
+    padding: 10px 12px;
+    border: 1px solid #ccc;
+    border-radius: 10px;
+    font-size: 15px;
+    box-sizing: border-box;
+}
+
+label {
+    display: block;
+    margin-bottom: 6px;
+    font-weight: bold;
+}
+
+.modal-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.45);
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+}
+
+.modal-overlay.active {
+    display: flex;
+}
+
+.modal {
+    background: white;
+    width: 90%;
+    max-width: 420px;
+    border-radius: 16px;
+    padding: 24px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+}
+
+.modal h2 {
+    margin-top: 0;
+    margin-bottom: 20px;
+}
+
+.modal-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    margin-top: 20px;
 }
 
 .btn {
@@ -90,47 +191,11 @@
 
 .btn-danger {
     background: #ffd9d9;
-}
+}   
 
-.empty-state {
-    color: #777;
-    text-align: center;
-    padding: 32px 0;
-}
-
-.shopping-row {
-    display: grid;
-    grid-template-columns: 24px 1fr;
-    align-items: center;
-    gap: 12px;
-    cursor: pointer;
-    width: 100%;
-}
-
-.shopping-content {
-    display: grid;
-    grid-template-columns: 1fr auto;
-    align-items: center;
-    column-gap: 16px;
-    width: 100%;
-    min-width: 0;
-}
-
-.shopping-row input[type="checkbox"] {
-    width: 18px;
-    height: 18px;
-    cursor: pointer;
-    transition: transform 0.15s ease;
-}
-
-.shopping-row input[type="checkbox"]:checked {
-    transform: scale(1.2);
-}
-
-.shopping-row input:checked + .shopping-content {
-    opacity: 0.5;
-}
-
-.shopping-row input:checked + .shopping-content .shopping-name {
-    text-decoration: line-through;
+.errorlist {
+    color: #c00000;
+    padding-left: 18px;
+    margin-top: 6px;
+    margin-bottom: 0;
 }
