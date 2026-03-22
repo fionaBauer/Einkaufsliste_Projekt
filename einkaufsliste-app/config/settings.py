@@ -145,3 +145,10 @@ DATABASES = {
         conn_max_age=600,
     )
 }
+
+import os
+
+ALLOWED_HOSTS = os.environ.get(
+    "ALLOWED_HOSTS",
+    "127.0.0.1,localhost,einkaufsliste-projekt.onrender.com"
+).split(",")
