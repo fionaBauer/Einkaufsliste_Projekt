@@ -1,8 +1,8 @@
 const CACHE_NAME = "einkaufsliste-v1";
 const ASSETS_TO_CACHE = [
   "/",
-  "/static/home/css/home.css",
-  "/static/home/js/home.js",
+  "/static/core/css/home.css",
+  "/static/core/js/home.js",
   "/static/ingredients/css/ingredient_list.css",
   "/static/ingredients/js/ingredient_list.js",
   "/static/inventory/css/inventory_list.css",
