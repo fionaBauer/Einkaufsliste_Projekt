@@ -7,6 +7,8 @@ class Unit(models.TextChoices):
     MILLILITER = "ml", "Milliliter"
     LITER = "l", "Liter"
     PIECE = "pcs", "Stück"
+    TABLESPOON = "el", "Esslöffel"
+    TEASPOON = "tl", "Teelöffel"
 
 
 class Ingredient(models.Model):

@@ -1,0 +1,84 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Start{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'core/css/home.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="page">
+    <h1 class="page-title">Dashboard</h1>
+
+    <div class="card">
+        <h2>Schnell starten</h2>
+
+        <div class="quick-actions">
+            <button type="button" class="action-card" id="homeLinkBtn">
+                🔗 Rezept aus Link
+            </button>
+
+            <a href="{% url 'recipes:recipe_list' %}" class="action-card">
+                ➕ Rezept erstellen
+            </a>
+
+            <a href="{% url 'shopping:list' %}" class="action-card">
+                🛒 Einkaufsliste
+            </a>
+        </div>
+    </div>
+
+    <div class="card">
+        <h2>Letzte Rezepte</h2>
+
+        {% if recent_recipes %}
+            <ul class="recipe-list">
+                {% for recipe in recent_recipes %}
+                    <li>
+                        <a href="{% url 'recipes:recipe_detail' recipe.id %}">
+                            {{ recipe.name }}
+                        </a>
+                    </li>
+                {% endfor %}
+            </ul>
+        {% else %}
+            <p class="empty-state">Noch keine Rezepte vorhanden.</p>
+        {% endif %}
+    </div>
+
+    <div class="card">
+        <h2>Bereiche</h2>
+
+        <div class="quick-actions">
+            <a href="{% url 'recipes:recipe_list' %}" class="action-card">🍝 Rezepte</a>
+            <a href="{% url 'shopping:list' %}" class="action-card">🛒 Einkaufsliste</a>
+            <a href="{% url 'inventory:list' %}" class="action-card">📦 Inventar</a>
+        </div>
+    </div>
+</div>
+
+<div class="modal-overlay" id="homeLinkModal">
+    <div class="modal">
+        <h2>Rezept aus Link erstellen</h2>
+
+        <div class="form-group">
+            <label for="home-link-input">Link</label>
+            <input type="url" id="home-link-input" placeholder="Link einfügen...">
+        </div>
+
+        <div class="modal-actions">
+            <button type="button" class="btn btn-secondary" id="closeHomeLinkModal">
+                Abbrechen
+            </button>
+            <button type="button" class="btn btn-primary" id="submitHomeLink">
+                Erstellen
+            </button>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'core/js/home.js' %}"></script>
+{% endblock %}

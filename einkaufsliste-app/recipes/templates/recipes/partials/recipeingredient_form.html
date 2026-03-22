@@ -9,24 +9,50 @@
 <form method="post" action="{{ request.path }}">
     {% csrf_token %}
 
-    {% for field in form %}
-        <div class="form-group">
-            {{ field.label_tag }}
-            {{ field }}
-            {{ field.errors }}
+    <div class="form-group">
+        {{ form.ingredient_search.label_tag }}
+        {{ form.ingredient_search }}
+        {{ form.ingredient }}
 
-            {% if field.name == "ingredient" %}
-                <div class="inline-helper">
-                    <button
-                        type="button"
-                        class="btn btn-secondary open-ingredient-create-btn"
-                        data-url="{% url 'ingredients:modal_create' %}">
-                        Neue Zutat anlegen
-                    </button>
-                </div>
-            {% endif %}
+        <datalist id="ingredient-options">
+            {% for ingredient in form.fields.ingredient.queryset %}
+                <option
+                    value="{{ ingredient.name }}"
+                    data-id="{{ ingredient.id }}">
+                </option>
+            {% endfor %}
+        </datalist>
+
+        <div class="inline-helper">
+            <button
+                type="button"
+                class="btn btn-secondary open-ingredient-create-btn"
+                data-url="{% url 'ingredients:modal_create' %}">
+                Neue Zutat anlegen
+            </button>
         </div>
-    {% endfor %}
+
+        {{ form.ingredient_search.errors }}
+        {{ form.ingredient.errors }}
+    </div>
+
+    <div class="form-group">
+        {{ form.quantity.label_tag }}
+        {{ form.quantity }}
+        {{ form.quantity.errors }}
+    </div>
+
+    <div class="form-group">
+        {{ form.unit.label_tag }}
+        {{ form.unit }}
+        {{ form.unit.errors }}
+    </div>
+
+    <div class="form-group">
+        {{ form.notes.label_tag }}
+        {{ form.notes }}
+        {{ form.notes.errors }}
+    </div>
 
     <div class="modal-actions">
         <button type="button" class="btn btn-secondary modal-close-btn">Abbrechen</button>

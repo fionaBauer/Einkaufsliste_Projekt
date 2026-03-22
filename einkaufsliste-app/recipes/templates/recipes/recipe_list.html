@@ -11,13 +11,25 @@
 <div class="page">
     <div class="page-header">
         <h1 class="page-title">Rezepte</h1>
-        <button
-            id="open-create-modal"
-            class="add-button"
-            type="button"
-            data-url="{% url 'recipes:recipe_create' %}">
-            +
-        </button>
+
+        <div class="recipe-header-actions">
+            <button
+                type="button"
+                class="icon-button"
+                id="openLinkModalBtn"
+                aria-label="Rezept über Link hinzufügen"
+                title="Rezept über Link hinzufügen">
+                🔗
+            </button>
+
+            <button
+                id="open-create-modal"
+                class="add-button"
+                type="button"
+                data-url="{% url 'recipes:recipe_create' %}">
+                +
+            </button>
+        </div>
     </div>
 
     <form method="get" class="filter-bar">
@@ -47,54 +59,154 @@
     </form>
 
     <form method="get" action="{% url 'shopping:list' %}">
-        <div class="recipe-list">
-            {% for recipe in recipes %}
-                <div class="recipe-item">
-                    <div class="recipe-select">
-                        <input
-                            type="checkbox"
-                            name="recipes"
-                            value="{{ recipe.id }}"
-                            id="recipe-{{ recipe.id }}">
-                    </div>
+        <form id="recipe-selection-form">
+            <div class="recipe-list">
+                {% for recipe in recipes %}
+                    <div class="recipe-item">
+                        <div class="recipe-select">
+                            <input
+                                type="checkbox"
+                                name="recipes"
+                                value="{{ recipe.id }}"
+                                id="recipe-{{ recipe.id }}"
+                                data-recipe-name="{{ recipe.name }}"
+                                data-recipe-servings="{{ recipe.servings }}">
+                        </div>
 
-                    <div class="recipe-main">
-                        <a href="{% url 'recipes:recipe_detail' recipe.pk %}" class="recipe-name">
-                            {{ recipe.name }}
-                        </a>
-                        <span class="recipe-meta">
-                            {{ recipe.servings }} Portion(en)
-                        </span>
-                    </div>
+                        <div class="recipe-main">
+                            <a href="{% url 'recipes:recipe_detail' recipe.pk %}" class="recipe-name">
+                                {{ recipe.name }}
+                            </a>
+                            <span class="recipe-meta">
+                                {{ recipe.servings }} Portion(en)
+                            </span>
+                        </div>
 
-                    <div class="recipe-actions">
-                        <button
-                            type="button"
-                            class="action-btn edit-btn open-edit-modal"
-                            data-url="{% url 'recipes:recipe_edit' recipe.pk %}">
-                            Bearbeiten
-                        </button>
+                        <div class="recipe-actions">
+                            <button
+                                type="button"
+                                class="action-btn edit-btn open-edit-modal"
+                                data-url="{% url 'recipes:recipe_edit' recipe.pk %}">
+                                Bearbeiten
+                            </button>
 
-                        <button
-                            type="button"
-                            class="action-btn delete-btn open-delete-modal"
-                            data-url="{% url 'recipes:recipe_delete' recipe.pk %}">
-                            Löschen
-                        </button>
+                            <button
+                                type="button"
+                                class="action-btn delete-btn open-delete-modal"
+                                data-url="{% url 'recipes:recipe_delete' recipe.pk %}">
+                                Löschen
+                            </button>
+                        </div>
                     </div>
+                {% empty %}
+                    <p class="empty-state">Es sind noch keine Rezepte vorhanden.</p>
+                {% endfor %}
+            </div>
+
+            {% if recipes %}
+                <div class="shopping-actions">
+                    <button type="button" class="btn btn-primary" id="openShoppingModalBtn">
+                        Einkaufsliste erstellen
+                    </button>
                 </div>
-            {% empty %}
-                <p class="empty-state">Es sind noch keine Rezepte vorhanden.</p>
-            {% endfor %}
+            {% endif %}
+        </form>
+
+        <div class="modal-overlay" id="shoppingCreateModal">
+            <div class="modal modal-wide">
+                <h2>Einkaufsliste erstellen</h2>
+
+                <form method="get" action="{% url 'shopping:list' %}" id="shopping-create-form">
+                    <div class="form-group">
+                        <label for="servings-for-all">Portionen für alle</label>
+                        <div class="servings-all-row">
+                            <input type="number" id="servings-for-all" min="1" placeholder="z. B. 4">
+                            <button type="button" class="btn btn-secondary" id="applyServingsToAllBtn">
+                                Auf alle anwenden
+                            </button>
+                        </div>
+                    </div>
+
+                    <div id="selected-recipes-container" class="selected-recipes-container">
+                        <p class="empty-state">Keine Rezepte ausgewählt.</p>
+                    </div>
+
+                    <div class="modal-actions">
+                        <button type="button" class="btn btn-secondary" id="closeShoppingModalBtn">
+                            Abbrechen
+                        </button>
+                        <button type="submit" class="btn btn-primary">
+                            Einkaufsliste erstellen
+                        </button>
+                    </div>
+                </form>
+            </div>
         </div>
 
-        {% if recipes %}
-            <div class="shopping-actions">
-                <button type="submit" class="btn btn-primary">
-                    Einkaufsliste erstellen
-                </button>
+        <div class="modal-overlay" id="recipeReviewModal">
+            <div class="modal modal-wide modal-tall">
+                <div class="modal-scroll-area">
+                    <h2>Extrahiertes Rezept prüfen</h2>
+
+                    <form id="recipe-review-form">
+                        <div class="form-group">
+                            <label for="review-title">Name</label>
+                            <input type="text" id="review-title" name="title">
+                        </div>
+
+                        <div class="form-group">
+                            <label for="review-servings">Portionen</label>
+                            <input type="number" id="review-servings" name="servings" min="1" value="1">
+                        </div>
+
+                        <div class="form-group">
+                            <label for="review-instructions">Anleitung</label>
+                            <textarea id="review-instructions" name="instructions" rows="8"></textarea>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Zutaten</label>
+                            <div id="review-ingredients-container" class="review-ingredients-container"></div>
+                        </div>
+
+                        <div class="modal-actions sticky-modal-actions">
+                            <button type="button" class="btn btn-secondary" id="closeRecipeReviewModalBtn">
+                                Abbrechen
+                            </button>
+                            <button type="submit" class="btn btn-primary" id="saveExtractedRecipeBtn">
+                                Speichern
+                            </button>
+                        </div>
+                    </form>
+                </div>
             </div>
-        {% endif %}
+        </div>
+
+        <div class="modal-overlay" id="linkCreateModal">
+            <div class="modal">
+                <h2>Rezept aus Link erstellen</h2>
+
+                <div class="form-group">
+                    <label for="recipe-link-input">Link</label>
+                    <input
+                        type="url"
+                        id="recipe-link-input"
+                        class="search-input"
+                        placeholder="Rezept-Link einfügen..."
+                    >
+                </div>
+
+                <div class="modal-actions">
+                    <button type="button" class="btn btn-secondary" id="closeLinkModalBtn">
+                        Abbrechen
+                    </button>
+                    <button type="button" class="btn btn-primary" id="create-from-link-btn">
+                        Rezept erstellen
+                    </button>
+                </div>
+            </div>
+        </div>
+
     </form>
 </div>
 

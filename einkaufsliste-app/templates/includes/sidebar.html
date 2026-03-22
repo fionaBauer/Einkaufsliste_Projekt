@@ -7,6 +7,11 @@
 
         <nav class="sidebar-nav">
             <a
+                href="{% url 'home' %}"
+                class="sidebar-link {% if request.path == '/' %}active{% endif %}">
+                Home
+            </a>
+            <a
                 href="{% url 'ingredients:list' %}"
                 class="sidebar-link {% if '/ingredients' in request.path %}active{% endif %}">
                 Zutaten

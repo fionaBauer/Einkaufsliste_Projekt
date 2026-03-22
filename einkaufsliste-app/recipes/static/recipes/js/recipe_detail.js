@@ -45,12 +45,43 @@ document.addEventListener("DOMContentLoaded", () => {
 
             const html = await response.text();
             modalBody.innerHTML = html;
+            initializeIngredientSearch();
             openModal();
         } catch (error) {
             modalBody.innerHTML = "<p>Beim Laden ist ein Fehler aufgetreten.</p>";
             openModal();
             console.error(error);
         }
+    }
+
+    function initializeIngredientSearch() {
+        const searchInput = modalBody.querySelector(".ingredient-search-input");
+        const hiddenIngredientInput = modalBody.querySelector('input[name="ingredient"]');
+        const datalist = modalBody.querySelector("#ingredient-options");
+
+        if (!searchInput || !hiddenIngredientInput || !datalist) {
+            return;
+        }
+
+        searchInput.setAttribute("list", "ingredient-options");
+
+        function syncIngredientId() {
+            const typedValue = searchInput.value.trim().toLowerCase();
+            const options = Array.from(datalist.querySelectorAll("option"));
+
+            const match = options.find((option) => option.value.trim().toLowerCase() === typedValue);
+
+            if (match) {
+                hiddenIngredientInput.value = match.dataset.id || "";
+            } else {
+                hiddenIngredientInput.value = "";
+            }
+        }
+
+        searchInput.addEventListener("input", syncIngredientId);
+        searchInput.addEventListener("change", syncIngredientId);
+
+        syncIngredientId();
     }
 
     async function loadIngredientCreateModal(url) {
@@ -124,16 +155,24 @@ document.addEventListener("DOMContentLoaded", () => {
             const data = await response.json();
 
             if (data.success) {
-                const ingredientSelect = modalBody.querySelector('select[name="ingredient"]');
+                const hiddenIngredientInput = modalBody.querySelector('input[name="ingredient"]');
+                const ingredientSearchInput = modalBody.querySelector('.ingredient-search-input');
+                const datalist = modalBody.querySelector('#ingredient-options');
                 const unitSelect = modalBody.querySelector('select[name="unit"]');
 
-                if (ingredientSelect) {
+                if (hiddenIngredientInput) {
+                    hiddenIngredientInput.value = String(data.ingredient.id);
+                }
+
+                if (ingredientSearchInput) {
+                    ingredientSearchInput.value = data.ingredient.name;
+                }
+
+                if (datalist) {
                     const option = document.createElement("option");
-                    option.value = data.ingredient.id;
-                    option.textContent = data.ingredient.name;
-                    option.selected = true;
-                    ingredientSelect.appendChild(option);
-                    ingredientSelect.value = String(data.ingredient.id);
+                    option.value = data.ingredient.name;
+                    option.dataset.id = data.ingredient.id;
+                    datalist.appendChild(option);
                 }
 
                 if (unitSelect && data.ingredient.default_unit) {

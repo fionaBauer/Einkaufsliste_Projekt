@@ -333,3 +333,15 @@ label {
         min-width: unset;
     }
 }
+
+.ingredient-search-input {
+    width: 100%;
+}
+
+.inline-helper {
+    margin-top: 10px;
+}
+
+.inline-helper .btn {
+    width: 100%;
+}

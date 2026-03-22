@@ -8,7 +8,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
     const editIngredientIdInput = document.getElementById("editIngredientId");
     const editNameInput = document.getElementById("edit_name");
-    const editUnitInput = document.getElementById("edit_default_unit");
 
     if (openCreateModalBtn) {
         openCreateModalBtn.addEventListener("click", () => {
@@ -48,11 +47,8 @@ document.addEventListener("DOMContentLoaded", () => {
         button.addEventListener("click", () => {
             const ingredientId = button.dataset.id;
             const ingredientName = button.dataset.name;
-            const ingredientUnit = button.dataset.unit;
-
             editIngredientIdInput.value = ingredientId;
             editNameInput.value = ingredientName;
-            editUnitInput.value = ingredientUnit;
 
             editModal.classList.add("active");
         });

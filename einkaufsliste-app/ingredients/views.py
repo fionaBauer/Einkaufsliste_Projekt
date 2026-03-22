@@ -19,10 +19,6 @@ def ingredient_list(request):
 
     if sort == "name_desc":
         ingredients = ingredients.order_by("-name")
-    elif sort == "unit_asc":
-        ingredients = ingredients.order_by("default_unit", "name")
-    elif sort == "unit_desc":
-        ingredients = ingredients.order_by("-default_unit", "name")
     else:
         ingredients = ingredients.order_by("name")
 
@@ -74,8 +70,6 @@ def ingredient_list(request):
         "sort_options": [
             ("name_asc", "Name A–Z"),
             ("name_desc", "Name Z–A"),
-            ("unit_asc", "Einheit A–Z"),
-            ("unit_desc", "Einheit Z–A"),
         ],
     }
     return render(request, "ingredients/ingredient_list.html", context)

@@ -5,6 +5,12 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}Meal Planning{% endblock %}</title>
+    <link rel="manifest" href="{% static 'global/manifest.webmanifest' %}">
+    <meta name="theme-color" content="#4f46e5">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="apple-mobile-web-app-title" content="Einkaufsliste">
+    <link rel="apple-touch-icon" href="{% static 'global/icons/icon-192.png' %}">
 
     <link rel="stylesheet" href="{% static 'global/css/layout.css' %}?v=3">
     {% block extra_css %}{% endblock %}
@@ -45,6 +51,18 @@
             }, 2000);
         });
     });
+
+    if ("serviceWorker" in navigator) {
+        window.addEventListener("load", () => {
+        navigator.serviceWorker.register("/static/global/js/service-worker.js")
+            .then((registration) => {
+            console.log("Service Worker registriert:", registration);
+            })
+            .catch((error) => {
+            console.error("Service Worker Fehler:", error);
+            });
+        });
+    }
     </script>
 </body>
 </html>

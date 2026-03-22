@@ -8,6 +8,7 @@ from inventory.models import InventoryItem
 from recipes.models import Recipe
 from .forms import ShoppingListItemForm
 from .models import ShoppingList, ShoppingListItem
+from .utils import to_base_unit, from_base_unit
 
 
 def shopping_list(request):
@@ -16,7 +17,17 @@ def shopping_list(request):
     shopping_list_obj = _get_or_create_active_shopping_list()
 
     if recipe_ids:
-        _add_recipes_to_existing_shopping_list(shopping_list_obj, recipe_ids)
+        servings_map = {}
+
+        for recipe_id in recipe_ids:
+            servings_value = request.GET.get(f"servings_{recipe_id}")
+            if servings_value:
+                try:
+                    servings_map[int(recipe_id)] = int(servings_value)
+                except ValueError:
+                    pass
+
+        _add_recipes_to_existing_shopping_list(shopping_list_obj, recipe_ids, servings_map)
         return redirect("shopping:detail", pk=shopping_list_obj.pk)
 
     return redirect("shopping:detail", pk=shopping_list_obj.pk)
@@ -85,83 +96,109 @@ def _get_or_create_active_shopping_list():
     return shopping_list_obj
 
 
-def _add_recipes_to_existing_shopping_list(shopping_list_obj, recipe_ids):
+def _add_recipes_to_existing_shopping_list(shopping_list_obj, recipe_ids, servings_map=None):
     recipes = Recipe.objects.filter(id__in=recipe_ids).prefetch_related(
         "recipe_ingredients__ingredient"
     )
 
+    servings_map = servings_map or {}
     aggregated_items = defaultdict(Decimal)
 
     for recipe in recipes:
+        target_servings = servings_map.get(recipe.id, recipe.servings)
+        factor = recipe.scale_factor(target_servings)
+
         for item in recipe.recipe_ingredients.all():
-            key = (item.ingredient_id, item.unit)
-            aggregated_items[key] += item.quantity
+            scaled_quantity = item.quantity * factor
+            base_quantity, base_unit = to_base_unit(scaled_quantity, item.unit)
+            key = (item.ingredient_id, base_unit)
+            aggregated_items[key] += base_quantity
 
     inventory_items = {
         item.ingredient_id: item
         for item in InventoryItem.objects.select_related("ingredient")
     }
 
-    for (ingredient_id, unit), required_quantity in aggregated_items.items():
+    for (ingredient_id, base_unit), required_base_quantity in aggregated_items.items():
         inventory_item = inventory_items.get(ingredient_id)
 
         if not inventory_item:
+            quantity, unit = from_base_unit(required_base_quantity, base_unit)
             _merge_or_create_shopping_item(
                 shopping_list_obj=shopping_list_obj,
                 ingredient_id=ingredient_id,
-                quantity=required_quantity,
+                quantity=quantity,
                 unit=unit,
                 status=ShoppingListItem.STATUS_TO_BUY,
             )
             continue
 
         if inventory_item.quantity is None:
+            quantity, unit = from_base_unit(required_base_quantity, base_unit)
             _merge_or_create_shopping_item(
                 shopping_list_obj=shopping_list_obj,
                 ingredient_id=ingredient_id,
-                quantity=required_quantity,
+                quantity=quantity,
                 unit=unit,
                 status=ShoppingListItem.STATUS_CHECK,
             )
             continue
 
-        if inventory_item.unit != unit:
+        inventory_base_quantity, inventory_base_unit = to_base_unit(
+            inventory_item.quantity,
+            inventory_item.unit,
+        )
+
+        if inventory_base_unit != base_unit:
+            quantity, unit = from_base_unit(required_base_quantity, base_unit)
             _merge_or_create_shopping_item(
                 shopping_list_obj=shopping_list_obj,
                 ingredient_id=ingredient_id,
-                quantity=required_quantity,
+                quantity=quantity,
                 unit=unit,
                 status=ShoppingListItem.STATUS_CHECK,
             )
             continue
 
-        inventory_quantity = inventory_item.quantity
-
-        if inventory_quantity >= required_quantity:
+        if inventory_base_quantity >= required_base_quantity:
             continue
 
-        missing_quantity = required_quantity - inventory_quantity
+        missing_base_quantity = required_base_quantity - inventory_base_quantity
+        quantity, unit = from_base_unit(missing_base_quantity, base_unit)
+
         _merge_or_create_shopping_item(
             shopping_list_obj=shopping_list_obj,
             ingredient_id=ingredient_id,
-            quantity=missing_quantity,
+            quantity=quantity,
             unit=unit,
             status=ShoppingListItem.STATUS_TO_BUY,
         )
 
-
 def _merge_or_create_shopping_item(shopping_list_obj, ingredient_id, quantity, unit, status):
-    existing_item = shopping_list_obj.items.filter(
-        ingredient_id=ingredient_id,
-        unit=unit,
-        status=status,
-    ).first()
+    base_quantity, base_unit = to_base_unit(quantity, unit)
 
-    if existing_item:
-        if existing_item.quantity is not None and quantity is not None:
-            existing_item.quantity += quantity
-            existing_item.save(update_fields=["quantity"])
-        return
+    existing_items = shopping_list_obj.items.filter(
+        ingredient_id=ingredient_id,
+        status=status,
+    )
+
+    for existing_item in existing_items:
+        existing_base_quantity, existing_base_unit = to_base_unit(
+            existing_item.quantity,
+            existing_item.unit,
+        )
+
+        if existing_base_unit == base_unit:
+            if existing_base_quantity is not None and base_quantity is not None:
+                total_base_quantity = existing_base_quantity + base_quantity
+                new_quantity, new_unit = from_base_unit(total_base_quantity, base_unit)
+
+                existing_item.quantity = new_quantity
+                existing_item.unit = new_unit
+                existing_item.save(update_fields=["quantity", "unit"])
+                return
+
+            return
 
     ShoppingListItem.objects.create(
         shopping_list=shopping_list_obj,
@@ -177,25 +214,34 @@ def _add_manual_item_to_shopping_list(shopping_list_obj, form):
     quantity = form.cleaned_data["quantity"]
     unit = form.cleaned_data["unit"]
 
-    status = ShoppingListItem.STATUS_CHECK if quantity is None else ShoppingListItem.STATUS_TO_BUY
+    status = (
+        ShoppingListItem.STATUS_CHECK
+        if quantity is None
+        else ShoppingListItem.STATUS_TO_BUY
+    )
 
-    existing_item = shopping_list_obj.items.filter(
-        ingredient=ingredient,
-        unit=unit,
-        status=status,
-    ).first()
+    if quantity is None:
+        existing_item = shopping_list_obj.items.filter(
+            ingredient=ingredient,
+            status=status,
+            quantity__isnull=True,
+        ).first()
 
-    if existing_item and existing_item.quantity is not None and quantity is not None:
-        existing_item.quantity += quantity
-        existing_item.save(update_fields=["quantity"])
+        if existing_item:
+            return
+
+        ShoppingListItem.objects.create(
+            shopping_list=shopping_list_obj,
+            ingredient=ingredient,
+            quantity=None,
+            unit="",
+            status=status,
+        )
         return
 
-    if existing_item and quantity is None:
-        return
-
-    ShoppingListItem.objects.create(
-        shopping_list=shopping_list_obj,
-        ingredient=ingredient,
+    _merge_or_create_shopping_item(
+        shopping_list_obj=shopping_list_obj,
+        ingredient_id=ingredient.id,
         quantity=quantity,
         unit=unit,
         status=status,
@@ -206,12 +252,22 @@ def _move_checked_items_to_inventory(checked_items):
     for item in checked_items.select_related("ingredient"):
         inventory_item = InventoryItem.objects.filter(ingredient=item.ingredient).first()
 
+        item_base_quantity, item_base_unit = to_base_unit(item.quantity, item.unit)
+
         if not inventory_item:
-            InventoryItem.objects.create(
-                ingredient=item.ingredient,
-                quantity=item.quantity if item.quantity is not None else None,
-                unit=item.unit if item.quantity is not None else "",
-            )
+            if item.quantity is None:
+                InventoryItem.objects.create(
+                    ingredient=item.ingredient,
+                    quantity=None,
+                    unit="",
+                )
+            else:
+                display_quantity, display_unit = from_base_unit(item_base_quantity, item_base_unit)
+                InventoryItem.objects.create(
+                    ingredient=item.ingredient,
+                    quantity=display_quantity,
+                    unit=display_unit,
+                )
             continue
 
         if inventory_item.quantity is None:
@@ -220,8 +276,17 @@ def _move_checked_items_to_inventory(checked_items):
         if item.quantity is None:
             continue
 
-        if inventory_item.unit != item.unit:
+        inventory_base_quantity, inventory_base_unit = to_base_unit(
+            inventory_item.quantity,
+            inventory_item.unit,
+        )
+
+        if inventory_base_unit != item_base_unit:
             continue
 
-        inventory_item.quantity += item.quantity
-        inventory_item.save(update_fields=["quantity", "updated_at"])
+        total_base_quantity = inventory_base_quantity + item_base_quantity
+        display_quantity, display_unit = from_base_unit(total_base_quantity, inventory_base_unit)
+
+        inventory_item.quantity = display_quantity
+        inventory_item.unit = display_unit
+        inventory_item.save(update_fields=["quantity", "unit", "updated_at"])

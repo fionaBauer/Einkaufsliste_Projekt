@@ -172,6 +172,8 @@ textarea {
     justify-content: center;
     align-items: center;
     z-index: 1000;
+    padding: 20px;
+    box-sizing: border-box;
 }
 
 .modal-overlay.active {
@@ -245,4 +247,227 @@ label {
     margin-top: 20px;
     display: flex;
     justify-content: flex-end;
+}
+
+.modal-wide {
+    max-width: 700px;
+}
+
+.selected-recipes-container {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin-top: 20px;
+}
+
+.selected-recipe-row {
+    display: grid;
+    grid-template-columns: 1fr 130px 130px;
+    gap: 16px;
+    align-items: center;
+    padding: 12px 14px;
+    border: 1px solid #eaeaea;
+    border-radius: 12px;
+}
+
+.selected-recipe-name {
+    font-weight: bold;
+    font-size: 16px;
+}
+
+.selected-recipe-base {
+    color: #666;
+    font-size: 14px;
+}
+
+.selected-recipe-servings input {
+    width: 100%;
+}
+
+.servings-all-row {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+}
+
+.servings-all-row input {
+    flex: 1;
+}
+
+@media (max-width: 700px) {
+    .selected-recipe-row {
+        grid-template-columns: 1fr;
+    }
+
+    .servings-all-row {
+        flex-direction: column;
+        align-items: stretch;
+    }
+}
+
+.recipe-header-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 16px;
+    flex-wrap: wrap;
+}
+
+.recipe-create-tools {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.recipe-link-input {
+    min-width: 320px;
+    max-width: 420px;
+}
+
+@media (max-width: 700px) {
+    .recipe-create-tools {
+        width: 100%;
+    }
+
+    .recipe-link-input {
+        min-width: unset;
+        max-width: unset;
+        flex: 1;
+    }
+}
+
+.review-ingredients-container {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin-top: 10px;
+}
+
+.review-ingredient-row {
+    display: grid;
+    grid-template-columns: 1.2fr 0.7fr 0.7fr 1fr;
+    gap: 10px;
+    padding: 12px;
+    border: 1px solid #eaeaea;
+    border-radius: 12px;
+}
+
+.review-ingredient-row input {
+    width: 100%;
+}
+
+textarea {
+    width: 100%;
+    padding: 10px 12px;
+    border: 1px solid #ccc;
+    border-radius: 10px;
+    font-size: 15px;
+    box-sizing: border-box;
+    resize: vertical;
+}
+
+@media (max-width: 700px) {
+    .review-ingredient-row {
+        grid-template-columns: 1fr;
+    }
+}
+
+.modal-tall {
+    width: min(900px, 95vw);
+    max-height: 90vh;
+    padding: 0;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+}
+
+.modal-scroll-area {
+    padding: 24px;
+    overflow-y: auto;
+    max-height: 90vh;
+}
+
+.sticky-modal-actions {
+    position: sticky;
+    bottom: 0;
+    background: white;
+    padding-top: 16px;
+    margin-top: 20px;
+    border-top: 1px solid #eaeaea;
+}
+
+.review-ingredients-container {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin-top: 10px;
+}
+
+.review-ingredient-row {
+    display: grid;
+    grid-template-columns: 1.2fr 0.7fr 0.7fr 1fr;
+    gap: 10px;
+    padding: 12px;
+    border: 1px solid #eaeaea;
+    border-radius: 12px;
+    background: #fafafa;
+}
+
+.review-ingredient-row input {
+    width: 100%;
+    min-width: 0;
+}
+
+@media (max-width: 900px) {
+    .modal-tall {
+        width: 95vw;
+        max-height: 92vh;
+    }
+
+    .modal-scroll-area {
+        max-height: 92vh;
+        padding: 20px;
+    }
+}
+
+@media (max-width: 700px) {
+    .review-ingredient-row {
+        grid-template-columns: 1fr;
+    }
+
+    .sticky-modal-actions {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+    }
+
+    .sticky-modal-actions .btn {
+        width: 100%;
+    }
+}
+
+.recipe-header-actions {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.icon-button {
+    width: 46px;
+    height: 46px;
+    border: none;
+    border-radius: 50%;
+    background: #eaeaea;
+    color: #111;
+    font-size: 20px;
+    cursor: pointer;
+    box-shadow: 0 8px 18px rgba(0, 0, 0, 0.08);
+    transition: transform 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
+}
+
+.icon-button:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 10px 22px rgba(0, 0, 0, 0.12);
+    background: #dddddd;
 }
