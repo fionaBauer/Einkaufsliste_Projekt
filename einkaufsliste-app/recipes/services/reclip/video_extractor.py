@@ -1,16 +1,56 @@
 import json
+import os
+import shutil
 import tempfile
 from pathlib import Path
 
 import yt_dlp
 
 
+def _get_ffmpeg_location() -> str | None:
+    """
+    Findet einen brauchbaren ffmpeg/ffprobe-Standort.
+    Prüft zuerst PATH, dann typische Render/Linux-Pfade.
+    Optional kann FFMPEG_LOCATION per Env gesetzt werden.
+    """
+    env_location = os.getenv("FFMPEG_LOCATION")
+    if env_location:
+        return env_location
+
+    ffmpeg_path = shutil.which("ffmpeg")
+    ffprobe_path = shutil.which("ffprobe")
+
+    if ffmpeg_path and ffprobe_path:
+        return str(Path(ffmpeg_path).parent)
+
+    candidate_dirs = [
+        "/usr/bin",
+        "/usr/local/bin",
+        "/opt/render/.local/bin",
+    ]
+
+    for directory in candidate_dirs:
+        ffmpeg_candidate = Path(directory) / "ffmpeg"
+        ffprobe_candidate = Path(directory) / "ffprobe"
+
+        if ffmpeg_candidate.exists() and ffprobe_candidate.exists():
+            return directory
+
+    return None
+
+
 def extract_metadata(url: str) -> dict:
-    with yt_dlp.YoutubeDL({
+    ydl_opts = {
         "quiet": True,
         "skip_download": True,
         "writeinfojson": False,
-    }) as ydl:
+    }
+
+    ffmpeg_location = _get_ffmpeg_location()
+    if ffmpeg_location:
+        ydl_opts["ffmpeg_location"] = ffmpeg_location
+
+    with yt_dlp.YoutubeDL(ydl_opts) as ydl:
         info = ydl.extract_info(url, download=False)
 
     return {
@@ -34,6 +74,10 @@ def extract_subtitles(url: str) -> str | None:
             "outtmpl": str(Path(tmpdir) / "%(id)s"),
         }
 
+        ffmpeg_location = _get_ffmpeg_location()
+        if ffmpeg_location:
+            opts["ffmpeg_location"] = ffmpeg_location
+
         with yt_dlp.YoutubeDL(opts) as ydl:
             ydl.download([url])
 
@@ -51,7 +95,6 @@ def download_audio(url: str, output_dir: str) -> Path:
         "quiet": True,
         "format": "bestaudio/best",
         "outtmpl": str(Path(output_dir) / "%(id)s.%(ext)s"),
-        "ffmpeg_location": "/opt/homebrew/bin",
         "postprocessors": [
             {
                 "key": "FFmpegExtractAudio",
@@ -59,6 +102,11 @@ def download_audio(url: str, output_dir: str) -> Path:
             }
         ],
     }
+
+    ffmpeg_location = _get_ffmpeg_location()
+    if ffmpeg_location:
+        opts["ffmpeg_location"] = ffmpeg_location
+
     with yt_dlp.YoutubeDL(opts) as ydl:
         info = ydl.extract_info(url, download=True)
         video_id = info["id"]

@@ -10,6 +10,7 @@ from .views import (
     RecipeIngredientDeleteView,
     extract_recipe_from_link,
     create_recipe_from_extracted_data,
+    ffmpeg_debug,
 )
 
 app_name = "recipes"
@@ -28,4 +29,6 @@ urlpatterns = [
 
     path("extract-from-link/", extract_recipe_from_link, name="recipe_extract_from_link"),
     path("create-from-extracted/", create_recipe_from_extracted_data, name="recipe_create_from_extracted"),
+
+    path("ffmpeg-debug/", ffmpeg_debug, name="ffmpeg_debug"),
 ]

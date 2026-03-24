@@ -1,6 +1,8 @@
 import json
 import re
 from fractions import Fraction
+import shutil
+import os
 
 from django.views.decorators.http import require_POST
 from django.shortcuts import get_object_or_404, redirect
@@ -407,3 +409,11 @@ def _map_unit(raw_unit):
     }
 
     return unit_map.get((raw_unit or "").strip().lower(), "")
+
+def ffmpeg_debug(request):
+    return JsonResponse({
+        "ffmpeg": shutil.which("ffmpeg"),
+        "ffprobe": shutil.which("ffprobe"),
+        "PATH": os.environ.get("PATH", ""),
+        "FFMPEG_LOCATION": os.environ.get("FFMPEG_LOCATION", ""),
+    })
