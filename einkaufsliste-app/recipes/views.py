@@ -237,29 +237,33 @@ def extract_recipe_from_link(request):
                 status=400,
             )
 
+        from .services.reclip.video_extractor import extract_metadata
+
+        metadata = extract_metadata(url)
+
         return JsonResponse({
             "success": True,
             "recipe": {
-                "title": "Test-Rezept",
-                "servings": "2 Portionen",
-                "ingredients": [
-                    {"name": "Nudeln", "amount": "500", "unit": "g", "notes": ""},
-                    {"name": "Tomaten", "amount": "2", "unit": "pcs", "notes": ""},
-                ],
+                "title": metadata.get("title") or "Test-Rezept",
+                "servings": "1 Portion",
+                "ingredients": [],
                 "steps": [
-                    {"order": 1, "instruction": "Alles kochen.", "duration": ""},
-                    {"order": 2, "instruction": "Servieren.", "duration": ""},
+                    {
+                        "order": 1,
+                        "instruction": metadata.get("description") or "Keine Beschreibung gefunden.",
+                        "duration": "",
+                    }
                 ],
             },
             "raw_transcript": None,
-            "raw_caption": None,
+            "raw_caption": metadata.get("description"),
         })
 
     except Exception as error:
         import traceback
         traceback.print_exc()
         return JsonResponse(
-            {"success": False, "error": f"Extraktion fehlgeschlagen: {str(error)}"},
+            {"success": False, "error": f"Metadaten-Test fehlgeschlagen: {str(error)}"},
             status=500,
         )
     
