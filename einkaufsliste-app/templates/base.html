@@ -5,6 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}Meal Planning{% endblock %}</title>
+    <meta name="csrf-token" content="{{ csrf_token }}">
     <link rel="manifest" href="{% static 'global/manifest.webmanifest' %}">
     <meta name="theme-color" content="#4f46e5">
     <meta name="apple-mobile-web-app-capable" content="yes">

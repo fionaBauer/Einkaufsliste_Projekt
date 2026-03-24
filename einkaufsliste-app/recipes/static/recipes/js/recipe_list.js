@@ -299,8 +299,7 @@ let extractedRecipeData = null;
             }
 
             try {
-                const csrfToken = document.querySelector("[name=csrfmiddlewaretoken]")?.value
-                    || getCsrfTokenFromCookie();
+                const csrfToken = getCsrfToken();
 
                 const response = await fetch("/recipes/create-from-extracted/", {
                     method: "POST",
@@ -395,14 +394,13 @@ let extractedRecipeData = null;
                 try {
                     data = JSON.parse(responseText);
                 } catch (error) {
-                    console.error("Keine gültige JSON-Antwort:", responseText);
+                    console.error("Server hat HTML oder ungültige Antwort geschickt:", responseText);
                     throw new Error("Der Server hat keine gültige JSON-Antwort zurückgegeben.");
                 }
 
                 if (!response.ok || !data.success) {
                     throw new Error(data.error || "Extraktion fehlgeschlagen.");
                 }
-
                 closeLinkModal();
                 renderExtractedRecipe(data.recipe);
                 openRecipeReviewModal();
@@ -417,6 +415,19 @@ let extractedRecipeData = null;
     }
 
     function getCsrfTokenFromCookie() {
+        const cookieValue = document.cookie
+            .split("; ")
+            .find((row) => row.startsWith("csrftoken="));
+
+        return cookieValue ? cookieValue.split("=")[1] : "";
+    }
+
+    function getCsrfToken() {
+        const metaToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute("content");
+        if (metaToken) {
+            return metaToken;
+        }
+
         const cookieValue = document.cookie
             .split("; ")
             .find((row) => row.startsWith("csrftoken="));

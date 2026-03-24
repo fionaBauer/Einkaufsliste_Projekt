@@ -7,6 +7,8 @@ from django.shortcuts import get_object_or_404, redirect
 from django.urls import reverse, reverse_lazy
 from django.views.generic import ListView, DetailView, CreateView, UpdateView, DeleteView
 from django.http import JsonResponse
+from django.utils.decorators import method_decorator
+from django.views.decorators.csrf import ensure_csrf_cookie
 
 from decimal import Decimal, InvalidOperation
 from ingredients.models import Ingredient, Unit
@@ -16,6 +18,7 @@ from .forms import RecipeForm, RecipeIngredientForm
 from .services.reclip.pipeline import process_url
 
 
+@method_decorator(ensure_csrf_cookie, name="dispatch")
 class RecipeListView(ListView):
     model = Recipe
     template_name = "recipes/recipe_list.html"
