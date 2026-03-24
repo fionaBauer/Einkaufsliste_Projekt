@@ -5,13 +5,14 @@ import tempfile
 from pathlib import Path
 
 import yt_dlp
+import imageio_ffmpeg
 
 
 def _get_ffmpeg_location() -> str | None:
     """
-    Findet einen brauchbaren ffmpeg/ffprobe-Standort.
-    Prüft zuerst PATH, dann typische Render/Linux-Pfade.
-    Optional kann FFMPEG_LOCATION per Env gesetzt werden.
+    Sucht zuerst nach einer expliziten ENV-Variable,
+    dann im PATH und fällt danach auf das von imageio-ffmpeg
+    mitgelieferte Binary zurück.
     """
     env_location = os.getenv("FFMPEG_LOCATION")
     if env_location:
@@ -23,18 +24,12 @@ def _get_ffmpeg_location() -> str | None:
     if ffmpeg_path and ffprobe_path:
         return str(Path(ffmpeg_path).parent)
 
-    candidate_dirs = [
-        "/usr/bin",
-        "/usr/local/bin",
-        "/opt/render/.local/bin",
-    ]
-
-    for directory in candidate_dirs:
-        ffmpeg_candidate = Path(directory) / "ffmpeg"
-        ffprobe_candidate = Path(directory) / "ffprobe"
-
-        if ffmpeg_candidate.exists() and ffprobe_candidate.exists():
-            return directory
+    try:
+        bundled_ffmpeg = imageio_ffmpeg.get_ffmpeg_exe()
+        if bundled_ffmpeg:
+            return str(Path(bundled_ffmpeg).parent)
+    except Exception:
+        pass
 
     return None
 

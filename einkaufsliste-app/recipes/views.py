@@ -11,6 +11,8 @@ from django.views.generic import ListView, DetailView, CreateView, UpdateView, D
 from django.http import JsonResponse
 
 from decimal import Decimal, InvalidOperation
+
+import imageio_ffmpeg
 from ingredients.models import Ingredient, Unit
 
 from .models import Recipe, RecipeIngredient
@@ -411,9 +413,16 @@ def _map_unit(raw_unit):
     return unit_map.get((raw_unit or "").strip().lower(), "")
 
 def ffmpeg_debug(request):
+    bundled = None
+    try:
+        bundled = imageio_ffmpeg.get_ffmpeg_exe()
+    except Exception:
+        bundled = None
+
     return JsonResponse({
-        "ffmpeg": shutil.which("ffmpeg"),
-        "ffprobe": shutil.which("ffprobe"),
+        "ffmpeg_in_path": shutil.which("ffmpeg"),
+        "ffprobe_in_path": shutil.which("ffprobe"),
+        "bundled_ffmpeg": bundled,
+        "bundled_ffmpeg_dir": str(Path(bundled).parent) if bundled else None,
         "PATH": os.environ.get("PATH", ""),
-        "FFMPEG_LOCATION": os.environ.get("FFMPEG_LOCATION", ""),
     })
