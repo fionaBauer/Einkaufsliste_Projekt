@@ -389,7 +389,15 @@ let extractedRecipeData = null;
                     body: JSON.stringify({ url }),
                 });
 
-                const data = await response.json();
+                const responseText = await response.text();
+
+                let data;
+                try {
+                    data = JSON.parse(responseText);
+                } catch (error) {
+                    console.error("Keine gültige JSON-Antwort:", responseText);
+                    throw new Error("Der Server hat keine gültige JSON-Antwort zurückgegeben.");
+                }
 
                 if (!response.ok || !data.success) {
                     throw new Error(data.error || "Extraktion fehlgeschlagen.");
