@@ -191,7 +191,7 @@ class RecipeIngredientDeleteView(DeleteView):
 
         return redirect("recipes:recipe_detail", pk=recipe_pk)
     
-@require_POST
+'''@require_POST
 def extract_recipe_from_link(request):
     try:
         data = json.loads(request.body)
@@ -217,6 +217,44 @@ def extract_recipe_from_link(request):
             {"success": False, "error": str(error)},
             status=422,
         )
+    except Exception as error:
+        import traceback
+        traceback.print_exc()
+        return JsonResponse(
+            {"success": False, "error": f"Extraktion fehlgeschlagen: {str(error)}"},
+            status=500,
+        )'''
+
+@require_POST
+def extract_recipe_from_link(request):
+    try:
+        data = json.loads(request.body)
+        url = data.get("url", "").strip()
+
+        if not url:
+            return JsonResponse(
+                {"success": False, "error": "Bitte gib einen Link ein."},
+                status=400,
+            )
+
+        return JsonResponse({
+            "success": True,
+            "recipe": {
+                "title": "Test-Rezept",
+                "servings": "2 Portionen",
+                "ingredients": [
+                    {"name": "Nudeln", "amount": "500", "unit": "g", "notes": ""},
+                    {"name": "Tomaten", "amount": "2", "unit": "pcs", "notes": ""},
+                ],
+                "steps": [
+                    {"order": 1, "instruction": "Alles kochen.", "duration": ""},
+                    {"order": 2, "instruction": "Servieren.", "duration": ""},
+                ],
+            },
+            "raw_transcript": None,
+            "raw_caption": None,
+        })
+
     except Exception as error:
         import traceback
         traceback.print_exc()
