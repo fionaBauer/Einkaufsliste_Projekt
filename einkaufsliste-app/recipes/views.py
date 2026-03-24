@@ -1,8 +1,6 @@
 import json
 import re
 from fractions import Fraction
-import shutil
-import os
 
 from django.views.decorators.http import require_POST
 from django.shortcuts import get_object_or_404, redirect
@@ -11,8 +9,6 @@ from django.views.generic import ListView, DetailView, CreateView, UpdateView, D
 from django.http import JsonResponse
 
 from decimal import Decimal, InvalidOperation
-
-import imageio_ffmpeg
 from ingredients.models import Ingredient, Unit
 
 from .models import Recipe, RecipeIngredient
@@ -411,18 +407,3 @@ def _map_unit(raw_unit):
     }
 
     return unit_map.get((raw_unit or "").strip().lower(), "")
-
-def ffmpeg_debug(request):
-    bundled = None
-    try:
-        bundled = imageio_ffmpeg.get_ffmpeg_exe()
-    except Exception:
-        bundled = None
-
-    return JsonResponse({
-        "ffmpeg_in_path": shutil.which("ffmpeg"),
-        "ffprobe_in_path": shutil.which("ffprobe"),
-        "bundled_ffmpeg": bundled,
-        "bundled_ffmpeg_dir": str(Path(bundled).parent) if bundled else None,
-        "PATH": os.environ.get("PATH", ""),
-    })

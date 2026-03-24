@@ -1,51 +1,16 @@
 import json
-import os
-import shutil
 import tempfile
 from pathlib import Path
 
 import yt_dlp
-import imageio_ffmpeg
-
-
-def _get_ffmpeg_location() -> str | None:
-    """
-    Sucht zuerst nach einer expliziten ENV-Variable,
-    dann im PATH und fällt danach auf das von imageio-ffmpeg
-    mitgelieferte Binary zurück.
-    """
-    env_location = os.getenv("FFMPEG_LOCATION")
-    if env_location:
-        return env_location
-
-    ffmpeg_path = shutil.which("ffmpeg")
-    ffprobe_path = shutil.which("ffprobe")
-
-    if ffmpeg_path and ffprobe_path:
-        return str(Path(ffmpeg_path).parent)
-
-    try:
-        bundled_ffmpeg = imageio_ffmpeg.get_ffmpeg_exe()
-        if bundled_ffmpeg:
-            return str(Path(bundled_ffmpeg).parent)
-    except Exception:
-        pass
-
-    return None
 
 
 def extract_metadata(url: str) -> dict:
-    ydl_opts = {
+    with yt_dlp.YoutubeDL({
         "quiet": True,
         "skip_download": True,
         "writeinfojson": False,
-    }
-
-    ffmpeg_location = _get_ffmpeg_location()
-    if ffmpeg_location:
-        ydl_opts["ffmpeg_location"] = ffmpeg_location
-
-    with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+    }) as ydl:
         info = ydl.extract_info(url, download=False)
 
     return {
@@ -69,10 +34,6 @@ def extract_subtitles(url: str) -> str | None:
             "outtmpl": str(Path(tmpdir) / "%(id)s"),
         }
 
-        ffmpeg_location = _get_ffmpeg_location()
-        if ffmpeg_location:
-            opts["ffmpeg_location"] = ffmpeg_location
-
         with yt_dlp.YoutubeDL(opts) as ydl:
             ydl.download([url])
 
@@ -90,24 +51,15 @@ def download_audio(url: str, output_dir: str) -> Path:
         "quiet": True,
         "format": "bestaudio/best",
         "outtmpl": str(Path(output_dir) / "%(id)s.%(ext)s"),
-        "postprocessors": [
-            {
-                "key": "FFmpegExtractAudio",
-                "preferredcodec": "mp3",
-            }
-        ],
+        "noplaylist": True,
     }
-
-    ffmpeg_location = _get_ffmpeg_location()
-    if ffmpeg_location:
-        opts["ffmpeg_location"] = ffmpeg_location
 
     with yt_dlp.YoutubeDL(opts) as ydl:
         info = ydl.extract_info(url, download=True)
         video_id = info["id"]
 
     for file_path in Path(output_dir).glob(f"{video_id}.*"):
-        if file_path.suffix in (".mp3", ".m4a", ".wav", ".opus"):
+        if file_path.suffix.lower() in (".mp3", ".m4a", ".wav", ".opus", ".webm", ".mp4"):
             return file_path
 
     raise FileNotFoundError(f"Audio file not found for {video_id}")
