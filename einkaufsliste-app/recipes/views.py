@@ -237,9 +237,10 @@ def extract_recipe_from_link(request):
                 status=400,
             )
 
-        from .services.reclip.video_extractor import extract_metadata
+        from .services.reclip.video_extractor import extract_metadata, extract_subtitles
 
         metadata = extract_metadata(url)
+        subtitles = extract_subtitles(url)
 
         return JsonResponse({
             "success": True,
@@ -250,12 +251,12 @@ def extract_recipe_from_link(request):
                 "steps": [
                     {
                         "order": 1,
-                        "instruction": metadata.get("description") or "Keine Beschreibung gefunden.",
+                        "instruction": subtitles or metadata.get("description") or "Keine Untertitel gefunden.",
                         "duration": "",
                     }
                 ],
             },
-            "raw_transcript": None,
+            "raw_transcript": subtitles,
             "raw_caption": metadata.get("description"),
         })
 
@@ -263,7 +264,7 @@ def extract_recipe_from_link(request):
         import traceback
         traceback.print_exc()
         return JsonResponse(
-            {"success": False, "error": f"Metadaten-Test fehlgeschlagen: {str(error)}"},
+            {"success": False, "error": f"Untertitel-Test fehlgeschlagen: {str(error)}"},
             status=500,
         )
     
