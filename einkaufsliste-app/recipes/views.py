@@ -227,19 +227,32 @@ def extract_recipe_from_link(request):
 
 @require_POST
 def extract_recipe_from_link(request):
+    import traceback
+    import time
+
     try:
+        print("=== extract_recipe_from_link START ===", flush=True)
+
         data = json.loads(request.body)
         url = data.get("url", "").strip()
+        print(f"URL: {url}", flush=True)
 
         if not url:
+            print("Kein URL-Wert erhalten", flush=True)
             return JsonResponse(
                 {"success": False, "error": "Bitte gib einen Link ein."},
                 status=400,
             )
 
         from .services.reclip.video_extractor import extract_metadata
+        print("Vor extract_metadata()", flush=True)
 
+        start = time.time()
         metadata = extract_metadata(url)
+        duration = time.time() - start
+
+        print(f"Nach extract_metadata() in {duration:.2f}s", flush=True)
+        print(f"Metadata title: {metadata.get('title')}", flush=True)
 
         return JsonResponse({
             "success": True,
@@ -260,7 +273,7 @@ def extract_recipe_from_link(request):
         })
 
     except Exception as error:
-        import traceback
+        print("=== extract_recipe_from_link ERROR ===", flush=True)
         traceback.print_exc()
         return JsonResponse(
             {"success": False, "error": f"Metadaten-Test fehlgeschlagen: {str(error)}"},
