@@ -253,6 +253,8 @@ def create_recipe_from_extracted_data(request):
             instructions=instructions.strip(),
         )
 
+        merged_recipe_ingredients = {}
+
         for item in ingredients_data:
             ingredient_name = (item.get("name") or "").strip()
             if not ingredient_name:
@@ -272,12 +274,47 @@ def create_recipe_from_extracted_data(request):
                 default_unit=unit or Unit.GRAM,
             )
 
+            final_quantity = quantity if quantity is not None else Decimal("1.00")
+            final_unit = unit or ingredient.default_unit
+
+            key = ingredient.id
+
+            if key in merged_recipe_ingredients:
+                existing = merged_recipe_ingredients[key]
+
+                merged_quantity, merged_unit = _merge_quantities_with_units(
+                    existing_quantity=existing["quantity"],
+                    existing_unit=existing["unit"],
+                    new_quantity=final_quantity,
+                    new_unit=final_unit,
+                )
+
+                existing["quantity"] = merged_quantity
+                existing["unit"] = merged_unit
+
+                if notes:
+                    existing_notes = existing["notes"].strip()
+                    if existing_notes:
+                        note_parts = {part.strip() for part in existing_notes.split(",") if part.strip()}
+                        note_parts.add(notes)
+                        existing["notes"] = ", ".join(sorted(note_parts))
+                    else:
+                        existing["notes"] = notes
+            else:
+                merged_recipe_ingredients[key] = {
+                    "ingredient": ingredient,
+                    "quantity": final_quantity,
+                    "unit": final_unit,
+                    "notes": notes,
+                }
+
+        for merged_item in merged_recipe_ingredients.values():
             RecipeIngredient.objects.create(
                 recipe=recipe,
-                ingredient=ingredient,
-                quantity=quantity if quantity is not None else Decimal("1.00"),
-                unit=unit or ingredient.default_unit,
-                notes=notes,
+                ingredient=merged_item["ingredient"],
+                quantity=merged_item["quantity"],
+                unit=merged_item["unit"],
+                notes=merged_item["notes"],
             )
 
         return JsonResponse({
@@ -507,6 +544,44 @@ def _get_or_create_matching_ingredient(ingredient_name: str, default_unit: str):
         if existing:
             return existing
         raise
+
+def _to_base_unit(quantity, unit):
+    if quantity is None:
+        return None, unit
+
+    if unit == Unit.KILOGRAM:
+        return quantity * Decimal("1000"), Unit.GRAM
+
+    if unit == Unit.LITER:
+        return quantity * Decimal("1000"), Unit.MILLILITER
+
+    return quantity, unit
+
+
+def _from_base_unit(quantity, unit):
+    if quantity is None:
+        return None, unit
+
+    if unit == Unit.GRAM and quantity >= Decimal("1000"):
+        return quantity / Decimal("1000"), Unit.KILOGRAM
+
+    if unit == Unit.MILLILITER and quantity >= Decimal("1000"):
+        return quantity / Decimal("1000"), Unit.LITER
+
+    return quantity, unit
+
+
+def _merge_quantities_with_units(existing_quantity, existing_unit, new_quantity, new_unit):
+    existing_base_quantity, existing_base_unit = _to_base_unit(existing_quantity, existing_unit)
+    new_base_quantity, new_base_unit = _to_base_unit(new_quantity, new_unit)
+
+    if existing_base_unit == new_base_unit:
+        merged_base_quantity = existing_base_quantity + new_base_quantity
+        return _from_base_unit(merged_base_quantity, existing_base_unit)
+
+    # Falls Einheiten nicht kompatibel sind, alte Werte beibehalten
+    # statt kaputt zu mergen.
+    return existing_quantity, existing_unit
 
 def ffmpeg_debug(request):
     return JsonResponse({
