@@ -15,6 +15,9 @@ from .models import Recipe, RecipeIngredient
 from .forms import RecipeForm, RecipeIngredientForm
 from .services.reclip.pipeline import process_url
 
+import os
+import shutil
+
 
 class RecipeListView(ListView):
     model = Recipe
@@ -407,3 +410,11 @@ def _map_unit(raw_unit):
     }
 
     return unit_map.get((raw_unit or "").strip().lower(), "")
+
+def ffmpeg_debug(request):
+    return JsonResponse({
+        "ffmpeg": shutil.which("ffmpeg"),
+        "ffprobe": shutil.which("ffprobe"),
+        "PATH": os.environ.get("PATH", ""),
+        "FFMPEG_LOCATION": os.environ.get("FFMPEG_LOCATION", ""),
+    })

@@ -1,16 +1,47 @@
 import json
+import os
+import shutil
 import tempfile
 from pathlib import Path
 
 import yt_dlp
 
 
+def _get_ffmpeg_location() -> str | None:
+    """
+    Gibt einen Pfad zurück, den yt-dlp für ffmpeg/ffprobe benutzen kann.
+    Priorität:
+    1. ENV FFMPEG_LOCATION
+    2. Verzeichnis von gefundenem ffmpeg
+    3. Verzeichnis von gefundenem ffprobe
+    """
+    env_value = os.getenv("FFMPEG_LOCATION", "").strip()
+    if env_value:
+        return env_value
+
+    ffmpeg_path = shutil.which("ffmpeg")
+    if ffmpeg_path:
+        return str(Path(ffmpeg_path).parent)
+
+    ffprobe_path = shutil.which("ffprobe")
+    if ffprobe_path:
+        return str(Path(ffprobe_path).parent)
+
+    return None
+
+
 def extract_metadata(url: str) -> dict:
-    with yt_dlp.YoutubeDL({
+    opts = {
         "quiet": True,
         "skip_download": True,
         "writeinfojson": False,
-    }) as ydl:
+    }
+
+    ffmpeg_location = _get_ffmpeg_location()
+    if ffmpeg_location:
+        opts["ffmpeg_location"] = ffmpeg_location
+
+    with yt_dlp.YoutubeDL(opts) as ydl:
         info = ydl.extract_info(url, download=False)
 
     return {
@@ -34,6 +65,10 @@ def extract_subtitles(url: str) -> str | None:
             "outtmpl": str(Path(tmpdir) / "%(id)s"),
         }
 
+        ffmpeg_location = _get_ffmpeg_location()
+        if ffmpeg_location:
+            opts["ffmpeg_location"] = ffmpeg_location
+
         with yt_dlp.YoutubeDL(opts) as ydl:
             ydl.download([url])
 
@@ -51,7 +86,6 @@ def download_audio(url: str, output_dir: str) -> Path:
         "quiet": True,
         "format": "bestaudio/best",
         "outtmpl": str(Path(output_dir) / "%(id)s.%(ext)s"),
-        "ffmpeg_location": "/opt/homebrew/bin",
         "postprocessors": [
             {
                 "key": "FFmpegExtractAudio",
@@ -59,6 +93,11 @@ def download_audio(url: str, output_dir: str) -> Path:
             }
         ],
     }
+
+    ffmpeg_location = _get_ffmpeg_location()
+    if ffmpeg_location:
+        opts["ffmpeg_location"] = ffmpeg_location
+
     with yt_dlp.YoutubeDL(opts) as ydl:
         info = ydl.extract_info(url, download=True)
         video_id = info["id"]
