@@ -1,5 +1,6 @@
 import json
 import re
+from difflib import SequenceMatcher
 from fractions import Fraction
 
 from django.views.decorators.http import require_POST
@@ -266,12 +267,10 @@ def create_recipe_from_extracted_data(request):
             unit = parsed["unit"]
             notes = (item.get("notes") or "").strip()
 
-            ingredient = Ingredient.objects.filter(name__iexact=ingredient_name).first()
-            if not ingredient:
-                ingredient = Ingredient.objects.create(
-                    name=ingredient_name,
-                    default_unit=unit or Unit.GRAM,
-                )
+            ingredient = _get_or_create_matching_ingredient(
+                ingredient_name=ingredient_name,
+                default_unit=unit or Unit.GRAM,
+            )
 
             RecipeIngredient.objects.create(
                 recipe=recipe,
@@ -410,6 +409,104 @@ def _map_unit(raw_unit):
     }
 
     return unit_map.get((raw_unit or "").strip().lower(), "")
+
+def _normalize_ingredient_name(name: str) -> str:
+    if not name:
+        return ""
+
+    name = name.strip().lower()
+
+    replacements = {
+        "ä": "ae",
+        "ö": "oe",
+        "ü": "ue",
+        "ß": "ss",
+    }
+
+    for old, new in replacements.items():
+        name = name.replace(old, new)
+
+    # Klammern und Sonderzeichen raus
+    name = re.sub(r"\([^)]*\)", "", name)
+    name = re.sub(r"[^a-z0-9\s]", " ", name)
+
+    # häufige Beschreibungswörter entfernen
+    stopwords = {
+        "frisch", "klein", "kleine", "kleiner", "gross", "grosse", "große", "großer",
+        "gehackt", "gewuerfelt", "gewürfelt", "fein", "bio", "optional",
+    }
+
+    parts = [part for part in name.split() if part not in stopwords]
+
+    # sehr einfache Singularisierung
+    normalized_parts = []
+    for part in parts:
+        if part.endswith("en") and len(part) > 4:
+            normalized_parts.append(part[:-2])
+        elif part.endswith("e") and len(part) > 4:
+            normalized_parts.append(part[:-1])
+        elif part.endswith("s") and len(part) > 4:
+            normalized_parts.append(part[:-1])
+        else:
+            normalized_parts.append(part)
+
+    normalized = " ".join(normalized_parts)
+    normalized = re.sub(r"\s+", " ", normalized).strip()
+
+    return normalized
+
+
+def _find_similar_ingredient(ingredient_name: str):
+    normalized_target = _normalize_ingredient_name(ingredient_name)
+    if not normalized_target:
+        return None
+
+    ingredients = Ingredient.objects.all()
+
+    best_match = None
+    best_score = 0.0
+
+    for ingredient in ingredients:
+        normalized_existing = _normalize_ingredient_name(ingredient.name)
+
+        if normalized_existing == normalized_target:
+            return ingredient
+
+        score = SequenceMatcher(None, normalized_target, normalized_existing).ratio()
+
+        if score > best_score:
+            best_score = score
+            best_match = ingredient
+
+    if best_score >= 0.88:
+        return best_match
+
+    return None
+
+
+def _get_or_create_matching_ingredient(ingredient_name: str, default_unit: str):
+    # 1. exakte Suche
+    exact_match = Ingredient.objects.filter(name__iexact=ingredient_name).first()
+    if exact_match:
+        return exact_match
+
+    # 2. ähnliche Suche auf normalisiertem Namen
+    similar_match = _find_similar_ingredient(ingredient_name)
+    if similar_match:
+        return similar_match
+
+    # 3. neu anlegen
+    try:
+        return Ingredient.objects.create(
+            name=ingredient_name.strip(),
+            default_unit=default_unit or Unit.GRAM,
+        )
+    except Exception:
+        # Falls parallel / wegen Unique doch schon vorhanden
+        existing = Ingredient.objects.filter(name__iexact=ingredient_name.strip()).first()
+        if existing:
+            return existing
+        raise
 
 def ffmpeg_debug(request):
     return JsonResponse({
