@@ -7,27 +7,16 @@ from pathlib import Path
 import yt_dlp
 
 
-def _get_ffmpeg_location() -> str | None:
+def _get_ffmpeg_location() -> str:
     """
     Gibt einen Pfad zurück, den yt-dlp für ffmpeg/ffprobe benutzen kann.
-    Priorität:
-    1. ENV FFMPEG_LOCATION
-    2. Verzeichnis von gefundenem ffmpeg
-    3. Verzeichnis von gefundenem ffprobe
+    Auf Render liegen beide unter /usr/bin.
     """
     env_value = os.getenv("FFMPEG_LOCATION", "").strip()
     if env_value:
         return env_value
 
-    ffmpeg_path = shutil.which("ffmpeg")
-    if ffmpeg_path:
-        return str(Path(ffmpeg_path).parent)
-
-    ffprobe_path = shutil.which("ffprobe")
-    if ffprobe_path:
-        return str(Path(ffprobe_path).parent)
-
-    return None
+    return "/usr/bin"
 
 
 def extract_metadata(url: str) -> dict:

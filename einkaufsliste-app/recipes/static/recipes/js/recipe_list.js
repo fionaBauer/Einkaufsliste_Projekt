@@ -389,6 +389,14 @@ let extractedRecipeData = null;
                     body: JSON.stringify({ url }),
                 });
 
+                const contentType = response.headers.get("content-type") || "";
+
+                if (!contentType.includes("application/json")) {
+                    const text = await response.text();
+                    console.error("Server returned HTML instead of JSON:", text);
+                    throw new Error("Der Server hat keine JSON-Antwort zurückgegeben.");
+                }
+
                 const data = await response.json();
 
                 if (!response.ok || !data.success) {
