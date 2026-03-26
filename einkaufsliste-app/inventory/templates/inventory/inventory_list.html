@@ -49,6 +49,7 @@
                     <div class="inventory-main">
                         <span class="inventory-name">{{ item.ingredient.name }}</span>
                         <span class="inventory-quantity">
+                            {{ item.ingredient.get_category_display }} •
                             {% if item.quantity %}
                                 {{ item.quantity }} {{ item.unit }}
                             {% else %}

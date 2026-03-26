@@ -216,3 +216,8 @@ label {
 .delete-form {
     display: inline;
 }
+
+.ingredient-meta {
+    color: #666;
+    font-size: 14px;
+}

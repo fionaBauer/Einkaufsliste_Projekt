@@ -15,6 +15,10 @@ def inventory_list(request):
 
     if sort == "name_desc":
         inventory_items = inventory_items.order_by("-ingredient__name")
+    elif sort == "category_asc":
+        inventory_items = inventory_items.order_by("ingredient__category", "ingredient__name")
+    elif sort == "category_desc":
+        inventory_items = inventory_items.order_by("-ingredient__category", "ingredient__name")
     elif sort == "quantity_asc":
         inventory_items = inventory_items.order_by("quantity", "ingredient__name")
     elif sort == "quantity_desc":
@@ -70,6 +74,8 @@ def inventory_list(request):
         "sort_options": [
             ("name_asc", "Name A–Z"),
             ("name_desc", "Name Z–A"),
+            ("category_asc", "Kategorie A–Z"),
+            ("category_desc", "Kategorie Z–A"),
             ("quantity_asc", "Menge aufsteigend"),
             ("quantity_desc", "Menge absteigend"),
         ],
