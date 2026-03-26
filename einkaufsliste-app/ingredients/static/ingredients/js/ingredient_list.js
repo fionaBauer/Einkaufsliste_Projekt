@@ -6,8 +6,11 @@ document.addEventListener("DOMContentLoaded", () => {
     const closeCreateModalBtn = document.getElementById("closeCreateModalBtn");
     const closeEditModalBtn = document.getElementById("closeEditModalBtn");
 
-    const editIngredientIdInput = document.getElementById("editIngredientId");
-    const editNameInput = document.getElementById("edit_name");
+    const editButtons = document.querySelectorAll(".open-edit-modal-btn");
+
+    const editIngredientId = document.getElementById("editIngredientId");
+    const editName = document.getElementById("edit_name");
+    const editCategory = document.getElementById("edit_category");
 
     if (openCreateModalBtn) {
         openCreateModalBtn.addEventListener("click", () => {
@@ -27,30 +30,36 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     }
 
-    if (createModal) {
-        createModal.addEventListener("click", (event) => {
-            if (event.target === createModal) {
-                createModal.classList.remove("active");
-            }
-        });
-    }
-
-    if (editModal) {
-        editModal.addEventListener("click", (event) => {
-            if (event.target === editModal) {
-                editModal.classList.remove("active");
-            }
-        });
-    }
-
-    document.querySelectorAll(".open-edit-modal-btn").forEach((button) => {
+    editButtons.forEach((button) => {
         button.addEventListener("click", () => {
-            const ingredientId = button.dataset.id;
-            const ingredientName = button.dataset.name;
-            editIngredientIdInput.value = ingredientId;
-            editNameInput.value = ingredientName;
+            if (editIngredientId) {
+                editIngredientId.value = button.dataset.id;
+            }
+            if (editName) {
+                editName.value = button.dataset.name || "";
+            }
+            if (editCategory) {
+                editCategory.value = button.dataset.category || "";
+            }
 
             editModal.classList.add("active");
         });
+    });
+
+    [createModal, editModal].forEach((modal) => {
+        if (!modal) return;
+
+        modal.addEventListener("click", (event) => {
+            if (event.target === modal) {
+                modal.classList.remove("active");
+            }
+        });
+    });
+
+    document.addEventListener("keydown", (event) => {
+        if (event.key === "Escape") {
+            createModal?.classList.remove("active");
+            editModal?.classList.remove("active");
+        }
     });
 });

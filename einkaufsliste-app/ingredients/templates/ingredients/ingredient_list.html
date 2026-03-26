@@ -47,9 +47,7 @@
                 <li class="ingredient-item">
                     <div class="ingredient-main">
                         <span class="ingredient-name">{{ ingredient.name }}</span>
-                        <span class="ingredient-meta">
-                            {{ ingredient.get_category_display }}
-                        </span>
+                        <span class="ingredient-meta">{{ ingredient.get_category_display }}</span>
                     </div>
 
                     <div class="ingredient-actions">
@@ -58,7 +56,7 @@
                             class="action-btn edit-btn open-edit-modal-btn"
                             data-id="{{ ingredient.id }}"
                             data-name="{{ ingredient.name }}"
-                            data-unit="{{ ingredient.default_unit }}"
+                            data-category="{{ ingredient.category }}"
                         >
                             Bearbeiten
                         </button>
@@ -95,8 +93,26 @@
 
             <div class="form-group">
                 <label for="create_name">Name</label>
-                <input type="text" name="name" id="create_name" value="{{ create_form.name.value|default:'' }}" required>
+                <input
+                    type="text"
+                    name="name"
+                    id="create_name"
+                    value="{{ create_form.name.value|default:'' }}"
+                    required
+                >
                 {{ create_form.name.errors }}
+            </div>
+
+            <div class="form-group">
+                <label for="create_category">Kategorie</label>
+                <select name="category" id="create_category" required>
+                    {% for value, label in create_form.fields.category.choices %}
+                        <option value="{{ value }}" {% if create_form.category.value == value %}selected{% endif %}>
+                            {{ label }}
+                        </option>
+                    {% endfor %}
+                </select>
+                {{ create_form.category.errors }}
             </div>
 
             <div class="modal-actions">
@@ -119,8 +135,26 @@
 
             <div class="form-group">
                 <label for="edit_name">Name</label>
-                <input type="text" name="name" id="edit_name" value="{{ edit_form.name.value|default:'' }}" required>
+                <input
+                    type="text"
+                    name="name"
+                    id="edit_name"
+                    value="{{ edit_form.name.value|default:'' }}"
+                    required
+                >
                 {{ edit_form.name.errors }}
+            </div>
+
+            <div class="form-group">
+                <label for="edit_category">Kategorie</label>
+                <select name="category" id="edit_category" required>
+                    {% for value, label in edit_form.fields.category.choices %}
+                        <option value="{{ value }}" {% if edit_form.category.value == value %}selected{% endif %}>
+                            {{ label }}
+                        </option>
+                    {% endfor %}
+                </select>
+                {{ edit_form.category.errors }}
             </div>
 
             <div class="modal-actions">
