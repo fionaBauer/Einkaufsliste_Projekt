@@ -229,3 +229,11 @@ label {
 .delete-form {
     display: inline;
 }
+
+.inline-helper {
+    margin-top: 10px;
+}
+
+.inline-helper .btn {
+    width: 100%;
+}
