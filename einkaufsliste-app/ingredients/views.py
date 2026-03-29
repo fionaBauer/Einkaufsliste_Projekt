@@ -5,7 +5,9 @@ from django.template.loader import render_to_string
 from django.views.decorators.http import require_http_methods
 
 from .forms import IngredientForm
-from .models import Ingredient
+from .models import Ingredient, IngredientCategory
+
+from collections import OrderedDict
 
 
 def ingredient_list(request):
@@ -21,6 +23,13 @@ def ingredient_list(request):
         ingredients = ingredients.order_by("-name")
     else:
         ingredients = ingredients.order_by("name")
+
+    grouped_ingredients = OrderedDict()
+
+    for category_value, category_label in IngredientCategory.choices:
+        category_items = [ingredient for ingredient in ingredients if ingredient.category == category_value]
+        if category_items:
+            grouped_ingredients[category_label] = category_items
 
     create_form = IngredientForm()
     edit_form = None
@@ -60,6 +69,7 @@ def ingredient_list(request):
 
     context = {
         "ingredients": ingredients,
+        "grouped_ingredients": grouped_ingredients,
         "create_form": create_form,
         "edit_form": edit_form,
         "edit_ingredient_id": edit_ingredient_id,

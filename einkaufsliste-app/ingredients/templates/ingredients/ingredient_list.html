@@ -41,36 +41,41 @@
         {% endif %}
     </form>
 
-    {% if ingredients %}
-        <ul class="ingredient-list">
-            {% for ingredient in ingredients %}
-                <li class="ingredient-item">
-                    <div class="ingredient-main">
-                        <span class="ingredient-name">{{ ingredient.name }}</span>
-                        <span class="ingredient-meta">{{ ingredient.get_category_display }}</span>
-                    </div>
+    {% if grouped_ingredients %}
+        {% for category_label, category_items in grouped_ingredients.items %}
+            <section class="category-section">
+                <h2 class="category-title">{{ category_label }}</h2>
 
-                    <div class="ingredient-actions">
-                        <button
-                            type="button"
-                            class="action-btn edit-btn open-edit-modal-btn"
-                            data-id="{{ ingredient.id }}"
-                            data-name="{{ ingredient.name }}"
-                            data-category="{{ ingredient.category }}"
-                        >
-                            Bearbeiten
-                        </button>
+                <ul class="ingredient-list">
+                    {% for ingredient in category_items %}
+                        <li class="ingredient-item">
+                            <div class="ingredient-main">
+                                <span class="ingredient-name">{{ ingredient.name }}</span>
+                            </div>
 
-                        <form method="post" class="delete-form" onsubmit="return confirm('Möchtest du diese Zutat wirklich löschen?');">
-                            {% csrf_token %}
-                            <input type="hidden" name="action" value="delete">
-                            <input type="hidden" name="ingredient_id" value="{{ ingredient.id }}">
-                            <button type="submit" class="action-btn delete-btn">Löschen</button>
-                        </form>
-                    </div>
-                </li>
-            {% endfor %}
-        </ul>
+                            <div class="ingredient-actions">
+                                <button
+                                    type="button"
+                                    class="action-btn edit-btn open-edit-modal-btn"
+                                    data-id="{{ ingredient.id }}"
+                                    data-name="{{ ingredient.name }}"
+                                    data-category="{{ ingredient.category }}"
+                                >
+                                    Bearbeiten
+                                </button>
+
+                                <form method="post" class="delete-form" onsubmit="return confirm('Möchtest du diese Zutat wirklich löschen?');">
+                                    {% csrf_token %}
+                                    <input type="hidden" name="action" value="delete">
+                                    <input type="hidden" name="ingredient_id" value="{{ ingredient.id }}">
+                                    <button type="submit" class="action-btn delete-btn">Löschen</button>
+                                </form>
+                            </div>
+                        </li>
+                    {% endfor %}
+                </ul>
+            </section>
+        {% endfor %}
     {% else %}
         <div class="empty-state">
             {% if search_query %}

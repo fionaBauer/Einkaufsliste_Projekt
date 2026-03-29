@@ -221,3 +221,13 @@ label {
     color: #666;
     font-size: 14px;
 }
+
+.category-section {
+    margin-bottom: 28px;
+}
+
+.category-title {
+    margin: 0 0 12px 0;
+    font-size: 20px;
+    font-weight: 700;
+}

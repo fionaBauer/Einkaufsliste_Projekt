@@ -13,6 +13,6 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='ingredient',
             name='category',
-            field=models.CharField(choices=[('spices', 'Gewürze'), ('fridge', 'Kühlschrank'), ('drinks', 'Getränke'), ('pantry', 'Vorrat'), ('freezer', 'Tiefkühl'), ('baking', 'Backzutaten'), ('other', 'Sonstiges')], default='other', max_length=20),
+            field=models.CharField(choices=[('spices', 'Gewürze'), ('fridge', 'Kühlschrank'), ('drinks', 'Getränke'), ('pantry', 'Vorrat'), ('freezer', 'Tiefkühl'), ('baking', 'Backzutaten'), ('snacks', 'Snacks'), ('other', 'Sonstiges')], default='other', max_length=20),
         ),
     ]

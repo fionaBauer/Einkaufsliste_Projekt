@@ -18,6 +18,7 @@ class IngredientCategory(models.TextChoices):
     PANTRY = "pantry", "Vorrat"
     FREEZER = "freezer", "Tiefkühl"
     BAKING = "baking", "Backzutaten"
+    SNACKS = "snacks", "Snacks"
     OTHER = "other", "Sonstiges"
 
 

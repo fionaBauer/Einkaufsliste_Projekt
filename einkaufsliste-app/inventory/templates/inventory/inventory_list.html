@@ -42,44 +42,49 @@
         {% endif %}
     </form>
 
-    {% if inventory_items %}
-        <ul class="inventory-list">
-            {% for item in inventory_items %}
-                <li class="inventory-item">
-                    <div class="inventory-main">
-                        <span class="inventory-name">{{ item.ingredient.name }}</span>
-                        <span class="inventory-quantity">
-                            {{ item.ingredient.get_category_display }} •
-                            {% if item.quantity %}
-                                {{ item.quantity }} {{ item.unit }}
-                            {% else %}
-                                Vorhanden, Menge unbekannt
-                            {% endif %}
-                        </span>
-                    </div>
+    {% if grouped_inventory_items %}
+        {% for category_label, category_items in grouped_inventory_items.items %}
+            <section class="category-section">
+                <h2 class="category-title">{{ category_label }}</h2>
 
-                    <div class="inventory-actions">
-                        <button
-                            type="button"
-                            class="action-btn edit-btn open-edit-modal-btn"
-                            data-id="{{ item.id }}"
-                            data-ingredient="{{ item.ingredient.id }}"
-                            data-quantity="{{ item.quantity|default:'' }}"
-                            data-unit="{{ item.unit|default:'' }}"
-                        >
-                            Bearbeiten
-                        </button>
+                <ul class="inventory-list">
+                    {% for item in category_items %}
+                        <li class="inventory-item">
+                            <div class="inventory-main">
+                                <span class="inventory-name">{{ item.ingredient.name }}</span>
+                                <span class="inventory-quantity">
+                                    {% if item.quantity %}
+                                        {{ item.quantity }} {{ item.unit }}
+                                    {% else %}
+                                        Vorhanden, Menge unbekannt
+                                    {% endif %}
+                                </span>
+                            </div>
 
-                        <form method="post" class="delete-form" onsubmit="return confirm('Möchtest du diesen Inventar-Eintrag wirklich löschen?');">
-                            {% csrf_token %}
-                            <input type="hidden" name="action" value="delete">
-                            <input type="hidden" name="item_id" value="{{ item.id }}">
-                            <button type="submit" class="action-btn delete-btn">Löschen</button>
-                        </form>
-                    </div>
-                </li>
-            {% endfor %}
-        </ul>
+                            <div class="inventory-actions">
+                                <button
+                                    type="button"
+                                    class="action-btn edit-btn open-edit-modal-btn"
+                                    data-id="{{ item.id }}"
+                                    data-ingredient="{{ item.ingredient.id }}"
+                                    data-quantity="{{ item.quantity|default:'' }}"
+                                    data-unit="{{ item.unit|default:'' }}"
+                                >
+                                    Bearbeiten
+                                </button>
+
+                                <form method="post" class="delete-form" onsubmit="return confirm('Möchtest du diesen Inventar-Eintrag wirklich löschen?');">
+                                    {% csrf_token %}
+                                    <input type="hidden" name="action" value="delete">
+                                    <input type="hidden" name="item_id" value="{{ item.id }}">
+                                    <button type="submit" class="action-btn delete-btn">Löschen</button>
+                                </form>
+                            </div>
+                        </li>
+                    {% endfor %}
+                </ul>
+            </section>
+        {% endfor %}
     {% else %}
         <div class="empty-state">
             {% if search_query %}

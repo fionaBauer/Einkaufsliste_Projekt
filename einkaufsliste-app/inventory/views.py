@@ -1,5 +1,8 @@
+from collections import OrderedDict
+
 from django.shortcuts import get_object_or_404, redirect, render
 
+from ingredients.models import IngredientCategory
 from .forms import InventoryItemForm
 from .models import InventoryItem
 
@@ -8,23 +11,41 @@ def inventory_list(request):
     search_query = request.GET.get("q", "").strip()
     sort = request.GET.get("sort", "name_asc")
 
-    inventory_items = InventoryItem.objects.select_related("ingredient").all()
+    inventory_items = list(InventoryItem.objects.select_related("ingredient").all())
 
     if search_query:
-        inventory_items = inventory_items.filter(ingredient__name__icontains=search_query)
+        inventory_items = [
+            item for item in inventory_items
+            if search_query.lower() in item.ingredient.name.lower()
+        ]
 
     if sort == "name_desc":
-        inventory_items = inventory_items.order_by("-ingredient__name")
-    elif sort == "category_asc":
-        inventory_items = inventory_items.order_by("ingredient__category", "ingredient__name")
-    elif sort == "category_desc":
-        inventory_items = inventory_items.order_by("-ingredient__category", "ingredient__name")
+        inventory_items.sort(key=lambda item: item.ingredient.name.lower(), reverse=True)
     elif sort == "quantity_asc":
-        inventory_items = inventory_items.order_by("quantity", "ingredient__name")
+        inventory_items.sort(
+            key=lambda item: (
+                item.quantity is None,
+                item.quantity if item.quantity is not None else 0,
+                item.ingredient.name.lower(),
+            )
+        )
     elif sort == "quantity_desc":
-        inventory_items = inventory_items.order_by("-quantity", "ingredient__name")
+        inventory_items.sort(
+            key=lambda item: (
+                item.quantity is None,
+                -(float(item.quantity) if item.quantity is not None else 0),
+                item.ingredient.name.lower(),
+            )
+        )
     else:
-        inventory_items = inventory_items.order_by("ingredient__name")
+        inventory_items.sort(key=lambda item: item.ingredient.name.lower())
+
+    grouped_inventory_items = OrderedDict()
+
+    for category_value, category_label in IngredientCategory.choices:
+        category_items = [item for item in inventory_items if item.ingredient.category == category_value]
+        if category_items:
+            grouped_inventory_items[category_label] = category_items
 
     create_form = InventoryItemForm(exclude_used_ingredients=True)
     edit_form = None
@@ -64,6 +85,7 @@ def inventory_list(request):
 
     context = {
         "inventory_items": inventory_items,
+        "grouped_inventory_items": grouped_inventory_items,
         "create_form": create_form,
         "edit_form": edit_form,
         "edit_item_id": edit_item_id,
@@ -74,8 +96,6 @@ def inventory_list(request):
         "sort_options": [
             ("name_asc", "Name A–Z"),
             ("name_desc", "Name Z–A"),
-            ("category_asc", "Kategorie A–Z"),
-            ("category_desc", "Kategorie Z–A"),
             ("quantity_asc", "Menge aufsteigend"),
             ("quantity_desc", "Menge absteigend"),
         ],
