@@ -52,6 +52,7 @@ class ShoppingListItem(models.Model):
         default=STATUS_TO_BUY,
     )
     is_checked = models.BooleanField(default=False)
+    source_details = models.JSONField(default=list, blank=True)
 
     class Meta:
         ordering = ["ingredient__name"]

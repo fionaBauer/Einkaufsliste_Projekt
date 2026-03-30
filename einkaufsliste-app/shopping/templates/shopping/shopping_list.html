@@ -32,7 +32,29 @@
                                         {% if item.is_checked %}checked{% endif %}
                                     >
                                     <span class="shopping-content">
-                                        <span class="shopping-name">{{ item.ingredient.name }}</span>
+                                        <span class="shopping-name-with-info">
+                                            <span class="shopping-name">{{ item.ingredient.name }}</span>
+
+                                            {% if item.source_details %}
+                                                <span class="shopping-info-wrapper">
+                                                    <button
+                                                        type="button"
+                                                        class="info-button"
+                                                        aria-label="Info"
+                                                        title="Verwendung anzeigen">
+                                                        i
+                                                    </button>
+
+                                                    <span class="shopping-tooltip">
+                                                        {% for source in item.source_details %}
+                                                            <span class="shopping-tooltip-line">
+                                                                {{ source.recipe_name }} – {{ source.quantity }} {{ source.unit }}
+                                                            </span>
+                                                        {% endfor %}
+                                                    </span>
+                                                </span>
+                                            {% endif %}
+                                        </span>
                                         <span class="shopping-quantity">
                                             {{ item.quantity|floatformat:2 }} {{ item.unit }}
                                         </span>
@@ -58,7 +80,29 @@
                                         {% if item.is_checked %}checked{% endif %}
                                     >
                                     <span class="shopping-content">
-                                        <span class="shopping-name">{{ item.ingredient.name }}</span>
+                                        <span class="shopping-name-with-info">
+                                            <span class="shopping-name">{{ item.ingredient.name }}</span>
+
+                                            {% if item.source_details %}
+                                                <span class="shopping-info-wrapper">
+                                                    <button
+                                                        type="button"
+                                                        class="info-button"
+                                                        aria-label="Info"
+                                                        title="Verwendung anzeigen">
+                                                        i
+                                                    </button>
+
+                                                    <span class="shopping-tooltip">
+                                                        {% for source in item.source_details %}
+                                                            <span class="shopping-tooltip-line">
+                                                                {{ source.recipe_name }} – {{ source.quantity }} {{ source.unit }}
+                                                            </span>
+                                                        {% endfor %}
+                                                    </span>
+                                                </span>
+                                            {% endif %}
+                                        </span>
                                         <span class="shopping-quantity">
                                             {% if item.quantity %}
                                                 {{ item.quantity|floatformat:2 }} {{ item.unit }}

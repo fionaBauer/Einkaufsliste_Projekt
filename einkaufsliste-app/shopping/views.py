@@ -4,7 +4,7 @@ from decimal import Decimal
 from django.contrib import messages
 from django.shortcuts import get_object_or_404, redirect, render
 
-from inventory.models import InventoryItem
+from inventory.models import InventoryItem, Unit
 from recipes.models import Recipe
 from .forms import ShoppingListItemForm
 from .models import ShoppingList, ShoppingListItem
@@ -102,7 +102,7 @@ def _add_recipes_to_existing_shopping_list(shopping_list_obj, recipe_ids, servin
     )
 
     servings_map = servings_map or {}
-    aggregated_items = defaultdict(Decimal)
+    aggregated_items = defaultdict(list)
 
     for recipe in recipes:
         target_servings = servings_map.get(recipe.id, recipe.servings)
@@ -112,15 +112,32 @@ def _add_recipes_to_existing_shopping_list(shopping_list_obj, recipe_ids, servin
             scaled_quantity = item.quantity * factor
             base_quantity, base_unit = to_base_unit(scaled_quantity, item.unit)
             key = (item.ingredient_id, base_unit)
-            aggregated_items[key] += base_quantity
+
+            aggregated_items[key].append({
+                "recipe_id": recipe.id,
+                "recipe_name": recipe.name,
+                "quantity": base_quantity,
+                "unit": base_unit,
+            })
 
     inventory_items = {
         item.ingredient_id: item
         for item in InventoryItem.objects.select_related("ingredient")
     }
 
-    for (ingredient_id, base_unit), required_base_quantity in aggregated_items.items():
+    for (ingredient_id, base_unit), source_entries in aggregated_items.items():
+        required_base_quantity = sum(entry["quantity"] for entry in source_entries)
         inventory_item = inventory_items.get(ingredient_id)
+
+        normalized_source_details = []
+        for entry in source_entries:
+            display_quantity, display_unit = from_base_unit(entry["quantity"], entry["unit"])
+            normalized_source_details.append({
+                "recipe_id": entry["recipe_id"],
+                "recipe_name": entry["recipe_name"],
+                "quantity": str(display_quantity),
+                "unit": display_unit,
+            })
 
         if not inventory_item:
             quantity, unit = from_base_unit(required_base_quantity, base_unit)
@@ -130,6 +147,7 @@ def _add_recipes_to_existing_shopping_list(shopping_list_obj, recipe_ids, servin
                 quantity=quantity,
                 unit=unit,
                 status=ShoppingListItem.STATUS_TO_BUY,
+                source_details=normalized_source_details,
             )
             continue
 
@@ -141,6 +159,7 @@ def _add_recipes_to_existing_shopping_list(shopping_list_obj, recipe_ids, servin
                 quantity=quantity,
                 unit=unit,
                 status=ShoppingListItem.STATUS_CHECK,
+                source_details=normalized_source_details,
             )
             continue
 
@@ -157,6 +176,7 @@ def _add_recipes_to_existing_shopping_list(shopping_list_obj, recipe_ids, servin
                 quantity=quantity,
                 unit=unit,
                 status=ShoppingListItem.STATUS_CHECK,
+                source_details=normalized_source_details,
             )
             continue
 
@@ -172,9 +192,18 @@ def _add_recipes_to_existing_shopping_list(shopping_list_obj, recipe_ids, servin
             quantity=quantity,
             unit=unit,
             status=ShoppingListItem.STATUS_TO_BUY,
+            source_details=normalized_source_details,
         )
 
-def _merge_or_create_shopping_item(shopping_list_obj, ingredient_id, quantity, unit, status):
+def _merge_or_create_shopping_item(
+    shopping_list_obj,
+    ingredient_id,
+    quantity,
+    unit,
+    status,
+    source_details=None,
+):
+    source_details = source_details or []
     base_quantity, base_unit = to_base_unit(quantity, unit)
 
     existing_items = shopping_list_obj.items.filter(
@@ -195,9 +224,18 @@ def _merge_or_create_shopping_item(shopping_list_obj, ingredient_id, quantity, u
 
                 existing_item.quantity = new_quantity
                 existing_item.unit = new_unit
-                existing_item.save(update_fields=["quantity", "unit"])
+                existing_item.source_details = _merge_source_details(
+                    existing_item.source_details or [],
+                    source_details,
+                )
+                existing_item.save(update_fields=["quantity", "unit", "source_details"])
                 return
 
+            existing_item.source_details = _merge_source_details(
+                existing_item.source_details or [],
+                source_details,
+            )
+            existing_item.save(update_fields=["source_details"])
             return
 
     ShoppingListItem.objects.create(
@@ -206,6 +244,7 @@ def _merge_or_create_shopping_item(shopping_list_obj, ingredient_id, quantity, u
         quantity=quantity,
         unit=unit,
         status=status,
+        source_details=source_details,
     )
 
 
@@ -236,6 +275,7 @@ def _add_manual_item_to_shopping_list(shopping_list_obj, form):
             quantity=None,
             unit="",
             status=status,
+            source_details=[],
         )
         return
 
@@ -245,12 +285,23 @@ def _add_manual_item_to_shopping_list(shopping_list_obj, form):
         quantity=quantity,
         unit=unit,
         status=status,
+        source_details=[],
     )
 
 
 def _move_checked_items_to_inventory(checked_items):
     for item in checked_items.select_related("ingredient"):
         inventory_item = InventoryItem.objects.filter(ingredient=item.ingredient).first()
+
+        # TL / EL nie als exakte Lagermenge speichern
+        if item.unit in [Unit.TABLESPOON, Unit.TEASPOON]:
+            if not inventory_item:
+                InventoryItem.objects.create(
+                    ingredient=item.ingredient,
+                    quantity=None,
+                    unit="",
+                )
+            continue
 
         item_base_quantity, item_base_unit = to_base_unit(item.quantity, item.unit)
 
@@ -290,3 +341,30 @@ def _move_checked_items_to_inventory(checked_items):
         inventory_item.quantity = display_quantity
         inventory_item.unit = display_unit
         inventory_item.save(update_fields=["quantity", "unit", "updated_at"])
+
+
+def _merge_source_details(existing_sources, new_sources):
+    merged = list(existing_sources)
+
+    for new_source in new_sources:
+        match = next(
+            (
+                item for item in merged
+                if item.get("recipe_id") == new_source.get("recipe_id")
+                and item.get("unit") == new_source.get("unit")
+            ),
+            None,
+        )
+
+        if match:
+            try:
+                existing_quantity = Decimal(str(match.get("quantity", "0")))
+                new_quantity = Decimal(str(new_source.get("quantity", "0")))
+                total_quantity = existing_quantity + new_quantity
+                match["quantity"] = str(total_quantity)
+            except Exception:
+                pass
+        else:
+            merged.append(new_source)
+
+    return merged
