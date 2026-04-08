@@ -259,3 +259,15 @@ label {
 .shopping-info-wrapper:focus-within .shopping-tooltip {
     display: block;
 }
+
+.inline-helper {
+    margin-top: 10px;
+}
+
+.inline-helper .btn {
+    width: 100%;
+}
+
+.ingredient-search-input {
+    width: 100%;
+}

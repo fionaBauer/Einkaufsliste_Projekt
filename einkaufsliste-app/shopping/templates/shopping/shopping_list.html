@@ -138,23 +138,60 @@
     <div class="modal">
         <h2>Lebensmittel hinzufügen</h2>
 
-        <form method="post">
+        <form method="post" id="shopping-create-item-form">
             {% csrf_token %}
             <input type="hidden" name="action" value="create">
 
-            {% for field in create_form %}
-                <div class="form-group">
-                    {{ field.label_tag }}
-                    {{ field }}
-                    {{ field.errors }}
+            <div class="form-group">
+                {{ create_form.ingredient_search.label_tag }}
+                {{ create_form.ingredient_search }}
+                {{ create_form.ingredient }}
+
+                <datalist id="shopping-ingredient-options">
+                    {% for ingredient in create_form.fields.ingredient.queryset %}
+                        <option value="{{ ingredient.name }}" data-id="{{ ingredient.id }}"></option>
+                    {% endfor %}
+                </datalist>
+
+                <div class="inline-helper">
+                    <button
+                        type="button"
+                        class="btn btn-secondary open-ingredient-create-btn"
+                        data-url="{% url 'ingredients:modal_create' %}">
+                        Neue Zutat anlegen
+                    </button>
                 </div>
-            {% endfor %}
+
+                {{ create_form.ingredient_search.errors }}
+                {{ create_form.ingredient.errors }}
+            </div>
+
+            <div class="form-group">
+                {{ create_form.quantity.label_tag }}
+                {{ create_form.quantity }}
+                {{ create_form.quantity.errors }}
+            </div>
+
+            <div class="form-group">
+                {{ create_form.unit.label_tag }}
+                {{ create_form.unit }}
+                {{ create_form.unit.errors }}
+            </div>
 
             <div class="modal-actions">
-                <button type="button" class="btn btn-secondary" id="closeCreateModalBtn">Abbrechen</button>
-                <button type="submit" class="btn btn-primary">Speichern</button>
+                <button type="button" class="btn btn-secondary" id="closeCreateModalBtn">
+                    Abbrechen
+                </button>
+                <button type="submit" class="btn btn-primary">
+                    Speichern
+                </button>
             </div>
         </form>
+    </div>
+</div>
+<div class="modal-overlay" id="ingredientCreateModal">
+    <div class="modal">
+        <div id="ingredientCreateModalBody"></div>
     </div>
 </div>
 {% endblock %}

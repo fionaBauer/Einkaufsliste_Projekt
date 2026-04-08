@@ -115,6 +115,11 @@ def ingredient_create_modal(request):
         request=request,
     )
     return JsonResponse({
-        "success": False,
-        "html": html,
-    }, status=400)
+        "success": True,
+        "ingredient": {
+            "id": ingredient.id,
+            "name": ingredient.name,
+            "default_unit": ingredient.default_unit,
+            "category": ingredient.category,
+        }
+    })
