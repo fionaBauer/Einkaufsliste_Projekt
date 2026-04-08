@@ -22,6 +22,8 @@ document.addEventListener("DOMContentLoaded", () => {
     const consumeServingsInput = document.getElementById("consume_servings");
     const consumeRecipePreviewContainer = document.getElementById("consumeRecipePreviewContainer");
 
+    const applyConsumeRecipeBtn = document.getElementById("applyConsumeRecipeBtn");
+
     let activeInventoryFormContainer = null;
 
     function initializeIngredientSearch(modalElement, datalistId) {
@@ -114,6 +116,64 @@ document.addEventListener("DOMContentLoaded", () => {
                 alert(error.message || "Beim Laden der Vorschau ist ein Fehler aufgetreten.");
             }
         });
+    }
+
+    if (applyConsumeRecipeBtn) {
+        applyConsumeRecipeBtn.addEventListener("click", async () => {
+            const recipeId = consumeRecipeIdInput?.value;
+            const servings = consumeServingsInput?.value || "1";
+
+            if (!recipeId) {
+                alert("Bitte wähle ein Rezept aus.");
+                return;
+            }
+
+            const selectedIngredientIds = Array.from(
+                document.querySelectorAll(".consume-ingredient-checkbox:checked")
+            ).map((checkbox) => checkbox.value);
+
+            if (selectedIngredientIds.length === 0) {
+                alert("Bitte wähle mindestens eine Zutat aus.");
+                return;
+            }
+
+            try {
+                const csrfToken = getCsrfTokenFromCookie();
+
+                const response = await fetch("/inventory/apply-recipe-consumption/", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                        "X-CSRFToken": csrfToken,
+                    },
+                    body: JSON.stringify({
+                        recipe_id: recipeId,
+                        servings: servings,
+                        ingredient_ids: selectedIngredientIds,
+                    }),
+                });
+
+                const data = await response.json();
+
+                if (!response.ok || !data.success) {
+                    throw new Error(data.error || "Verbrauch konnte nicht angewendet werden.");
+                }
+
+                alert(data.message || "Verbrauch wurde angewendet.");
+                window.location.reload();
+            } catch (error) {
+                console.error(error);
+                alert(error.message || "Beim Anwenden ist ein Fehler aufgetreten.");
+            }
+        });
+    }
+
+    function getCsrfTokenFromCookie() {
+        const cookieValue = document.cookie
+            .split("; ")
+            .find((row) => row.startsWith("csrftoken="));
+
+        return cookieValue ? cookieValue.split("=")[1] : "";
     }
 
     consumeRecipeModal?.addEventListener("click", (event) => {
@@ -286,6 +346,25 @@ document.addEventListener("DOMContentLoaded", () => {
 
     function closeConsumeRecipeModal() {
         consumeRecipeModal?.classList.remove("active");
+
+        if (consumeRecipePreviewContainer) {
+            consumeRecipePreviewContainer.innerHTML = "";
+            consumeRecipePreviewContainer.classList.add("hidden");
+        }
+
+        applyConsumeRecipeBtn?.classList.add("hidden");
+
+        if (consumeRecipeSearchInput) {
+            consumeRecipeSearchInput.value = "";
+        }
+
+        if (consumeRecipeIdInput) {
+            consumeRecipeIdInput.value = "";
+        }
+
+        if (consumeServingsInput) {
+            consumeServingsInput.value = "1";
+        }
     }
 
     function initializeConsumeRecipeSearch() {
@@ -324,6 +403,7 @@ document.addEventListener("DOMContentLoaded", () => {
         if (!data.items || data.items.length === 0) {
             consumeRecipePreviewContainer.innerHTML = '<p class="empty-state">Keine Zutaten gefunden.</p>';
             consumeRecipePreviewContainer.classList.remove("hidden");
+            applyConsumeRecipeBtn?.classList.add("hidden");
             return;
         }
 
@@ -331,6 +411,8 @@ document.addEventListener("DOMContentLoaded", () => {
             <li class="consume-preview-item">
                 <input
                     type="checkbox"
+                    class="consume-ingredient-checkbox"
+                    value="${item.ingredient_id}"
                     ${item.checked ? "checked" : ""}
                     ${item.disabled ? "disabled" : ""}
                 >
@@ -351,5 +433,6 @@ document.addEventListener("DOMContentLoaded", () => {
             </ul>
         `;
         consumeRecipePreviewContainer.classList.remove("hidden");
+        applyConsumeRecipeBtn?.classList.remove("hidden");
     }
 });

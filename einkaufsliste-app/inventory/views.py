@@ -6,6 +6,8 @@ from ingredients.models import IngredientCategory
 from .forms import InventoryItemForm
 from .models import InventoryItem
 
+from recipes.views import _from_base_unit, _to_base_unit
+
 from decimal import Decimal
 from django.http import JsonResponse
 from recipes.models import Recipe
@@ -182,3 +184,104 @@ def recipe_consume_preview(request):
         "servings": target_servings,
         "items": preview_items,
     })
+
+def apply_recipe_consumption(request):
+    if request.method != "POST":
+        return JsonResponse({
+            "success": False,
+            "error": "Ungültige Anfrage.",
+        }, status=405)
+
+    try:
+        import json
+        data = json.loads(request.body)
+
+        recipe_id = data.get("recipe_id")
+        target_servings = data.get("servings")
+        selected_ingredient_ids = data.get("ingredient_ids", [])
+
+        if not recipe_id:
+            return JsonResponse({
+                "success": False,
+                "error": "Bitte wähle ein Rezept aus.",
+            }, status=400)
+
+        try:
+            recipe = Recipe.objects.prefetch_related("recipe_ingredients__ingredient").get(pk=recipe_id)
+        except Recipe.DoesNotExist:
+            return JsonResponse({
+                "success": False,
+                "error": "Rezept wurde nicht gefunden.",
+            }, status=404)
+
+        try:
+            target_servings = int(target_servings) if target_servings else recipe.servings
+            if target_servings < 1:
+                target_servings = recipe.servings
+        except (TypeError, ValueError):
+            target_servings = recipe.servings
+
+        factor = recipe.scale_factor(target_servings)
+
+        inventory_items = {
+            item.ingredient_id: item
+            for item in InventoryItem.objects.select_related("ingredient")
+        }
+
+        selected_ingredient_ids = {int(pk) for pk in selected_ingredient_ids}
+        changed_count = 0
+        removed_count = 0
+
+        for recipe_item in recipe.recipe_ingredients.all():
+            ingredient_id = recipe_item.ingredient_id
+
+            if ingredient_id not in selected_ingredient_ids:
+                continue
+
+            inventory_item = inventory_items.get(ingredient_id)
+            if not inventory_item:
+                continue
+
+            if inventory_item.quantity is None:
+                continue
+
+            scaled_quantity = recipe_item.quantity * factor
+
+            if recipe_item.unit in ["el", "tl"]:
+                continue
+
+            recipe_base_quantity, recipe_base_unit = _to_base_unit(scaled_quantity, recipe_item.unit)
+            inventory_base_quantity, inventory_base_unit = _to_base_unit(
+                inventory_item.quantity,
+                inventory_item.unit,
+            )
+
+            if recipe_base_unit != inventory_base_unit:
+                continue
+
+            new_base_quantity = inventory_base_quantity - recipe_base_quantity
+
+            if new_base_quantity <= 0:
+                inventory_item.delete()
+                removed_count += 1
+                changed_count += 1
+                continue
+
+            display_quantity, display_unit = _from_base_unit(new_base_quantity, inventory_base_unit)
+            inventory_item.quantity = display_quantity
+            inventory_item.unit = display_unit
+            inventory_item.save(update_fields=["quantity", "unit", "updated_at"])
+            changed_count += 1
+
+        return JsonResponse({
+            "success": True,
+            "message": f"{changed_count} Inventar-Einträge wurden angepasst, {removed_count} entfernt.",
+        })
+
+    except Exception as error:
+        import traceback
+        traceback.print_exc()
+        return JsonResponse({
+            "success": False,
+            "error": f"Verbrauch konnte nicht angewendet werden: {str(error)}",
+        }, status=500)
