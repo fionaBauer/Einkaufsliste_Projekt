@@ -11,7 +11,13 @@
 <div class="page">
     <div class="page-header">
         <h1 class="page-title">Inventar</h1>
-        <button class="add-button" id="openCreateModalBtn" type="button">+</button>
+
+        <div class="header-actions">
+            <button type="button" class="action-header-btn" id="openConsumeRecipeModalBtn">
+                Rezept verbrauchen
+            </button>
+            <button class="add-button" id="openCreateModalBtn" type="button">+</button>
+        </div>
     </div>
 
     <form method="get" class="filter-bar">
@@ -200,6 +206,46 @@
                 <button type="submit" class="btn btn-primary">Änderungen speichern</button>
             </div>
         </form>
+    </div>
+</div>
+
+<div class="modal-overlay" id="consumeRecipeModal">
+    <div class="modal modal-wide">
+        <h2>Rezept verbrauchen</h2>
+
+        <div class="form-group">
+            <label for="consume_recipe_search">Rezept</label>
+            <input
+                type="text"
+                id="consume_recipe_search"
+                class="form-control recipe-search-input"
+                placeholder="Rezept suchen..."
+                autocomplete="off"
+            >
+            <input type="hidden" id="consume_recipe_id">
+
+            <datalist id="consume-recipe-options">
+                {% for recipe in recipes_for_consume %}
+                    <option value="{{ recipe.name }}" data-id="{{ recipe.id }}"></option>
+                {% endfor %}
+            </datalist>
+        </div>
+
+        <div class="form-group">
+            <label for="consume_servings">Portionen</label>
+            <input type="number" id="consume_servings" min="1" value="1">
+        </div>
+
+        <div class="modal-actions">
+            <button type="button" class="btn btn-secondary" id="closeConsumeRecipeModalBtn">
+                Abbrechen
+            </button>
+            <button type="button" class="btn btn-primary" id="loadConsumeRecipePreviewBtn">
+                Zutaten laden
+            </button>
+        </div>
+
+        <div id="consumeRecipePreviewContainer" class="consume-preview-container hidden"></div>
     </div>
 </div>
 

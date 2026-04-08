@@ -251,3 +251,65 @@ label {
 .ingredient-search-input {
     width: 100%;
 }
+
+.header-actions {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.action-header-btn {
+    padding: 10px 16px;
+    border: none;
+    border-radius: 10px;
+    background: #eaeaea;
+    color: #111;
+    cursor: pointer;
+    font-size: 15px;
+}
+
+.modal-wide {
+    max-width: 720px;
+}
+
+.consume-preview-container {
+    margin-top: 20px;
+}
+
+.consume-preview-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.consume-preview-item {
+    display: grid;
+    grid-template-columns: 28px 1fr auto;
+    gap: 12px;
+    align-items: center;
+    padding: 12px 0;
+    border-bottom: 1px solid #eaeaea;
+}
+
+.consume-preview-item:last-child {
+    border-bottom: none;
+}
+
+.consume-preview-main {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.consume-preview-name {
+    font-weight: 600;
+}
+
+.consume-preview-meta {
+    color: #666;
+    font-size: 14px;
+}
+
+.hidden {
+    display: none;
+}

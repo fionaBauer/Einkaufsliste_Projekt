@@ -6,6 +6,10 @@ from ingredients.models import IngredientCategory
 from .forms import InventoryItemForm
 from .models import InventoryItem
 
+from decimal import Decimal
+from django.http import JsonResponse
+from recipes.models import Recipe
+
 
 def inventory_list(request):
     search_query = request.GET.get("q", "").strip()
@@ -93,6 +97,7 @@ def inventory_list(request):
         "edit_modal_open": edit_modal_open,
         "search_query": search_query,
         "sort": sort,
+        "recipes_for_consume": Recipe.objects.order_by("name"),
         "sort_options": [
             ("name_asc", "Name A–Z"),
             ("name_desc", "Name Z–A"),
@@ -101,3 +106,79 @@ def inventory_list(request):
         ],
     }
     return render(request, "inventory/inventory_list.html", context)
+
+def recipe_consume_preview(request):
+    recipe_id = request.GET.get("recipe_id")
+    target_servings = request.GET.get("servings")
+
+    if not recipe_id:
+        return JsonResponse({
+            "success": False,
+            "error": "Bitte wähle ein Rezept aus.",
+        }, status=400)
+
+    try:
+        recipe = Recipe.objects.prefetch_related("recipe_ingredients__ingredient").get(pk=recipe_id)
+    except Recipe.DoesNotExist:
+        return JsonResponse({
+            "success": False,
+            "error": "Rezept wurde nicht gefunden.",
+        }, status=404)
+
+    try:
+        target_servings = int(target_servings) if target_servings else recipe.servings
+        if target_servings < 1:
+            target_servings = recipe.servings
+    except (TypeError, ValueError):
+        target_servings = recipe.servings
+
+    factor = recipe.scale_factor(target_servings)
+
+    preview_items = []
+
+    inventory_items = {
+        item.ingredient_id: item
+        for item in InventoryItem.objects.select_related("ingredient")
+    }
+
+    for recipe_item in recipe.recipe_ingredients.all():
+        scaled_quantity = recipe_item.quantity * factor
+        inventory_item = inventory_items.get(recipe_item.ingredient_id)
+
+        can_be_consumed = False
+        inventory_display = "Nicht im Inventar"
+
+        if inventory_item:
+            if inventory_item.quantity is None:
+                inventory_display = "Menge unbekannt"
+            elif inventory_item.unit in ["el", "tl"]:
+                inventory_display = f"{inventory_item.quantity} {inventory_item.unit}"
+            else:
+                inventory_display = f"{inventory_item.quantity} {inventory_item.unit}"
+                can_be_consumed = True
+
+        if recipe_item.unit in ["el", "tl"]:
+            can_be_consumed = False
+
+        if recipe_item.quantity is None:
+            can_be_consumed = False
+
+        preview_items.append({
+            "ingredient_id": recipe_item.ingredient.id,
+            "ingredient_name": recipe_item.ingredient.name,
+            "recipe_quantity": str(scaled_quantity),
+            "recipe_unit": recipe_item.unit,
+            "inventory_display": inventory_display,
+            "checked": can_be_consumed,
+            "disabled": not can_be_consumed,
+        })
+
+    return JsonResponse({
+        "success": True,
+        "recipe": {
+            "id": recipe.id,
+            "name": recipe.name,
+        },
+        "servings": target_servings,
+        "items": preview_items,
+    })

@@ -12,6 +12,16 @@ document.addEventListener("DOMContentLoaded", () => {
     const editButtons = document.querySelectorAll(".open-edit-modal-btn");
     const editItemIdInput = document.getElementById("editItemId");
 
+    const consumeRecipeModal = document.getElementById("consumeRecipeModal");
+    const openConsumeRecipeModalBtn = document.getElementById("openConsumeRecipeModalBtn");
+    const closeConsumeRecipeModalBtn = document.getElementById("closeConsumeRecipeModalBtn");
+    const loadConsumeRecipePreviewBtn = document.getElementById("loadConsumeRecipePreviewBtn");
+    const consumeRecipeSearchInput = document.getElementById("consume_recipe_search");
+    const consumeRecipeIdInput = document.getElementById("consume_recipe_id");
+    const consumeRecipeOptions = document.getElementById("consume-recipe-options");
+    const consumeServingsInput = document.getElementById("consume_servings");
+    const consumeRecipePreviewContainer = document.getElementById("consumeRecipePreviewContainer");
+
     let activeInventoryFormContainer = null;
 
     function initializeIngredientSearch(modalElement, datalistId) {
@@ -64,6 +74,53 @@ document.addEventListener("DOMContentLoaded", () => {
             editModal.classList.remove("active");
         });
     }
+
+    if (openConsumeRecipeModalBtn) {
+        openConsumeRecipeModalBtn.addEventListener("click", () => {
+            openConsumeRecipeModal();
+        });
+    }
+
+    if (closeConsumeRecipeModalBtn) {
+        closeConsumeRecipeModalBtn.addEventListener("click", () => {
+            closeConsumeRecipeModal();
+        });
+    }
+
+    if (loadConsumeRecipePreviewBtn) {
+        loadConsumeRecipePreviewBtn.addEventListener("click", async () => {
+            const recipeId = consumeRecipeIdInput?.value;
+            const servings = consumeServingsInput?.value || "1";
+
+            if (!recipeId) {
+                alert("Bitte wähle ein Rezept aus.");
+                return;
+            }
+
+            try {
+                const response = await fetch(
+                    `/inventory/consume-recipe-preview/?recipe_id=${recipeId}&servings=${servings}`
+                );
+
+                const data = await response.json();
+
+                if (!response.ok || !data.success) {
+                    throw new Error(data.error || "Vorschau konnte nicht geladen werden.");
+                }
+
+                renderConsumeRecipePreview(data);
+            } catch (error) {
+                console.error(error);
+                alert(error.message || "Beim Laden der Vorschau ist ein Fehler aufgetreten.");
+            }
+        });
+    }
+
+    consumeRecipeModal?.addEventListener("click", (event) => {
+        if (event.target === consumeRecipeModal) {
+            closeConsumeRecipeModal();
+        }
+    });
 
     editButtons.forEach((button) => {
         button.addEventListener("click", () => {
@@ -213,4 +270,86 @@ document.addEventListener("DOMContentLoaded", () => {
             editModal?.classList.remove("active");
         }
     });
+
+    document.addEventListener("keydown", (event) => {
+        if (event.key === "Escape") {
+            if (consumeRecipeModal?.classList.contains("active")) {
+                closeConsumeRecipeModal();
+            }
+        }
+    });
+
+    function openConsumeRecipeModal() {
+        consumeRecipeModal?.classList.add("active");
+        initializeConsumeRecipeSearch();
+    }
+
+    function closeConsumeRecipeModal() {
+        consumeRecipeModal?.classList.remove("active");
+    }
+
+    function initializeConsumeRecipeSearch() {
+        if (!consumeRecipeSearchInput || !consumeRecipeIdInput || !consumeRecipeOptions) {
+            return;
+        }
+
+        consumeRecipeSearchInput.setAttribute("list", "consume-recipe-options");
+
+        function syncRecipeId() {
+            const typedValue = consumeRecipeSearchInput.value.trim().toLowerCase();
+            const options = Array.from(consumeRecipeOptions.querySelectorAll("option"));
+
+            const match = options.find(
+                (option) => option.value.trim().toLowerCase() === typedValue
+            );
+
+            if (match) {
+                consumeRecipeIdInput.value = match.dataset.id || "";
+            } else {
+                consumeRecipeIdInput.value = "";
+            }
+        }
+
+        consumeRecipeSearchInput.addEventListener("input", syncRecipeId);
+        consumeRecipeSearchInput.addEventListener("change", syncRecipeId);
+
+        syncRecipeId();
+    }
+
+    function renderConsumeRecipePreview(data) {
+        if (!consumeRecipePreviewContainer) {
+            return;
+        }
+
+        if (!data.items || data.items.length === 0) {
+            consumeRecipePreviewContainer.innerHTML = '<p class="empty-state">Keine Zutaten gefunden.</p>';
+            consumeRecipePreviewContainer.classList.remove("hidden");
+            return;
+        }
+
+        const itemsHtml = data.items.map((item) => `
+            <li class="consume-preview-item">
+                <input
+                    type="checkbox"
+                    ${item.checked ? "checked" : ""}
+                    ${item.disabled ? "disabled" : ""}
+                >
+                <div class="consume-preview-main">
+                    <span class="consume-preview-name">${item.ingredient_name}</span>
+                    <span class="consume-preview-meta">
+                        Benötigt: ${item.recipe_quantity} ${item.recipe_unit}
+                    </span>
+                </div>
+                <span class="consume-preview-meta">${item.inventory_display}</span>
+            </li>
+        `).join("");
+
+        consumeRecipePreviewContainer.innerHTML = `
+            <h3>${data.recipe.name} – ${data.servings} Portion(en)</h3>
+            <ul class="consume-preview-list">
+                ${itemsHtml}
+            </ul>
+        `;
+        consumeRecipePreviewContainer.classList.remove("hidden");
+    }
 });
