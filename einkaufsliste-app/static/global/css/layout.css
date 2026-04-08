@@ -225,3 +225,13 @@ body {
         padding: 20px;
     }
 }
+
+.toast.error {
+    background: #c62828;
+    color: white;
+}
+
+.toast.success {
+    background: black;
+    color: white;
+}

@@ -95,7 +95,7 @@ document.addEventListener("DOMContentLoaded", () => {
             const servings = consumeServingsInput?.value || "1";
 
             if (!recipeId) {
-                alert("Bitte wähle ein Rezept aus.");
+                showToast("Bitte wähle ein Rezept aus.", "error");
                 return;
             }
 
@@ -113,7 +113,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 renderConsumeRecipePreview(data);
             } catch (error) {
                 console.error(error);
-                alert(error.message || "Beim Laden der Vorschau ist ein Fehler aufgetreten.");
+                showToast(error.message || "Beim Laden der Vorschau ist ein Fehler aufgetreten.", "error");
             }
         });
     }
@@ -124,7 +124,7 @@ document.addEventListener("DOMContentLoaded", () => {
             const servings = consumeServingsInput?.value || "1";
 
             if (!recipeId) {
-                alert("Bitte wähle ein Rezept aus.");
+                showToast("Bitte wähle ein Rezept aus.", "error");
                 return;
             }
 
@@ -133,7 +133,7 @@ document.addEventListener("DOMContentLoaded", () => {
             ).map((checkbox) => checkbox.value);
 
             if (selectedIngredientIds.length === 0) {
-                alert("Bitte wähle mindestens eine Zutat aus.");
+                showToast("Bitte wähle mindestens eine Zutat aus.", "error");
                 return;
             }
 
@@ -159,11 +159,14 @@ document.addEventListener("DOMContentLoaded", () => {
                     throw new Error(data.error || "Verbrauch konnte nicht angewendet werden.");
                 }
 
-                alert(data.message || "Verbrauch wurde angewendet.");
+                showToast(data.message || "Verbrauch wurde angewendet.", "success");
+                setTimeout(() => {
+                    window.location.reload();
+                }, 700);
                 window.location.reload();
             } catch (error) {
                 console.error(error);
-                alert(error.message || "Beim Anwenden ist ein Fehler aufgetreten.");
+                showToast(error.message || "Beim Anwenden ist ein Fehler aufgetreten.", "error");
             }
         });
     }
@@ -174,6 +177,31 @@ document.addEventListener("DOMContentLoaded", () => {
             .find((row) => row.startsWith("csrftoken="));
 
         return cookieValue ? cookieValue.split("=")[1] : "";
+    }
+
+    function showToast(message, type = "success") {
+        const container = document.querySelector(".toast-container");
+        if (!container) {
+            alert(message);
+            return;
+        }
+
+        const toast = document.createElement("div");
+        toast.className = `toast ${type}`;
+        toast.innerHTML = `
+            <span class="toast-icon">✔</span>
+            <span class="toast-text">${message}</span>
+        `;
+
+        container.appendChild(toast);
+
+        setTimeout(() => {
+            toast.classList.add("hide");
+
+            setTimeout(() => {
+                toast.remove();
+            }, 250);
+        }, 2000);
     }
 
     consumeRecipeModal?.addEventListener("click", (event) => {
@@ -408,7 +436,7 @@ document.addEventListener("DOMContentLoaded", () => {
         }
 
         const itemsHtml = data.items.map((item) => `
-            <li class="consume-preview-item">
+            <li class="consume-preview-item ${item.disabled ? "disabled-row" : ""}">
                 <input
                     type="checkbox"
                     class="consume-ingredient-checkbox"
@@ -422,12 +450,20 @@ document.addEventListener("DOMContentLoaded", () => {
                         Benötigt: ${item.recipe_quantity} ${item.recipe_unit}
                     </span>
                 </div>
-                <span class="consume-preview-meta">${item.inventory_display}</span>
+                <div class="consume-preview-right">
+                    <span class="consume-preview-meta">${item.inventory_display}</span>
+                    <span class="consume-preview-status ${item.status_type}">
+                        ${item.status_label}
+                    </span>
+                </div>
             </li>
         `).join("");
 
         consumeRecipePreviewContainer.innerHTML = `
-            <h3>${data.recipe.name} – ${data.servings} Portion(en)</h3>
+            <h3 class="consume-preview-heading">${data.recipe.name} – ${data.servings} Portion(en)</h3>
+            <p class="consume-preview-subtext">
+                Nur ausgewählte und kompatible Zutaten werden vom Inventar abgezogen.
+            </p>
             <ul class="consume-preview-list">
                 ${itemsHtml}
             </ul>

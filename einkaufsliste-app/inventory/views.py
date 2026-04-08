@@ -149,21 +149,33 @@ def recipe_consume_preview(request):
 
         can_be_consumed = False
         inventory_display = "Nicht im Inventar"
+        status_label = "Nicht im Inventar"
+        status_type = "muted"
 
         if inventory_item:
             if inventory_item.quantity is None:
                 inventory_display = "Menge unbekannt"
+                status_label = "Menge unbekannt"
+                status_type = "muted"
             elif inventory_item.unit in ["el", "tl"]:
                 inventory_display = f"{inventory_item.quantity} {inventory_item.unit}"
+                status_label = "EL/TL nicht automatisch"
+                status_type = "warn"
             else:
                 inventory_display = f"{inventory_item.quantity} {inventory_item.unit}"
                 can_be_consumed = True
+                status_label = "Wird angepasst"
+                status_type = "ok"
 
         if recipe_item.unit in ["el", "tl"]:
             can_be_consumed = False
+            status_label = "EL/TL nicht automatisch"
+            status_type = "warn"
 
         if recipe_item.quantity is None:
             can_be_consumed = False
+            status_label = "Rezeptmenge unbekannt"
+            status_type = "muted"
 
         preview_items.append({
             "ingredient_id": recipe_item.ingredient.id,
@@ -173,6 +185,8 @@ def recipe_consume_preview(request):
             "inventory_display": inventory_display,
             "checked": can_be_consumed,
             "disabled": not can_be_consumed,
+            "status_label": status_label,
+            "status_type": status_type,
         })
 
     return JsonResponse({
