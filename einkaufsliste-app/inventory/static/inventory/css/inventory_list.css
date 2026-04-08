@@ -247,3 +247,7 @@ label {
     font-size: 20px;
     font-weight: 700;
 }
+
+.ingredient-search-input {
+    width: 100%;
+}

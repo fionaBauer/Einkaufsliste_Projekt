@@ -105,24 +105,41 @@
             {% csrf_token %}
             <input type="hidden" name="action" value="create">
 
-            {% for field in create_form %}
-                <div class="form-group">
-                    {{ field.label_tag }}
-                    {{ field }}
-                    {{ field.errors }}
+            <div class="form-group">
+                {{ create_form.ingredient_search.label_tag }}
+                {{ create_form.ingredient_search }}
+                {{ create_form.ingredient }}
 
-                    {% if field.name == "ingredient" %}
-                        <div class="inline-helper">
-                            <button
-                                type="button"
-                                class="btn btn-secondary open-ingredient-create-btn"
-                                data-url="{% url 'ingredients:modal_create' %}">
-                                Neue Zutat anlegen
-                            </button>
-                        </div>
-                    {% endif %}
+                <datalist id="inventory-ingredient-options-create">
+                    {% for ingredient in create_form.fields.ingredient.queryset %}
+                        <option value="{{ ingredient.name }}" data-id="{{ ingredient.id }}"></option>
+                    {% endfor %}
+                </datalist>
+
+                <div class="inline-helper">
+                    <button
+                        type="button"
+                        class="btn btn-secondary open-ingredient-create-btn"
+                        data-url="{% url 'ingredients:modal_create' %}">
+                        Neue Zutat anlegen
+                    </button>
                 </div>
-            {% endfor %}
+
+                {{ create_form.ingredient_search.errors }}
+                {{ create_form.ingredient.errors }}
+            </div>
+
+            <div class="form-group">
+                {{ create_form.quantity.label_tag }}
+                {{ create_form.quantity }}
+                {{ create_form.quantity.errors }}
+            </div>
+
+            <div class="form-group">
+                {{ create_form.unit.label_tag }}
+                {{ create_form.unit }}
+                {{ create_form.unit.errors }}
+            </div>
 
             <div class="modal-actions">
                 <button type="button" class="btn btn-secondary" id="closeCreateModalBtn">Abbrechen</button>
@@ -142,24 +159,41 @@
             <input type="hidden" name="action" value="edit">
             <input type="hidden" name="item_id" id="editItemId" value="{{ edit_item_id|default:'' }}">
 
-            {% for field in edit_form %}
-                <div class="form-group">
-                    {{ field.label_tag }}
-                    {{ field }}
-                    {{ field.errors }}
+            <div class="form-group">
+                {{ edit_form.ingredient_search.label_tag }}
+                {{ edit_form.ingredient_search }}
+                {{ edit_form.ingredient }}
 
-                    {% if field.name == "ingredient" %}
-                        <div class="inline-helper">
-                            <button
-                                type="button"
-                                class="btn btn-secondary open-ingredient-create-btn"
-                                data-url="{% url 'ingredients:modal_create' %}">
-                                Neue Zutat anlegen
-                            </button>
-                        </div>
-                    {% endif %}
+                <datalist id="inventory-ingredient-options-edit">
+                    {% for ingredient in edit_form.fields.ingredient.queryset %}
+                        <option value="{{ ingredient.name }}" data-id="{{ ingredient.id }}"></option>
+                    {% endfor %}
+                </datalist>
+
+                <div class="inline-helper">
+                    <button
+                        type="button"
+                        class="btn btn-secondary open-ingredient-create-btn"
+                        data-url="{% url 'ingredients:modal_create' %}">
+                        Neue Zutat anlegen
+                    </button>
                 </div>
-            {% endfor %}
+
+                {{ edit_form.ingredient_search.errors }}
+                {{ edit_form.ingredient.errors }}
+            </div>
+
+            <div class="form-group">
+                {{ edit_form.quantity.label_tag }}
+                {{ edit_form.quantity }}
+                {{ edit_form.quantity.errors }}
+            </div>
+
+            <div class="form-group">
+                {{ edit_form.unit.label_tag }}
+                {{ edit_form.unit }}
+                {{ edit_form.unit.errors }}
+            </div>
 
             <div class="modal-actions">
                 <button type="button" class="btn btn-secondary" id="closeEditModalBtn">Abbrechen</button>

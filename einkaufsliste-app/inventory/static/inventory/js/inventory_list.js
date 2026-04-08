@@ -14,9 +14,42 @@ document.addEventListener("DOMContentLoaded", () => {
 
     let activeInventoryFormContainer = null;
 
+    function initializeIngredientSearch(modalElement, datalistId) {
+        const searchInput = modalElement?.querySelector(".ingredient-search-input");
+        const hiddenIngredientInput = modalElement?.querySelector('input[name="ingredient"]');
+        const datalist = modalElement?.querySelector(`#${datalistId}`);
+
+        if (!searchInput || !hiddenIngredientInput || !datalist) {
+            return;
+        }
+
+        searchInput.setAttribute("list", datalistId);
+
+        function syncIngredientId() {
+            const typedValue = searchInput.value.trim().toLowerCase();
+            const options = Array.from(datalist.querySelectorAll("option"));
+
+            const match = options.find(
+                (option) => option.value.trim().toLowerCase() === typedValue
+            );
+
+            if (match) {
+                hiddenIngredientInput.value = match.dataset.id || "";
+            } else {
+                hiddenIngredientInput.value = "";
+            }
+        }
+
+        searchInput.addEventListener("input", syncIngredientId);
+        searchInput.addEventListener("change", syncIngredientId);
+
+        syncIngredientId();
+    }
+
     if (openCreateModalBtn) {
         openCreateModalBtn.addEventListener("click", () => {
             createModal.classList.add("active");
+            initializeIngredientSearch(createModal, "inventory-ingredient-options-create");
         });
     }
 
@@ -34,16 +67,36 @@ document.addEventListener("DOMContentLoaded", () => {
 
     editButtons.forEach((button) => {
         button.addEventListener("click", () => {
-            const editIngredient = editModal.querySelector('[name="ingredient"]');
+            const editIngredientHidden = editModal.querySelector('input[name="ingredient"]');
+            const editIngredientSearch = editModal.querySelector(".ingredient-search-input");
             const editQuantity = editModal.querySelector('[name="quantity"]');
             const editUnit = editModal.querySelector('[name="unit"]');
 
-            editItemIdInput.value = button.dataset.id;
-            editIngredient.value = button.dataset.ingredient;
-            editQuantity.value = button.dataset.quantity;
-            editUnit.value = button.dataset.unit;
+            if (editItemIdInput) {
+                editItemIdInput.value = button.dataset.id;
+            }
+
+            if (editIngredientHidden) {
+                editIngredientHidden.value = button.dataset.ingredient || "";
+            }
+
+            if (editIngredientSearch) {
+                const selectedOption = editModal.querySelector(
+                    `#inventory-ingredient-options-edit option[data-id="${button.dataset.ingredient}"]`
+                );
+                editIngredientSearch.value = selectedOption ? selectedOption.value : "";
+            }
+
+            if (editQuantity) {
+                editQuantity.value = button.dataset.quantity || "";
+            }
+
+            if (editUnit) {
+                editUnit.value = button.dataset.unit || "";
+            }
 
             editModal.classList.add("active");
+            initializeIngredientSearch(editModal, "inventory-ingredient-options-edit");
         });
     });
 
@@ -66,6 +119,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 console.error(error);
                 alert("Ingredient-Modal konnte nicht geladen werden.");
             }
+            return;
         }
 
         const ingredientCloseButton = event.target.closest(".ingredient-modal-close-btn");
@@ -98,15 +152,30 @@ document.addEventListener("DOMContentLoaded", () => {
             const data = await response.json();
 
             if (data.success) {
-                const ingredientSelect = activeInventoryFormContainer?.querySelector('select[name="ingredient"]');
+                const hiddenIngredientInput = activeInventoryFormContainer?.querySelector('input[name="ingredient"]');
+                const ingredientSearchInput = activeInventoryFormContainer?.querySelector(".ingredient-search-input");
+                const unitSelect = activeInventoryFormContainer?.querySelector('select[name="unit"]');
+                const createDatalist = activeInventoryFormContainer?.querySelector("#inventory-ingredient-options-create");
+                const editDatalist = activeInventoryFormContainer?.querySelector("#inventory-ingredient-options-edit");
+                const activeDatalist = createDatalist || editDatalist;
 
-                if (ingredientSelect) {
+                if (hiddenIngredientInput) {
+                    hiddenIngredientInput.value = String(data.ingredient.id);
+                }
+
+                if (ingredientSearchInput) {
+                    ingredientSearchInput.value = data.ingredient.name;
+                }
+
+                if (activeDatalist) {
                     const option = document.createElement("option");
-                    option.value = data.ingredient.id;
-                    option.textContent = data.ingredient.name;
-                    option.selected = true;
-                    ingredientSelect.appendChild(option);
-                    ingredientSelect.value = String(data.ingredient.id);
+                    option.value = data.ingredient.name;
+                    option.dataset.id = data.ingredient.id;
+                    activeDatalist.appendChild(option);
+                }
+
+                if (unitSelect && data.ingredient.default_unit) {
+                    unitSelect.value = data.ingredient.default_unit;
                 }
 
                 ingredientCreateModal.classList.remove("active");
@@ -134,9 +203,14 @@ document.addEventListener("DOMContentLoaded", () => {
 
     document.addEventListener("keydown", (event) => {
         if (event.key === "Escape") {
+            if (ingredientCreateModal?.classList.contains("active")) {
+                ingredientCreateModal.classList.remove("active");
+                ingredientCreateModalBody.innerHTML = "";
+                return;
+            }
+
             createModal?.classList.remove("active");
             editModal?.classList.remove("active");
-            ingredientCreateModal?.classList.remove("active");
         }
     });
 });
