@@ -116,11 +116,17 @@
                 {{ create_form.ingredient_search }}
                 {{ create_form.ingredient }}
 
-                <datalist id="inventory-ingredient-options-create">
+                <div class="custom-search-dropdown hidden" id="inventoryIngredientDropdownCreate">
                     {% for ingredient in create_form.fields.ingredient.queryset %}
-                        <option value="{{ ingredient.name }}" data-id="{{ ingredient.id }}"></option>
+                        <button
+                            type="button"
+                            class="custom-search-option"
+                            data-id="{{ ingredient.id }}"
+                            data-name="{{ ingredient.name }}">
+                            {{ ingredient.name }}
+                        </button>
                     {% endfor %}
-                </datalist>
+                </div>
 
                 <div class="inline-helper">
                     <button
@@ -170,11 +176,17 @@
                 {{ edit_form.ingredient_search }}
                 {{ edit_form.ingredient }}
 
-                <datalist id="inventory-ingredient-options-edit">
+                <div class="custom-search-dropdown hidden" id="inventoryIngredientDropdownEdit">
                     {% for ingredient in edit_form.fields.ingredient.queryset %}
-                        <option value="{{ ingredient.name }}" data-id="{{ ingredient.id }}"></option>
+                        <button
+                            type="button"
+                            class="custom-search-option"
+                            data-id="{{ ingredient.id }}"
+                            data-name="{{ ingredient.name }}">
+                            {{ ingredient.name }}
+                        </button>
                     {% endfor %}
-                </datalist>
+                </div>
 
                 <div class="inline-helper">
                     <button

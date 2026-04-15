@@ -14,14 +14,17 @@
         {{ form.ingredient_search }}
         {{ form.ingredient }}
 
-        <datalist id="ingredient-options">
+        <div class="custom-search-dropdown hidden" id="recipeIngredientDropdown">
             {% for ingredient in form.fields.ingredient.queryset %}
-                <option
-                    value="{{ ingredient.name }}"
-                    data-id="{{ ingredient.id }}">
-                </option>
+                <button
+                    type="button"
+                    class="custom-search-option"
+                    data-id="{{ ingredient.id }}"
+                    data-name="{{ ingredient.name }}">
+                    {{ ingredient.name }}
+                </button>
             {% endfor %}
-        </datalist>
+        </div>
 
         <div class="inline-helper">
             <button

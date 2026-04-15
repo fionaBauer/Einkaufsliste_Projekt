@@ -57,19 +57,39 @@ document.addEventListener("DOMContentLoaded", () => {
     function initializeIngredientSearch() {
         const searchInput = modalBody.querySelector(".ingredient-search-input");
         const hiddenIngredientInput = modalBody.querySelector('input[name="ingredient"]');
-        const datalist = modalBody.querySelector("#ingredient-options");
+        const dropdown = modalBody.querySelector("#recipeIngredientDropdown");
 
-        if (!searchInput || !hiddenIngredientInput || !datalist) {
+        if (!searchInput || !hiddenIngredientInput || !dropdown) {
             return;
         }
 
-        searchInput.setAttribute("list", "ingredient-options");
+        const allOptions = Array.from(dropdown.querySelectorAll(".custom-search-option"));
+
+        function renderFilteredOptions() {
+            const typedValue = searchInput.value.trim().toLowerCase();
+            let visibleCount = 0;
+
+            allOptions.forEach((option) => {
+                const name = (option.dataset.name || option.textContent || "").toLowerCase();
+                const matches = !typedValue || name.includes(typedValue);
+
+                option.classList.toggle("hidden", !matches);
+
+                if (matches) {
+                    visibleCount += 1;
+                }
+            });
+
+            dropdown.classList.toggle("hidden", visibleCount === 0);
+        }
 
         function syncIngredientId() {
             const typedValue = searchInput.value.trim().toLowerCase();
-            const options = Array.from(datalist.querySelectorAll("option"));
 
-            const match = options.find((option) => option.value.trim().toLowerCase() === typedValue);
+            const match = allOptions.find(
+                (option) =>
+                    ((option.dataset.name || option.textContent || "").trim().toLowerCase() === typedValue)
+            );
 
             if (match) {
                 hiddenIngredientInput.value = match.dataset.id || "";
@@ -78,10 +98,36 @@ document.addEventListener("DOMContentLoaded", () => {
             }
         }
 
-        searchInput.addEventListener("input", syncIngredientId);
-        searchInput.addEventListener("change", syncIngredientId);
+        searchInput.onfocus = () => {
+            renderFilteredOptions();
+        };
+
+        searchInput.oninput = () => {
+            syncIngredientId();
+            renderFilteredOptions();
+        };
+
+        searchInput.onchange = () => {
+            syncIngredientId();
+            renderFilteredOptions();
+        };
+
+        allOptions.forEach((option) => {
+            option.onclick = () => {
+                searchInput.value = option.dataset.name || option.textContent || "";
+                hiddenIngredientInput.value = option.dataset.id || "";
+                dropdown.classList.add("hidden");
+            };
+        });
+
+        document.addEventListener("click", (event) => {
+            if (!modalBody.contains(event.target)) {
+                dropdown.classList.add("hidden");
+            }
+        });
 
         syncIngredientId();
+        dropdown.classList.add("hidden");
     }
 
     async function loadIngredientCreateModal(url) {
@@ -157,7 +203,7 @@ document.addEventListener("DOMContentLoaded", () => {
             if (data.success) {
                 const hiddenIngredientInput = modalBody.querySelector('input[name="ingredient"]');
                 const ingredientSearchInput = modalBody.querySelector('.ingredient-search-input');
-                const datalist = modalBody.querySelector('#ingredient-options');
+                const dropdown = modalBody.querySelector('#recipeIngredientDropdown');
                 const unitSelect = modalBody.querySelector('select[name="unit"]');
 
                 if (hiddenIngredientInput) {
@@ -168,11 +214,14 @@ document.addEventListener("DOMContentLoaded", () => {
                     ingredientSearchInput.value = data.ingredient.name;
                 }
 
-                if (datalist) {
-                    const option = document.createElement("option");
-                    option.value = data.ingredient.name;
+                if (dropdown) {
+                    const option = document.createElement("button");
+                    option.type = "button";
+                    option.className = "custom-search-option";
+                    option.dataset.name = data.ingredient.name;
                     option.dataset.id = data.ingredient.id;
-                    datalist.appendChild(option);
+                    option.textContent = data.ingredient.name;
+                    dropdown.appendChild(option);
                 }
 
                 if (unitSelect && data.ingredient.default_unit) {

@@ -26,23 +26,41 @@ document.addEventListener("DOMContentLoaded", () => {
 
     let activeInventoryFormContainer = null;
 
-    function initializeIngredientSearch(modalElement, datalistId) {
+    function initializeIngredientSearch(modalElement, dropdownId) {
         const searchInput = modalElement?.querySelector(".ingredient-search-input");
         const hiddenIngredientInput = modalElement?.querySelector('input[name="ingredient"]');
-        const datalist = modalElement?.querySelector(`#${datalistId}`);
+        const dropdown = modalElement?.querySelector(`#${dropdownId}`);
 
-        if (!searchInput || !hiddenIngredientInput || !datalist) {
+        if (!searchInput || !hiddenIngredientInput || !dropdown) {
             return;
         }
 
-        searchInput.setAttribute("list", datalistId);
+        const allOptions = Array.from(dropdown.querySelectorAll(".custom-search-option"));
+
+        function renderFilteredOptions() {
+            const typedValue = searchInput.value.trim().toLowerCase();
+            let visibleCount = 0;
+
+            allOptions.forEach((option) => {
+                const name = (option.dataset.name || option.textContent || "").toLowerCase();
+                const matches = !typedValue || name.includes(typedValue);
+
+                option.classList.toggle("hidden", !matches);
+
+                if (matches) {
+                    visibleCount += 1;
+                }
+            });
+
+            dropdown.classList.toggle("hidden", visibleCount === 0);
+        }
 
         function syncIngredientId() {
             const typedValue = searchInput.value.trim().toLowerCase();
-            const options = Array.from(datalist.querySelectorAll("option"));
 
-            const match = options.find(
-                (option) => option.value.trim().toLowerCase() === typedValue
+            const match = allOptions.find(
+                (option) =>
+                    ((option.dataset.name || option.textContent || "").trim().toLowerCase() === typedValue)
             );
 
             if (match) {
@@ -52,16 +70,42 @@ document.addEventListener("DOMContentLoaded", () => {
             }
         }
 
-        searchInput.addEventListener("input", syncIngredientId);
-        searchInput.addEventListener("change", syncIngredientId);
+        searchInput.onfocus = () => {
+            renderFilteredOptions();
+        };
+
+        searchInput.oninput = () => {
+            syncIngredientId();
+            renderFilteredOptions();
+        };
+
+        searchInput.onchange = () => {
+            syncIngredientId();
+            renderFilteredOptions();
+        };
+
+        allOptions.forEach((option) => {
+            option.onclick = () => {
+                searchInput.value = option.dataset.name || option.textContent || "";
+                hiddenIngredientInput.value = option.dataset.id || "";
+                dropdown.classList.add("hidden");
+            };
+        });
+
+        document.addEventListener("click", (event) => {
+            if (!modalElement.contains(event.target)) {
+                dropdown.classList.add("hidden");
+            }
+        });
 
         syncIngredientId();
+        dropdown.classList.add("hidden");
     }
 
     if (openCreateModalBtn) {
         openCreateModalBtn.addEventListener("click", () => {
             createModal.classList.add("active");
-            initializeIngredientSearch(createModal, "inventory-ingredient-options-create");
+            initializeIngredientSearch(createModal, "inventoryIngredientDropdownCreate");
         });
     }
 
@@ -241,7 +285,7 @@ document.addEventListener("DOMContentLoaded", () => {
             }
 
             editModal.classList.add("active");
-            initializeIngredientSearch(editModal, "inventory-ingredient-options-edit");
+            initializeIngredientSearch(editModal, "inventoryIngredientDropdownEdit");
         });
     });
 
@@ -300,9 +344,9 @@ document.addEventListener("DOMContentLoaded", () => {
                 const hiddenIngredientInput = activeInventoryFormContainer?.querySelector('input[name="ingredient"]');
                 const ingredientSearchInput = activeInventoryFormContainer?.querySelector(".ingredient-search-input");
                 const unitSelect = activeInventoryFormContainer?.querySelector('select[name="unit"]');
-                const createDatalist = activeInventoryFormContainer?.querySelector("#inventory-ingredient-options-create");
-                const editDatalist = activeInventoryFormContainer?.querySelector("#inventory-ingredient-options-edit");
-                const activeDatalist = createDatalist || editDatalist;
+                const createDropdown = activeInventoryFormContainer?.querySelector("#inventoryIngredientDropdownCreate");
+                const editDropdown = activeInventoryFormContainer?.querySelector("#inventoryIngredientDropdownEdit");
+                const activeDropdown = createDropdown || editDropdown;
 
                 if (hiddenIngredientInput) {
                     hiddenIngredientInput.value = String(data.ingredient.id);
@@ -312,11 +356,14 @@ document.addEventListener("DOMContentLoaded", () => {
                     ingredientSearchInput.value = data.ingredient.name;
                 }
 
-                if (activeDatalist) {
-                    const option = document.createElement("option");
-                    option.value = data.ingredient.name;
+                if (activeDropdown) {
+                    const option = document.createElement("button");
+                    option.type = "button";
+                    option.className = "custom-search-option";
+                    option.dataset.name = data.ingredient.name;
                     option.dataset.id = data.ingredient.id;
-                    activeDatalist.appendChild(option);
+                    option.textContent = data.ingredient.name;
+                    activeDropdown.appendChild(option);
                 }
 
                 if (unitSelect && data.ingredient.default_unit) {
