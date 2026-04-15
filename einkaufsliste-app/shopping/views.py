@@ -61,6 +61,15 @@ def shopping_list_detail(request, pk):
                 messages.success(request, f"{deleted_count} Einträge wurden gelöscht.")
             return redirect("shopping:detail", pk=shopping_list_obj.pk)
 
+        elif action == "clear_all":
+            deleted_count = shopping_list_obj.items.count()
+            shopping_list_obj.items.all().delete()
+
+            if deleted_count > 0:
+                messages.success(request, "Die Einkaufsliste wurde komplett geleert.")
+
+            return redirect("shopping:detail", pk=shopping_list_obj.pk)
+        
         elif action == "clean":
             shopping_list_obj.items.update(is_checked=False)
             if checked_ids:
@@ -76,7 +85,7 @@ def shopping_list_detail(request, pk):
                 messages.success(request, f"{count} Einträge wurden ins Inventar übernommen.")
 
             return redirect("shopping:detail", pk=shopping_list_obj.pk)
-
+        
     to_buy = shopping_list_obj.items.filter(status=ShoppingListItem.STATUS_TO_BUY)
     check_quantity = shopping_list_obj.items.filter(status=ShoppingListItem.STATUS_CHECK)
 

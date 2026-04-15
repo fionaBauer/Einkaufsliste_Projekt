@@ -122,6 +122,9 @@
                 <button type="submit" name="action" value="delete_selected" class="btn btn-secondary">
                     Ausgewählte löschen
                 </button>
+                <button type="submit" name="action" value="clear_all" class="btn btn-secondary">
+                    Alles löschen
+                </button>
                 <button type="submit" name="action" value="clean" class="btn btn-danger">
                     Abgehakte entfernen
                 </button>
@@ -147,11 +150,17 @@
                 {{ create_form.ingredient_search }}
                 {{ create_form.ingredient }}
 
-                <datalist id="shopping-ingredient-options">
+                <div class="custom-search-dropdown hidden" id="shoppingIngredientDropdown">
                     {% for ingredient in create_form.fields.ingredient.queryset %}
-                        <option value="{{ ingredient.name }}" data-id="{{ ingredient.id }}"></option>
+                        <button
+                            type="button"
+                            class="custom-search-option"
+                            data-id="{{ ingredient.id }}"
+                            data-name="{{ ingredient.name }}">
+                            {{ ingredient.name }}
+                        </button>
                     {% endfor %}
-                </datalist>
+                </div>
 
                 <div class="inline-helper">
                     <button
