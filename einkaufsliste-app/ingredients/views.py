@@ -1,3 +1,4 @@
+from django.contrib.auth.decorators import login_required
 from django.db.models import Case, When, Value, IntegerField
 from django.shortcuts import get_object_or_404, redirect, render
 from django.http import JsonResponse
@@ -10,6 +11,7 @@ from .models import Ingredient, IngredientCategory
 from collections import OrderedDict
 
 
+@login_required
 def ingredient_list(request):
     search_query = request.GET.get("q", "").strip()
     sort = request.GET.get("sort", "name_asc")
@@ -84,6 +86,7 @@ def ingredient_list(request):
     }
     return render(request, "ingredients/ingredient_list.html", context)
 
+@login_required
 @require_http_methods(["GET", "POST"])
 def ingredient_create_modal(request):
     if request.method == "GET":

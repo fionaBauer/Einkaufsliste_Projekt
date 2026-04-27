@@ -3,6 +3,8 @@ import re
 from difflib import SequenceMatcher
 from fractions import Fraction
 
+from django.contrib.auth.decorators import login_required
+from django.contrib.auth.mixins import LoginRequiredMixin
 from django.views.decorators.http import require_POST
 from django.shortcuts import get_object_or_404, redirect
 from django.urls import reverse, reverse_lazy
@@ -20,7 +22,7 @@ import os
 import shutil
 
 
-class RecipeListView(ListView):
+class RecipeListView(LoginRequiredMixin, ListView):
     model = Recipe
     template_name = "recipes/recipe_list.html"
     context_object_name = "recipes"
@@ -52,7 +54,7 @@ class RecipeListView(ListView):
         return context
 
 
-class RecipeDetailView(DetailView):
+class RecipeDetailView(LoginRequiredMixin, DetailView):
     model = Recipe
     template_name = "recipes/recipe_detail.html"
     context_object_name = "recipe"
@@ -66,7 +68,7 @@ class RecipeDetailView(DetailView):
         return Recipe.objects.prefetch_related("recipe_ingredients__ingredient")
 
 
-class RecipeCreateView(CreateView):
+class RecipeCreateView(LoginRequiredMixin, CreateView):
     model = Recipe
     form_class = RecipeForm
     template_name = "recipes/partials/recipe_form.html"
@@ -84,7 +86,7 @@ class RecipeCreateView(CreateView):
         return super().form_invalid(form)
 
 
-class RecipeUpdateView(UpdateView):
+class RecipeUpdateView(LoginRequiredMixin, UpdateView):
     model = Recipe
     form_class = RecipeForm
     template_name = "recipes/partials/recipe_form.html"
@@ -102,7 +104,7 @@ class RecipeUpdateView(UpdateView):
         return super().form_invalid(form)
 
 
-class RecipeDeleteView(DeleteView):
+class RecipeDeleteView(LoginRequiredMixin, DeleteView):
     model = Recipe
     template_name = "recipes/partials/recipe_confirm_delete.html"
     success_url = reverse_lazy("recipes:recipe_list")
@@ -117,7 +119,7 @@ class RecipeDeleteView(DeleteView):
         return redirect(self.success_url)
 
 
-class RecipeIngredientCreateView(CreateView):
+class RecipeIngredientCreateView(LoginRequiredMixin, CreateView):
     model = RecipeIngredient
     form_class = RecipeIngredientForm
     template_name = "recipes/partials/recipeingredient_form.html"
@@ -149,7 +151,7 @@ class RecipeIngredientCreateView(CreateView):
         return context
 
 
-class RecipeIngredientUpdateView(UpdateView):
+class RecipeIngredientUpdateView(LoginRequiredMixin, UpdateView):
     model = RecipeIngredient
     form_class = RecipeIngredientForm
     template_name = "recipes/partials/recipeingredient_form.html"
@@ -177,7 +179,7 @@ class RecipeIngredientUpdateView(UpdateView):
         return context
 
 
-class RecipeIngredientDeleteView(DeleteView):
+class RecipeIngredientDeleteView(LoginRequiredMixin, DeleteView):
     model = RecipeIngredient
     template_name = "recipes/partials/recipeingredient_confirm_delete.html"
     context_object_name = "recipe_ingredient"
@@ -192,6 +194,7 @@ class RecipeIngredientDeleteView(DeleteView):
 
         return redirect("recipes:recipe_detail", pk=recipe_pk)
     
+@login_required
 @require_POST
 def extract_recipe_from_link(request):
     try:
@@ -226,6 +229,7 @@ def extract_recipe_from_link(request):
             status=500,
         )
     
+@login_required
 @require_POST
 def create_recipe_from_extracted_data(request):
     try:
@@ -583,6 +587,7 @@ def _merge_quantities_with_units(existing_quantity, existing_unit, new_quantity,
     # statt kaputt zu mergen.
     return existing_quantity, existing_unit
 
+@login_required
 def ffmpeg_debug(request):
     return JsonResponse({
         "ffmpeg": shutil.which("ffmpeg"),

@@ -102,6 +102,40 @@ body {
     color: var(--text-sidebar-active);
 }
 
+.sidebar-footer {
+    padding: 16px 10px 8px;
+    border-top: 1px solid #2a2a2a;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+}
+
+.sidebar-user {
+    font-size: 13px;
+    color: #9ca3af;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.sidebar-logout {
+    background: none;
+    border: 1px solid #3a3a3a;
+    color: #9ca3af;
+    padding: 6px 12px;
+    border-radius: 8px;
+    font-size: 12px;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: background 0.15s, color 0.15s;
+}
+
+.sidebar-logout:hover {
+    background: #1e1e1e;
+    color: white;
+}
+
 .app-content {
     flex: 1;
     padding: 28px;
