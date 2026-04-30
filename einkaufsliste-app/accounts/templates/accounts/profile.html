@@ -1,0 +1,34 @@
+{% extends "base.html" %}
+
+{% block title %}Profil{% endblock %}
+
+{% block content %}
+<div class="page">
+    <div class="page-header">
+        <h1 class="page-title">Profil</h1>
+    </div>
+
+    {% if error %}
+        <div style="background:#fef2f2;border:1.5px solid #fca5a5;border-radius:var(--radius-md);padding:10px 14px;font-size:13px;color:#b91c1c;margin-bottom:20px;">
+            {{ error }}
+        </div>
+    {% endif %}
+
+    <form method="post" style="display:flex;flex-direction:column;gap:20px;">
+        {% csrf_token %}
+        <div>
+            <label style="display:block;font-size:13px;font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:8px;">Benutzername</label>
+            <input type="text" name="username" value="{{ request.user.username }}"
+                style="width:100%;padding:10px 12px;border:1.5px solid var(--border-light);border-radius:var(--radius-md);font-size:15px;color:var(--text-main);background:white;box-sizing:border-box;">
+        </div>
+        <div>
+            <label style="display:block;font-size:13px;font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:8px;">E-Mail-Adresse</label>
+            <input type="email" name="email" value="{{ request.user.email }}"
+                style="width:100%;padding:10px 12px;border:1.5px solid var(--border-light);border-radius:var(--radius-md);font-size:15px;color:var(--text-main);background:white;box-sizing:border-box;">
+        </div>
+        <div>
+            <button type="submit" class="btn btn-primary">Speichern</button>
+        </div>
+    </form>
+</div>
+{% endblock %}

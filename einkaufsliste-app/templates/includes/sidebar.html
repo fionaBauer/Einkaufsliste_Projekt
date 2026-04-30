@@ -46,7 +46,7 @@
             {{ request.user.households.first.name|default:"Haushalt" }}
         </a>
         <div class="sidebar-user-row">
-            <span class="sidebar-user">{{ request.user.username }}</span>
+            <a href="{% url 'accounts:profile' %}" class="sidebar-user" style="text-decoration:none;">{{ request.user.username }}</a>
             <form method="post" action="{% url 'logout' %}">
                 {% csrf_token %}
                 <button type="submit" class="sidebar-logout">Abmelden</button>
