@@ -48,6 +48,7 @@ INSTALLED_APPS = [
     "shopping",
     "inventory",
     "core",
+    "deals"
 ]
 
 MIDDLEWARE = [
