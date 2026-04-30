@@ -1,0 +1,159 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Anmelden – Meal Planner</title>
+    <link rel="manifest" href="{% static 'global/manifest.webmanifest' %}">
+    <meta name="theme-color" content="#4f46e5">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="apple-mobile-web-app-title" content="Einkaufsliste">
+    <link rel="apple-touch-icon" href="{% static 'global/icons/icon-192.png' %}">
+    <link rel="stylesheet" href="{% static 'global/css/layout.css' %}?v=3">
+    <style>
+        body {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            background: var(--bg-app);
+        }
+
+        .auth-card {
+            background: white;
+            border-radius: var(--radius-xl);
+            box-shadow: var(--shadow-soft);
+            padding: 48px 40px;
+            width: 100%;
+            max-width: 400px;
+        }
+
+        .auth-brand {
+            text-align: center;
+            margin-bottom: 36px;
+        }
+
+        .auth-brand h1 {
+            margin: 0;
+            font-size: 26px;
+            font-weight: 700;
+            color: var(--text-main);
+        }
+
+        .auth-brand p {
+            margin: 6px 0 0;
+            font-size: 13px;
+            color: var(--text-muted);
+        }
+
+        .auth-field {
+            margin-bottom: 16px;
+        }
+
+        .auth-field label {
+            display: block;
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--text-muted);
+            margin-bottom: 6px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .auth-field input {
+            width: 100%;
+            padding: 12px 14px;
+            border: 1.5px solid var(--border-light);
+            border-radius: var(--radius-md);
+            font-size: 15px;
+            color: var(--text-main);
+            background: white;
+            transition: border-color 0.15s;
+            box-sizing: border-box;
+        }
+
+        .auth-field input:focus {
+            outline: none;
+            border-color: #111111;
+        }
+
+        .auth-btn {
+            width: 100%;
+            padding: 13px;
+            background: #111111;
+            color: white;
+            border: none;
+            border-radius: var(--radius-md);
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            margin-top: 8px;
+            transition: background 0.15s;
+        }
+
+        .auth-btn:hover {
+            background: #222222;
+        }
+
+        .auth-error {
+            background: #fef2f2;
+            border: 1.5px solid #fca5a5;
+            border-radius: var(--radius-md);
+            padding: 10px 14px;
+            font-size: 13px;
+            color: #b91c1c;
+            margin-bottom: 16px;
+        }
+
+        .auth-footer {
+            text-align: center;
+            margin-top: 24px;
+            font-size: 13px;
+            color: var(--text-muted);
+        }
+
+        .auth-footer a {
+            color: var(--text-main);
+            font-weight: 600;
+            text-decoration: none;
+        }
+
+        .auth-footer a:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <div class="auth-card">
+        <div class="auth-brand">
+            <h1>Meal Planner</h1>
+            <p>Planen, kochen, organisieren</p>
+        </div>
+
+        {% if form.errors %}
+            <div class="auth-error">
+                Benutzername oder Passwort falsch.
+            </div>
+        {% endif %}
+
+        <form method="post">
+            {% csrf_token %}
+            <div class="auth-field">
+                <label for="id_username">Benutzername</label>
+                <input type="text" name="username" id="id_username" autofocus autocomplete="username">
+            </div>
+            <div class="auth-field">
+                <label for="id_password">Passwort</label>
+                <input type="password" name="password" id="id_password" autocomplete="current-password">
+            </div>
+            <button type="submit" class="auth-btn">Anmelden</button>
+        </form>
+
+        <p class="auth-footer">
+            Noch kein Konto? <a href="{% url 'register' %}">Registrieren</a>
+        </p>
+    </div>
+</body>
+</html>

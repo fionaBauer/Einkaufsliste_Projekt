@@ -2,6 +2,7 @@ from collections import defaultdict
 from decimal import Decimal
 
 from django.contrib import messages
+from django.contrib.auth.decorators import login_required
 from django.shortcuts import get_object_or_404, redirect, render
 
 from inventory.models import InventoryItem, Unit
@@ -11,6 +12,7 @@ from .models import ShoppingList, ShoppingListItem
 from .utils import to_base_unit, from_base_unit
 
 
+@login_required
 def shopping_list(request):
     recipe_ids = request.GET.getlist("recipes")
 
@@ -33,6 +35,7 @@ def shopping_list(request):
     return redirect("shopping:detail", pk=shopping_list_obj.pk)
 
 
+@login_required
 def shopping_list_detail(request, pk):
     shopping_list_obj = get_object_or_404(
         ShoppingList.objects.prefetch_related("items__ingredient"),
