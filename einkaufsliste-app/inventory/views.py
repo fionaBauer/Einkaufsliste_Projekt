@@ -1,5 +1,6 @@
 from collections import OrderedDict
 
+from django.contrib.auth.decorators import login_required
 from django.shortcuts import get_object_or_404, redirect, render
 
 from ingredients.models import IngredientCategory
@@ -13,6 +14,7 @@ from django.http import JsonResponse
 from recipes.models import Recipe
 
 
+@login_required
 def inventory_list(request):
     search_query = request.GET.get("q", "").strip()
     sort = request.GET.get("sort", "name_asc")
@@ -109,6 +111,7 @@ def inventory_list(request):
     }
     return render(request, "inventory/inventory_list.html", context)
 
+@login_required
 def recipe_consume_preview(request):
     recipe_id = request.GET.get("recipe_id")
     target_servings = request.GET.get("servings")
@@ -199,6 +202,7 @@ def recipe_consume_preview(request):
         "items": preview_items,
     })
 
+@login_required
 def apply_recipe_consumption(request):
     if request.method != "POST":
         return JsonResponse({
