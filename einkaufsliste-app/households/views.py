@@ -32,11 +32,13 @@ def household_detail(request):
         action = request.POST.get("action")
         if action == "regenerate_token":
             household.regenerate_invite_token()
+            return redirect("households:detail")
         elif action == "rename":
             name = request.POST.get("name", "").strip()
             if name:
                 household.name = name
                 household.save(update_fields=["name"])
+            return redirect("households:detail")
         elif action == "leave":
             household.members.remove(request.user)
             return redirect("households:create")

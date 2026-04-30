@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Registrieren – Meal Planner</title>
+    <title>Registrieren – Prepio</title>
     <link rel="manifest" href="{% static 'global/manifest.webmanifest' %}">
     <meta name="theme-color" content="#4f46e5">
     <meta name="apple-mobile-web-app-capable" content="yes">
@@ -170,9 +170,14 @@
                        value="{{ form.username.value|default:'' }}">
             </div>
             <div class="auth-field">
+                <label for="id_email">E-Mail-Adresse</label>
+                <input type="email" name="email" id="id_email" autocomplete="email"
+                       value="{{ form.email.value|default:'' }}">
+            </div>
+            <div class="auth-field">
                 <label for="id_password1">Passwort</label>
                 <input type="password" name="password1" id="id_password1" autocomplete="new-password">
-                <p class="auth-hint">Mindestens 8 Zeichen, nicht nur Zahlen.</p>
+                <p class="auth-hint">Mindestens 8 Zeichen, mind. eine Zahl und ein Sonderzeichen (z. B. !, @, #).</p>
             </div>
             <div class="auth-field">
                 <label for="id_password2">Passwort bestätigen</label>
