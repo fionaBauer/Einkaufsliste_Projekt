@@ -1,6 +1,6 @@
+from accounts.forms import RegisterForm
 from django.contrib.auth import login
 from django.contrib.auth.decorators import login_required
-from django.contrib.auth.forms import UserCreationForm
 from django.shortcuts import redirect, render
 from recipes.models import Recipe
 
@@ -16,11 +16,11 @@ def register(request):
     if request.user.is_authenticated:
         return redirect("home")
     if request.method == "POST":
-        form = UserCreationForm(request.POST)
+        form = RegisterForm(request.POST)
         if form.is_valid():
             user = form.save()
             login(request, user)
             return redirect("households:create")
     else:
-        form = UserCreationForm()
+        form = RegisterForm()
     return render(request, "registration/register.html", {"form": form})

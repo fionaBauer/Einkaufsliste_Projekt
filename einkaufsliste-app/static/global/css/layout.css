@@ -103,12 +103,62 @@ body {
 }
 
 .sidebar-footer {
-    padding: 16px 10px 8px;
+    padding: 16px 10px 12px;
     border-top: 1px solid #2a2a2a;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.sidebar-household {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    text-decoration: none;
+    color: var(--text-sidebar);
+    padding: 9px 12px;
+    border-radius: 12px;
+    font-size: 13px;
+    font-weight: 500;
+    transition: background 0.15s, color 0.15s, border-color 0.15s;
+    min-width: 0;
+    border: 1px solid #3a3a3a;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.sidebar-household:hover {
+    background: var(--bg-sidebar-hover);
+    color: white;
+    border-color: transparent;
+}
+
+.sidebar-household.active {
+    background: var(--bg-sidebar-active);
+    color: var(--text-sidebar-active);
+    border-color: transparent;
+}
+
+.sidebar-household-icon {
+    flex-shrink: 0;
+    opacity: 0.75;
+    display: block;
+}
+
+.sidebar-household-name {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    min-width: 0;
+}
+
+.sidebar-user-row {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    gap: 10px;
+    gap: 8px;
+    padding: 2px 4px;
 }
 
 .sidebar-user {
@@ -117,6 +167,7 @@ body {
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
+    min-width: 0;
 }
 
 .sidebar-logout {
@@ -128,6 +179,7 @@ body {
     font-size: 12px;
     cursor: pointer;
     white-space: nowrap;
+    flex-shrink: 0;
     transition: background 0.15s, color 0.15s;
 }
 
@@ -268,4 +320,83 @@ body {
 .toast.success {
     background: black;
     color: white;
+}
+
+/* ── Page layout ─────────────────────────────────── */
+.page {
+    max-width: 560px;
+}
+
+.page-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 24px;
+}
+
+.page-title {
+    margin: 0;
+    font-size: 28px;
+    font-weight: 700;
+    color: var(--text-main);
+}
+
+/* ── Buttons ──────────────────────────────────────── */
+.btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    padding: 9px 16px;
+    border-radius: var(--radius-md);
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    border: 1.5px solid transparent;
+    text-decoration: none;
+    transition: background 0.15s, color 0.15s, border-color 0.15s;
+    white-space: nowrap;
+    line-height: 1.2;
+}
+
+.btn-primary {
+    background: #111111;
+    color: white;
+    border-color: #111111;
+}
+
+.btn-primary:hover {
+    background: #222222;
+    border-color: #222222;
+}
+
+.btn-secondary {
+    background: white;
+    color: var(--text-main);
+    border-color: var(--border-light);
+}
+
+.btn-secondary:hover {
+    background: var(--bg-app);
+}
+
+.btn-ghost {
+    background: transparent;
+    color: var(--text-muted);
+    border-color: transparent;
+    padding: 9px 4px;
+}
+
+.btn-ghost:hover {
+    color: var(--text-main);
+}
+
+.btn-danger {
+    background: #fef2f2;
+    color: #b91c1c;
+    border-color: #fca5a5;
+}
+
+.btn-danger:hover {
+    background: #fee2e2;
 }
