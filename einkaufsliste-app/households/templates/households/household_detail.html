@@ -1,0 +1,67 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="page-header">
+    <h1 class="page-title">Haushalt</h1>
+</div>
+
+<div class="card" style="max-width:560px;">
+    <div style="margin-bottom:32px;">
+        <p style="font-size:13px;font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:6px;">Name</p>
+        <form method="post" style="display:flex;gap:8px;align-items:center;">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="rename">
+            <input type="text" name="name" value="{{ household.name }}"
+                style="flex:1;padding:10px 12px;border:1.5px solid var(--border-light);border-radius:var(--radius-md);font-size:15px;">
+            <button type="submit" class="btn btn-secondary" style="white-space:nowrap;">Umbenennen</button>
+        </form>
+    </div>
+
+    <div style="margin-bottom:32px;">
+        <p style="font-size:13px;font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:6px;">Mitglieder</p>
+        <ul style="list-style:none;padding:0;margin:0;display:flex;flex-direction:column;gap:6px;">
+            {% for member in household.members.all %}
+            <li style="padding:10px 12px;background:var(--bg-app);border-radius:var(--radius-md);font-size:14px;">
+                {{ member.username }}
+                {% if member == household.created_by %}<span style="font-size:12px;color:var(--text-muted);margin-left:6px;">(Ersteller)</span>{% endif %}
+            </li>
+            {% endfor %}
+        </ul>
+    </div>
+
+    <div style="margin-bottom:32px;">
+        <p style="font-size:13px;font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:6px;">Einladungslink</p>
+        <div style="display:flex;gap:8px;align-items:center;">
+            <input type="text" readonly
+                value="{{ request.scheme }}://{{ request.get_host }}{% url 'households:join' household.invite_token %}"
+                id="invite-link"
+                style="flex:1;padding:10px 12px;border:1.5px solid var(--border-light);border-radius:var(--radius-md);font-size:13px;color:var(--text-muted);background:var(--bg-app);">
+            <button type="button" onclick="copyInviteLink()" class="btn btn-secondary">Kopieren</button>
+        </div>
+        <form method="post" style="margin-top:8px;">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="regenerate_token">
+            <button type="submit" class="btn btn-ghost" style="font-size:13px;">Link neu generieren</button>
+        </form>
+    </div>
+
+    <div style="border-top:1px solid var(--border-light);padding-top:24px;">
+        <form method="post" onsubmit="return confirm('Haushalt wirklich verlassen?');">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="leave">
+            <button type="submit" class="btn" style="background:#fef2f2;color:#b91c1c;border:1.5px solid #fca5a5;">Haushalt verlassen</button>
+        </form>
+    </div>
+</div>
+
+<script>
+function copyInviteLink() {
+    const input = document.getElementById('invite-link');
+    navigator.clipboard.writeText(input.value).then(() => {
+        const btn = input.nextElementSibling;
+        btn.textContent = 'Kopiert!';
+        setTimeout(() => btn.textContent = 'Kopieren', 2000);
+    });
+}
+</script>
+{% endblock %}

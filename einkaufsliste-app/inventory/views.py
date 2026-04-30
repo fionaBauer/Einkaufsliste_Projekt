@@ -16,10 +16,13 @@ from recipes.models import Recipe
 
 @login_required
 def inventory_list(request):
+    household = request.user.households.first()
     search_query = request.GET.get("q", "").strip()
     sort = request.GET.get("sort", "name_asc")
 
-    inventory_items = list(InventoryItem.objects.select_related("ingredient").all())
+    inventory_items = list(
+        InventoryItem.objects.filter(household=household).select_related("ingredient")
+    )
 
     if search_query:
         inventory_items = [
@@ -55,7 +58,7 @@ def inventory_list(request):
         if category_items:
             grouped_inventory_items[category_label] = category_items
 
-    create_form = InventoryItemForm(exclude_used_ingredients=True)
+    create_form = InventoryItemForm(household=household, exclude_used_ingredients=True)
     edit_form = None
     edit_item_id = None
     create_modal_open = False
@@ -65,16 +68,18 @@ def inventory_list(request):
         action = request.POST.get("action")
 
         if action == "create":
-            create_form = InventoryItemForm(request.POST, exclude_used_ingredients=True)
+            create_form = InventoryItemForm(request.POST, household=household, exclude_used_ingredients=True)
             if create_form.is_valid():
-                create_form.save()
+                item = create_form.save(commit=False)
+                item.household = household
+                item.save()
                 return redirect("inventory:list")
             create_modal_open = True
 
         elif action == "edit":
             item_id = request.POST.get("item_id")
-            inventory_item = get_object_or_404(InventoryItem, pk=item_id)
-            edit_form = InventoryItemForm(request.POST, instance=inventory_item)
+            inventory_item = get_object_or_404(InventoryItem, pk=item_id, household=household)
+            edit_form = InventoryItemForm(request.POST, instance=inventory_item, household=household)
             edit_item_id = inventory_item.id
 
             if edit_form.is_valid():
@@ -84,12 +89,12 @@ def inventory_list(request):
 
         elif action == "delete":
             item_id = request.POST.get("item_id")
-            inventory_item = get_object_or_404(InventoryItem, pk=item_id)
+            inventory_item = get_object_or_404(InventoryItem, pk=item_id, household=household)
             inventory_item.delete()
             return redirect("inventory:list")
 
     if edit_form is None:
-        edit_form = InventoryItemForm()
+        edit_form = InventoryItemForm(household=household)
 
     context = {
         "inventory_items": inventory_items,
@@ -101,7 +106,7 @@ def inventory_list(request):
         "edit_modal_open": edit_modal_open,
         "search_query": search_query,
         "sort": sort,
-        "recipes_for_consume": Recipe.objects.order_by("name"),
+        "recipes_for_consume": Recipe.objects.filter(household=household).order_by("name"),
         "sort_options": [
             ("name_asc", "Name A–Z"),
             ("name_desc", "Name Z–A"),
@@ -113,6 +118,7 @@ def inventory_list(request):
 
 @login_required
 def recipe_consume_preview(request):
+    household = request.user.households.first()
     recipe_id = request.GET.get("recipe_id")
     target_servings = request.GET.get("servings")
 
@@ -123,7 +129,7 @@ def recipe_consume_preview(request):
         }, status=400)
 
     try:
-        recipe = Recipe.objects.prefetch_related("recipe_ingredients__ingredient").get(pk=recipe_id)
+        recipe = Recipe.objects.filter(household=household).prefetch_related("recipe_ingredients__ingredient").get(pk=recipe_id)
     except Recipe.DoesNotExist:
         return JsonResponse({
             "success": False,
@@ -143,7 +149,7 @@ def recipe_consume_preview(request):
 
     inventory_items = {
         item.ingredient_id: item
-        for item in InventoryItem.objects.select_related("ingredient")
+        for item in InventoryItem.objects.filter(household=household).select_related("ingredient")
     }
 
     for recipe_item in recipe.recipe_ingredients.all():
@@ -214,6 +220,7 @@ def apply_recipe_consumption(request):
         import json
         data = json.loads(request.body)
 
+        household = request.user.households.first()
         recipe_id = data.get("recipe_id")
         target_servings = data.get("servings")
         selected_ingredient_ids = data.get("ingredient_ids", [])
@@ -225,7 +232,7 @@ def apply_recipe_consumption(request):
             }, status=400)
 
         try:
-            recipe = Recipe.objects.prefetch_related("recipe_ingredients__ingredient").get(pk=recipe_id)
+            recipe = Recipe.objects.filter(household=household).prefetch_related("recipe_ingredients__ingredient").get(pk=recipe_id)
         except Recipe.DoesNotExist:
             return JsonResponse({
                 "success": False,
@@ -243,7 +250,7 @@ def apply_recipe_consumption(request):
 
         inventory_items = {
             item.ingredient_id: item
-            for item in InventoryItem.objects.select_related("ingredient")
+            for item in InventoryItem.objects.filter(household=household).select_related("ingredient")
         }
 
         selected_ingredient_ids = {int(pk) for pk in selected_ingredient_ids}

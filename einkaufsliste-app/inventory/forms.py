@@ -34,6 +34,7 @@ class InventoryItemForm(forms.ModelForm):
         }
 
     def __init__(self, *args, **kwargs):
+        self.household = kwargs.pop("household", None)
         exclude_used_ingredients = kwargs.pop("exclude_used_ingredients", False)
         super().__init__(*args, **kwargs)
 
@@ -42,9 +43,9 @@ class InventoryItemForm(forms.ModelForm):
 
         ingredient_queryset = Ingredient.objects.all().order_by("name")
 
-        if exclude_used_ingredients:
+        if exclude_used_ingredients and self.household:
             used_ingredient_ids = list(
-                InventoryItem.objects.values_list("ingredient_id", flat=True)
+                InventoryItem.objects.filter(household=self.household).values_list("ingredient_id", flat=True)
             )
 
             if (
@@ -66,7 +67,9 @@ class InventoryItemForm(forms.ModelForm):
         if not ingredient:
             return ingredient
 
-        existing_item = InventoryItem.objects.filter(ingredient=ingredient)
+        existing_item = InventoryItem.objects.filter(
+            household=self.household, ingredient=ingredient
+        )
 
         if self.instance.pk:
             existing_item = existing_item.exclude(pk=self.instance.pk)
