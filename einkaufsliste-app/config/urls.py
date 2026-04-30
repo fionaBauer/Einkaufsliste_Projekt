@@ -21,6 +21,7 @@ from core.views import register
 urlpatterns = [
     path("admin/", admin.site.urls),
     path("accounts/register/", register, name="register"),
+    path("accounts/", include("accounts.urls")),
     path("accounts/", include("django.contrib.auth.urls")),
     path("households/", include("households.urls")),
     path("ingredients/", include("ingredients.urls")),
