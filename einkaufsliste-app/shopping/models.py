@@ -3,6 +3,11 @@ from ingredients.models import Ingredient, Unit
 
 
 class ShoppingList(models.Model):
+    household = models.ForeignKey(
+        "households.Household",
+        on_delete=models.CASCADE,
+        related_name="shopping_lists",
+    )
     name = models.CharField(max_length=150, default="Aktuelle Einkaufsliste")
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)

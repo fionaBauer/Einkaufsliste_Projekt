@@ -4,6 +4,11 @@ from ingredients.models import Ingredient, Unit
 
 
 class Recipe(models.Model):
+    household = models.ForeignKey(
+        "households.Household",
+        on_delete=models.CASCADE,
+        related_name="recipes",
+    )
     name = models.CharField(max_length=150)
     servings = models.PositiveIntegerField(default=1)
     instructions = models.TextField(blank=True)

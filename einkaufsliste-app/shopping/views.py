@@ -14,9 +14,10 @@ from .utils import to_base_unit, from_base_unit
 
 @login_required
 def shopping_list(request):
+    household = request.user.households.first()
     recipe_ids = request.GET.getlist("recipes")
 
-    shopping_list_obj = _get_or_create_active_shopping_list()
+    shopping_list_obj = _get_or_create_active_shopping_list(household)
 
     if recipe_ids:
         servings_map = {}
@@ -29,7 +30,7 @@ def shopping_list(request):
                 except ValueError:
                     pass
 
-        _add_recipes_to_existing_shopping_list(shopping_list_obj, recipe_ids, servings_map)
+        _add_recipes_to_existing_shopping_list(household, shopping_list_obj, recipe_ids, servings_map)
         return redirect("shopping:detail", pk=shopping_list_obj.pk)
 
     return redirect("shopping:detail", pk=shopping_list_obj.pk)
@@ -37,9 +38,11 @@ def shopping_list(request):
 
 @login_required
 def shopping_list_detail(request, pk):
+    household = request.user.households.first()
     shopping_list_obj = get_object_or_404(
         ShoppingList.objects.prefetch_related("items__ingredient"),
         pk=pk,
+        household=household,
     )
 
     create_form = ShoppingListItemForm()
@@ -72,7 +75,7 @@ def shopping_list_detail(request, pk):
                 messages.success(request, "Die Einkaufsliste wurde komplett geleert.")
 
             return redirect("shopping:detail", pk=shopping_list_obj.pk)
-        
+
         elif action == "clean":
             shopping_list_obj.items.update(is_checked=False)
             if checked_ids:
@@ -81,14 +84,14 @@ def shopping_list_detail(request, pk):
             checked_items = shopping_list_obj.items.filter(is_checked=True)
             count = checked_items.count()
 
-            _move_checked_items_to_inventory(checked_items)
+            _move_checked_items_to_inventory(household, checked_items)
             checked_items.delete()
 
             if count > 0:
                 messages.success(request, f"{count} Einträge wurden ins Inventar übernommen.")
 
             return redirect("shopping:detail", pk=shopping_list_obj.pk)
-        
+
     to_buy = shopping_list_obj.items.filter(status=ShoppingListItem.STATUS_TO_BUY)
     check_quantity = shopping_list_obj.items.filter(status=ShoppingListItem.STATUS_CHECK)
 
@@ -101,15 +104,15 @@ def shopping_list_detail(request, pk):
     })
 
 
-def _get_or_create_active_shopping_list():
-    shopping_list_obj = ShoppingList.objects.first()
+def _get_or_create_active_shopping_list(household):
+    shopping_list_obj = ShoppingList.objects.filter(household=household).first()
     if not shopping_list_obj:
-        shopping_list_obj = ShoppingList.objects.create()
+        shopping_list_obj = ShoppingList.objects.create(household=household)
     return shopping_list_obj
 
 
-def _add_recipes_to_existing_shopping_list(shopping_list_obj, recipe_ids, servings_map=None):
-    recipes = Recipe.objects.filter(id__in=recipe_ids).prefetch_related(
+def _add_recipes_to_existing_shopping_list(household, shopping_list_obj, recipe_ids, servings_map=None):
+    recipes = Recipe.objects.filter(id__in=recipe_ids, household=household).prefetch_related(
         "recipe_ingredients__ingredient"
     )
 
@@ -134,7 +137,7 @@ def _add_recipes_to_existing_shopping_list(shopping_list_obj, recipe_ids, servin
 
     inventory_items = {
         item.ingredient_id: item
-        for item in InventoryItem.objects.select_related("ingredient")
+        for item in InventoryItem.objects.filter(household=household).select_related("ingredient")
     }
 
     for (ingredient_id, base_unit), source_entries in aggregated_items.items():
@@ -301,14 +304,16 @@ def _add_manual_item_to_shopping_list(shopping_list_obj, form):
     )
 
 
-def _move_checked_items_to_inventory(checked_items):
+def _move_checked_items_to_inventory(household, checked_items):
     for item in checked_items.select_related("ingredient"):
-        inventory_item = InventoryItem.objects.filter(ingredient=item.ingredient).first()
+        inventory_item = InventoryItem.objects.filter(
+            household=household, ingredient=item.ingredient
+        ).first()
 
-        # TL / EL nie als exakte Lagermenge speichern
         if item.unit in [Unit.TABLESPOON, Unit.TEASPOON]:
             if not inventory_item:
                 InventoryItem.objects.create(
+                    household=household,
                     ingredient=item.ingredient,
                     quantity=None,
                     unit="",
@@ -320,6 +325,7 @@ def _move_checked_items_to_inventory(checked_items):
         if not inventory_item:
             if item.quantity is None:
                 InventoryItem.objects.create(
+                    household=household,
                     ingredient=item.ingredient,
                     quantity=None,
                     unit="",
@@ -327,6 +333,7 @@ def _move_checked_items_to_inventory(checked_items):
             else:
                 display_quantity, display_unit = from_base_unit(item_base_quantity, item_base_unit)
                 InventoryItem.objects.create(
+                    household=household,
                     ingredient=item.ingredient,
                     quantity=display_quantity,
                     unit=display_unit,

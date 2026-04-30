@@ -1,0 +1,47 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Haushalt erstellen – Meal Planner</title>
+    <link rel="manifest" href="{% static 'global/manifest.webmanifest' %}">
+    <meta name="theme-color" content="#4f46e5">
+    <link rel="stylesheet" href="{% static 'global/css/layout.css' %}?v=3">
+    <style>
+        body { display:flex; align-items:center; justify-content:center; min-height:100vh; background:var(--bg-app); }
+        .auth-card { background:white; border-radius:var(--radius-xl); box-shadow:var(--shadow-soft); padding:48px 40px; width:100%; max-width:400px; }
+        .auth-brand { text-align:center; margin-bottom:36px; }
+        .auth-brand h1 { margin:0; font-size:26px; font-weight:700; color:var(--text-main); }
+        .auth-brand p { margin:6px 0 0; font-size:13px; color:var(--text-muted); }
+        .auth-field { margin-bottom:16px; }
+        .auth-field label { display:block; font-size:13px; font-weight:600; color:var(--text-muted); margin-bottom:6px; text-transform:uppercase; letter-spacing:0.5px; }
+        .auth-field input { width:100%; padding:12px 14px; border:1.5px solid var(--border-light); border-radius:var(--radius-md); font-size:15px; color:var(--text-main); background:white; transition:border-color 0.15s; box-sizing:border-box; }
+        .auth-field input:focus { outline:none; border-color:#111111; }
+        .auth-btn { width:100%; padding:13px; background:#111111; color:white; border:none; border-radius:var(--radius-md); font-size:15px; font-weight:600; cursor:pointer; margin-top:8px; transition:background 0.15s; }
+        .auth-btn:hover { background:#222222; }
+        .auth-hint { font-size:13px; color:var(--text-muted); margin-top:24px; text-align:center; }
+        .auth-hint a { color:var(--text-main); font-weight:600; text-decoration:none; }
+    </style>
+</head>
+<body>
+    <div class="auth-card">
+        <div class="auth-brand">
+            <h1>Meal Planner</h1>
+            <p>Erstelle deinen Haushalt</p>
+        </div>
+        <form method="post">
+            {% csrf_token %}
+            <div class="auth-field">
+                <label for="name">Haushaltsname</label>
+                <input type="text" name="name" id="name" autofocus placeholder="z.B. Familie Müller" required>
+            </div>
+            <button type="submit" class="auth-btn">Haushalt erstellen</button>
+        </form>
+        <p class="auth-hint">
+            Einladungslink von jemandem bekommen?<br>
+            Dann musst du keinen eigenen Haushalt erstellen.
+        </p>
+    </div>
+</body>
+</html>

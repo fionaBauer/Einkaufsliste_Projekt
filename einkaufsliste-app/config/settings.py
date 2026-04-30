@@ -43,12 +43,16 @@ INSTALLED_APPS = [
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
+    "accounts",
+    "households",
     "ingredients",
     "recipes",
     "shopping",
     "inventory",
     "core",
 ]
+
+AUTH_USER_MODEL = "accounts.User"
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
@@ -59,6 +63,7 @@ MIDDLEWARE = [
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
+    "households.middleware.HouseholdMiddleware",
 ]
 
 ROOT_URLCONF = "config.urls"
@@ -161,3 +166,5 @@ ALLOWED_HOSTS = os.environ.get(
 LOGIN_URL = "/accounts/login/"
 LOGIN_REDIRECT_URL = "/"
 LOGOUT_REDIRECT_URL = "/accounts/login/"
+
+EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"

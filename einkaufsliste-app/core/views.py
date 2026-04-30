@@ -7,7 +7,8 @@ from recipes.models import Recipe
 
 @login_required
 def home(request):
-    recent_recipes = Recipe.objects.order_by("-created_at")[:5]
+    household = request.user.households.first()
+    recent_recipes = Recipe.objects.filter(household=household).order_by("-created_at")[:5]
     return render(request, "core/home.html", {"recent_recipes": recent_recipes})
 
 
@@ -19,7 +20,7 @@ def register(request):
         if form.is_valid():
             user = form.save()
             login(request, user)
-            return redirect("home")
+            return redirect("households:create")
     else:
         form = UserCreationForm()
     return render(request, "registration/register.html", {"form": form})

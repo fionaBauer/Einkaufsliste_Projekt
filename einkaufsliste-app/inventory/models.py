@@ -4,10 +4,15 @@ from ingredients.models import Ingredient, Unit
 
 
 class InventoryItem(models.Model):
-    ingredient = models.OneToOneField(
+    household = models.ForeignKey(
+        "households.Household",
+        on_delete=models.CASCADE,
+        related_name="inventory_items",
+    )
+    ingredient = models.ForeignKey(
         Ingredient,
         on_delete=models.CASCADE,
-        related_name="inventory_item",
+        related_name="inventory_items",
     )
     quantity = models.DecimalField(
         max_digits=10,
@@ -25,6 +30,7 @@ class InventoryItem(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
+        unique_together = [("household", "ingredient")]
         ordering = ["ingredient__name"]
 
     def clean(self):

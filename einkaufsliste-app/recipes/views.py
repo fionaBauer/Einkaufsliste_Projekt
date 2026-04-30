@@ -29,7 +29,8 @@ class RecipeListView(LoginRequiredMixin, ListView):
     ordering = ["name"]
 
     def get_queryset(self):
-        queryset = super().get_queryset()
+        household = self.request.user.households.first()
+        queryset = Recipe.objects.filter(household=household)
 
         search = self.request.GET.get("search", "").strip()
         sort = self.request.GET.get("sort", "name")
@@ -65,7 +66,8 @@ class RecipeDetailView(LoginRequiredMixin, DetailView):
         return context
 
     def get_queryset(self):
-        return Recipe.objects.prefetch_related("recipe_ingredients__ingredient")
+        household = self.request.user.households.first()
+        return Recipe.objects.filter(household=household).prefetch_related("recipe_ingredients__ingredient")
 
 
 class RecipeCreateView(LoginRequiredMixin, CreateView):
@@ -75,6 +77,7 @@ class RecipeCreateView(LoginRequiredMixin, CreateView):
     success_url = reverse_lazy("recipes:recipe_list")
 
     def form_valid(self, form):
+        form.instance.household = self.request.user.households.first()
         self.object = form.save()
         if self.request.headers.get("X-Requested-With") == "XMLHttpRequest":
             return JsonResponse({"success": True})
@@ -92,6 +95,10 @@ class RecipeUpdateView(LoginRequiredMixin, UpdateView):
     template_name = "recipes/partials/recipe_form.html"
     success_url = reverse_lazy("recipes:recipe_list")
 
+    def get_queryset(self):
+        household = self.request.user.households.first()
+        return Recipe.objects.filter(household=household)
+
     def form_valid(self, form):
         self.object = form.save()
         if self.request.headers.get("X-Requested-With") == "XMLHttpRequest":
@@ -108,6 +115,10 @@ class RecipeDeleteView(LoginRequiredMixin, DeleteView):
     model = Recipe
     template_name = "recipes/partials/recipe_confirm_delete.html"
     success_url = reverse_lazy("recipes:recipe_list")
+
+    def get_queryset(self):
+        household = self.request.user.households.first()
+        return Recipe.objects.filter(household=household)
 
     def post(self, request, *args, **kwargs):
         self.object = self.get_object()
@@ -251,7 +262,9 @@ def create_recipe_from_extracted_data(request):
         except (TypeError, ValueError):
             servings = 1
 
+        household = request.user.households.first()
         recipe = Recipe.objects.create(
+            household=household,
             name=title,
             servings=max(servings, 1),
             instructions=instructions.strip(),

@@ -38,6 +38,9 @@
     </div>
 
     <div class="sidebar-footer">
+        <a href="{% url 'households:detail' %}" class="sidebar-link {% if '/households' in request.path %}active{% endif %}" style="font-size:13px;">
+            🏠 {{ request.user.households.first.name|default:"Haushalt" }}
+        </a>
         <span class="sidebar-user">{{ request.user.username }}</span>
         <form method="post" action="{% url 'logout' %}">
             {% csrf_token %}
