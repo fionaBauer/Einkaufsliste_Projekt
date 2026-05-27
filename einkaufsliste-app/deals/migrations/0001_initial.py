@@ -9,7 +9,7 @@ class Migration(migrations.Migration):
     initial = True
 
     dependencies = [
-        ('ingredients', '0005_alter_ingredient_category'),
+        ('ingredients', '0001_initial'),
     ]
 
     operations = [
