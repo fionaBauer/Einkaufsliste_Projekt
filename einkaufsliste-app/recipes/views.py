@@ -13,6 +13,7 @@ from django.http import JsonResponse
 
 from decimal import Decimal, InvalidOperation
 from ingredients.models import Ingredient, Unit
+from deals.services import get_suggested_recipes_by_deals
 
 from .models import Recipe, RecipeIngredient
 from .forms import RecipeForm, RecipeIngredientForm
@@ -52,6 +53,9 @@ class RecipeListView(LoginRequiredMixin, ListView):
         context["search"] = self.request.GET.get("search", "")
         context["sort"] = self.request.GET.get("sort", "name")
         context["form"] = RecipeForm()
+        context["suggested_recipes"] = get_suggested_recipes_by_deals(
+            Recipe.objects.all()
+        )
         return context
 
 

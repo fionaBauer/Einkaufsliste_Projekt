@@ -54,6 +54,25 @@
                                                     </span>
                                                 </span>
                                             {% endif %}
+                                            {% if item.discount_deals %}
+                                            <span class="shopping-info-wrapper">
+                                                <button
+                                                    type="button"
+                                                    class="info-button"
+                                                    aria-label="Rabatt"
+                                                    title="Rabatte anzeigen">
+                                                    %
+                                                </button>
+
+                                                <span class="shopping-tooltip">
+                                                    {% for deal in item.discount_deals %}
+                                                        <span class="shopping-tooltip-line">
+                                                            {{ deal.store.name }} – {{ deal.deal_price }} €
+                                                        </span>
+                                                    {% endfor %}
+                                                </span>
+                                            </span>
+                                        {% endif %}
                                         </span>
                                         <span class="shopping-quantity">
                                             {{ item.quantity|floatformat:2 }} {{ item.unit }}
@@ -102,6 +121,25 @@
                                                     </span>
                                                 </span>
                                             {% endif %}
+                                            {% if item.discount_deals %}
+                                                <span class="shopping-info-wrapper">
+                                                    <button
+                                                        type="button"
+                                                        class="info-button"
+                                                        aria-label="Rabatt"
+                                                        title="Rabatte anzeigen">
+                                                        %
+                                                    </button>
+
+                                                    <span class="shopping-tooltip">
+                                                        {% for deal in item.discount_deals %}
+                                                            <span class="shopping-tooltip-line">
+                                                                {{ deal.store.name }} – {{ deal.deal_price }} €
+                                                            </span>
+                                                        {% endfor %}
+                                                    </span>
+                                                </span>
+                                            {% endif %}
                                         </span>
                                         <span class="shopping-quantity">
                                             {% if item.quantity %}
@@ -129,6 +167,28 @@
                     Abgehakte entfernen
                 </button>
             </div>
+            {% if store_savings %}
+                <section class="shopping-section savings-section">
+                    <h2 class="section-title">Wo lohnt sich der Einkauf am meisten?</h2>
+
+                    <div class="savings-list">
+                        {% for store_entry in store_savings %}
+                            <div class="savings-card">
+                                <div>
+                                    <strong>{{ store_entry.store.name }}</strong>
+                                    <span class="savings-meta">
+                                        {{ store_entry.deals|length }} passende Rabatt(e)
+                                    </span>
+                                </div>
+
+                                <div class="savings-amount">
+                                    {{ store_entry.total_savings|floatformat:2 }} € sparen
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                </section>
+            {% endif %}
         </form>
     {% endif %}
 

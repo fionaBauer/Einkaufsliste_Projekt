@@ -50,6 +50,8 @@ INSTALLED_APPS = [
     "shopping",
     "inventory",
     "core",
+    "deals",
+    "user_settings.apps.UserSettingsConfig",
 ]
 
 AUTH_USER_MODEL = "accounts.User"

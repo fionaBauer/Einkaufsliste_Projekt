@@ -1,0 +1,133 @@
+.page {
+    max-width: 1000px;
+    margin: 0 auto;
+}
+
+.page-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 24px;
+}
+
+.page-title {
+    margin: 0;
+    font-size: 30px;
+    font-weight: 700;
+}
+
+.filter-bar {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin-bottom: 24px;
+    align-items: center;
+}
+
+.filter-group {
+    display: flex;
+    align-items: center;
+}
+
+.search-group {
+    flex: 1;
+    min-width: 220px;
+}
+
+.search-input,
+.sort-select {
+    width: 100%;
+    padding: 10px 12px;
+    border: 1px solid #ccc;
+    border-radius: 10px;
+    font-size: 15px;
+}
+
+.sort-select {
+    min-width: 190px;
+}
+
+.filter-btn {
+    padding: 10px 16px;
+    border: none;
+    border-radius: 10px;
+    background: black;
+    color: white;
+    cursor: pointer;
+    font-size: 15px;
+}
+
+.reset-link {
+    color: #555;
+    text-decoration: none;
+    font-size: 14px;
+}
+
+.deal-list {
+    display: flex;
+    flex-direction: column;
+}
+
+.deal-item {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 12px 14px;
+    border-bottom: 1px solid #eaeaea;
+}
+
+.deal-main {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    flex: 1;
+    text-align: left;
+    min-width: 0;
+}
+
+.deal-name {
+    font-size: 18px;
+    font-weight: bold;
+}
+
+.deal-meta {
+    color: #666;
+    font-size: 14px;
+}
+
+.deal-price {
+    font-weight: bold;
+    white-space: nowrap;
+}
+
+.empty-state {
+    color: #777;
+    text-align: center;
+    padding: 32px 0;
+}
+
+.deal-image {
+    width: 52px;
+    height: 52px;
+    object-fit: contain;
+    border-radius: 10px;
+    background: #f5f5f5;
+    flex-shrink: 0;
+    padding: 4px;
+}
+
+.deal-list .deal-item .deal-image {
+    width: 52px !important;
+    height: 52px !important;
+    max-width: 52px !important;
+    max-height: 52px !important;
+    object-fit: contain;
+    padding: 4px;
+}
+
+.deal-price {
+    font-weight: bold;
+    white-space: nowrap;
+    margin-left: auto;
+    font-size: 16px;
+}
