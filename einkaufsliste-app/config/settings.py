@@ -48,7 +48,8 @@ INSTALLED_APPS = [
     "shopping",
     "inventory",
     "core",
-    "deals"
+    "deals",
+    "user_settings.apps.UserSettingsConfig",
 ]
 
 MIDDLEWARE = [

@@ -208,6 +208,32 @@
         </div>
 
     </form>
+    {% if suggested_recipes %}
+        <section class="shopping-section">
+            <h2 class="section-title">Vorgeschlagene Rezepte</h2>
+
+            <div class="recipe-list">
+                {% for suggestion in suggested_recipes %}
+                    <div class="recipe-item">
+                        <div class="recipe-main">
+                            <a href="{% url 'recipes:recipe_detail' suggestion.recipe.pk %}" class="recipe-name">
+                                {{ suggestion.recipe.name }}
+                            </a>
+                            <span class="recipe-meta">
+                                Passend zu aktuellen Rabatten
+                            </span>
+
+                            <div class="recipe-meta">
+                                {% for deal in suggestion.deals %}
+                                    {{ deal.title }} bei {{ deal.store.name }} – {{ deal.deal_price }} €{% if not forloop.last %}<br>{% endif %}
+                                {% endfor %}
+                            </div>
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+        </section>
+    {% endif %}
 </div>
 
 <div id="modal-overlay" class="modal-overlay">
