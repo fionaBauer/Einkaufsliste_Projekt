@@ -39,22 +39,29 @@
 
     <div class="deal-list">
         {% for deal in deals %}
-            <div class="deal-item">
-                <div class="deal-main">
+            <div class="deal-item" style="display:flex; align-items:center; gap:14px;">
+                {% if deal.image_url %}
+                    <img
+                        src="{{ deal.image_url }}"
+                        alt="{{ deal.title }}"
+                        class="deal-image"
+                        loading="lazy"
+                        style="width:52px; height:52px; max-width:52px; max-height:52px; object-fit:contain; flex-shrink:0;"
+                        onerror="this.style.display='none';">
+                {% endif %}
+
+                <div class="deal-main" style="flex:1; text-align:left; min-width:0;">
                     <span class="deal-name">{{ deal.title }}</span>
                     <span class="deal-meta">{{ deal.store.name }}</span>
+
                     {% if deal.original_price %}
-                        <span class="deal-meta">
-                            statt {{ deal.original_price|floatformat:2 }} €
-                        </span>
+                        <span class="deal-meta">statt {{ deal.original_price|floatformat:2 }} €</span>
                     {% elif deal.description %}
-                        <span class="deal-meta">
-                            {{ deal.description }}
-                        </span>
+                        <span class="deal-meta">{{ deal.description }}</span>
                     {% endif %}
                 </div>
 
-                <div class="deal-price">
+                <div class="deal-price" style="margin-left:auto; white-space:nowrap;">
                     {% if deal.deal_price %}
                         {{ deal.deal_price|floatformat:2 }} €
                     {% else %}
