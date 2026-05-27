@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+
+{% block title %}Einstellungen{% endblock %}
+
+{% block content %}
+<div class="page">
+    <div class="page-header">
+        <h1 class="page-title">Einstellungen</h1>
+    </div>
+
+    <form method="post" class="form-card">
+        {% csrf_token %}
+
+        <div class="form-group">
+            <label for="{{ form.postal_code.id_for_label }}">
+                {{ form.postal_code.label }}
+            </label>
+            {{ form.postal_code }}
+            <p class="form-help">
+                Diese PLZ wird genutzt, um Angebote in deiner Umgebung zu laden.
+            </p>
+        </div>
+
+        <button type="submit" class="filter-btn">
+            Speichern
+        </button>
+    </form>
+</div>
+{% endblock %}

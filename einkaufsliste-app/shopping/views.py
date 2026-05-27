@@ -7,6 +7,7 @@ from django.shortcuts import get_object_or_404, redirect, render
 
 from inventory.models import InventoryItem, Unit
 from recipes.models import Recipe
+from deals.services import attach_deals_to_shopping_items, calculate_store_savings
 from .forms import ShoppingListItemForm
 from .models import ShoppingList, ShoppingListItem
 from .utils import to_base_unit, from_base_unit
@@ -89,8 +90,15 @@ def shopping_list_detail(request, pk):
 
             return redirect("shopping:detail", pk=shopping_list_obj.pk)
         
-    to_buy = shopping_list_obj.items.filter(status=ShoppingListItem.STATUS_TO_BUY)
-    check_quantity = shopping_list_obj.items.filter(status=ShoppingListItem.STATUS_CHECK)
+    to_buy = attach_deals_to_shopping_items(
+        list(shopping_list_obj.items.filter(status=ShoppingListItem.STATUS_TO_BUY))
+    )
+
+    check_quantity = attach_deals_to_shopping_items(
+        list(shopping_list_obj.items.filter(status=ShoppingListItem.STATUS_CHECK))
+    )
+
+    store_savings = calculate_store_savings(to_buy)
 
     return render(request, "shopping/shopping_list.html", {
         "shopping_list_obj": shopping_list_obj,
@@ -98,6 +106,7 @@ def shopping_list_detail(request, pk):
         "check_quantity": check_quantity,
         "create_form": create_form,
         "create_modal_open": create_modal_open,
+        "store_savings": store_savings,
     })
 
 
