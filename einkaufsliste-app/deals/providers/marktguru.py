@@ -163,6 +163,8 @@ class MarktguruProvider:
 
         product_url = item.get("externalUrl") or item.get("url") or ""
 
+        image_url = f"https://mg2de.b-cdn.net/api/v1/offers/{external_id}/images/default/0/large.webp"
+
         return ImportedDeal(
             external_id=f"marktguru-{external_id}",
             store_name=store_name,
@@ -172,7 +174,7 @@ class MarktguruProvider:
             deal_price=deal_price,
             discount_text=discount_text,
             product_url=product_url,
-            image_url="",
+            image_url=image_url,
             valid_from=valid_from,
             valid_until=valid_until,
         )
