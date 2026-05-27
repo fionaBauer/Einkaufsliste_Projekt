@@ -131,3 +131,45 @@
     margin-left: auto;
     font-size: 16px;
 }
+
+.deal-image-button {
+    border: none;
+    background: transparent;
+    padding: 0;
+    cursor: pointer;
+    flex-shrink: 0;
+}
+
+.image-modal {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.75);
+    z-index: 9999;
+    justify-content: center;
+    align-items: center;
+    padding: 24px;
+}
+
+.image-modal.is-open {
+    display: flex;
+}
+
+.image-modal-content {
+    max-width: 90vw;
+    max-height: 85vh;
+    border-radius: 16px;
+    background: white;
+    padding: 12px;
+}
+
+.image-modal-close {
+    position: absolute;
+    top: 20px;
+    right: 28px;
+    font-size: 42px;
+    color: white;
+    background: transparent;
+    border: none;
+    cursor: pointer;
+}

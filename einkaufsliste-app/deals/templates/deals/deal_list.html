@@ -41,13 +41,15 @@
         {% for deal in deals %}
             <div class="deal-item" style="display:flex; align-items:center; gap:14px;">
                 {% if deal.image_url %}
-                    <img
-                        src="{{ deal.image_url }}"
-                        alt="{{ deal.title }}"
-                        class="deal-image"
-                        loading="lazy"
-                        style="width:52px; height:52px; max-width:52px; max-height:52px; object-fit:contain; flex-shrink:0;"
-                        onerror="this.style.display='none';">
+                    <button type="button" class="deal-image-button">
+                        <img
+                            src="{{ deal.image_url }}"
+                            alt="{{ deal.title }}"
+                            class="deal-image"
+                            loading="lazy"
+                            style="width:52px; height:52px; max-width:52px; max-height:52px; object-fit:contain; flex-shrink:0;"
+                            onerror="this.parentElement.style.display='none';">
+                    </button>
                 {% endif %}
 
                 <div class="deal-main" style="flex:1; text-align:left; min-width:0;">
@@ -61,9 +63,30 @@
                     {% endif %}
                 </div>
 
-                <div class="deal-price" style="margin-left:auto; white-space:nowrap;">
+                <div class="deal-price" style="margin-left:auto; text-align:right; white-space:nowrap;">
                     {% if deal.deal_price %}
-                        {{ deal.deal_price|floatformat:2 }} €
+                        <div style="font-weight:700; font-size:17px;">
+                            {{ deal.deal_price|floatformat:2 }} €
+                        </div>
+
+                        {% if deal.original_price %}
+                            <div style="
+                                font-size:12px;
+                                color:#888;
+                                text-decoration:line-through;
+                                margin-top:2px;
+                            ">
+                                {{ deal.original_price|floatformat:2 }} €
+                            </div>
+                        {% else %}
+                            <div style="
+                                font-size:12px;
+                                color:#888;
+                                margin-top:2px;
+                            ">
+                                Angebot
+                            </div>
+                        {% endif %}
                     {% else %}
                         Angebot
                     {% endif %}
@@ -74,4 +97,77 @@
         {% endfor %}
     </div>
 </div>
+<div
+    id="image-modal"
+    style="
+        display:none;
+        position:fixed;
+        inset:0;
+        background:rgba(0,0,0,0.75);
+        z-index:99999;
+        justify-content:center;
+        align-items:center;
+        padding:24px;
+    "
+>
+    <button
+        type="button"
+        class="image-modal-close"
+        style="
+            position:absolute;
+            top:20px;
+            right:28px;
+            font-size:42px;
+            color:white;
+            background:transparent;
+            border:none;
+            cursor:pointer;
+        "
+    >
+        &times;
+    </button>
+
+    <img
+        id="image-modal-content"
+        src=""
+        alt=""
+        style="
+            max-width:90vw;
+            max-height:85vh;
+            border-radius:16px;
+            background:white;
+            padding:12px;
+            object-fit:contain;
+        "
+    >
+</div>
+
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+    const modal = document.getElementById("image-modal");
+    const modalImage = document.getElementById("image-modal-content");
+    const closeButton = document.querySelector(".image-modal-close");
+
+    document.querySelectorAll(".deal-image-button").forEach(function (button) {
+        button.addEventListener("click", function () {
+            const image = button.querySelector("img");
+
+            modalImage.src = image.src;
+            modalImage.alt = image.alt;
+
+            modal.style.display = "flex";
+        });
+    });
+
+    closeButton.addEventListener("click", function () {
+        modal.style.display = "none";
+    });
+
+    modal.addEventListener("click", function (event) {
+        if (event.target === modal) {
+            modal.style.display = "none";
+        }
+    });
+});
+</script>
 {% endblock %}
