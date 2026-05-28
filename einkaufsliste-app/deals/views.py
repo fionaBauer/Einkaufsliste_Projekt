@@ -1,8 +1,10 @@
+from django.contrib import messages
 from django.contrib.auth.decorators import login_required
-from django.shortcuts import render
+from django.shortcuts import redirect, render
 
 from .models import Store
 from .services import get_active_deals
+from .sync import sync_marktguru
 
 
 @login_required
@@ -26,3 +28,23 @@ def deal_list(request):
         "search": search,
         "selected_store": store_id,
     })
+
+
+@login_required
+def sync_deals_view(request):
+    if request.method != "POST":
+        return redirect("deals:list")
+
+    settings_obj = getattr(request.user, "settings", None)
+
+    if not settings_obj or not settings_obj.postal_code:
+        messages.error(request, "Bitte speichere zuerst deine Postleitzahl.")
+        return redirect("user_settings:settings")
+
+    try:
+        count = sync_marktguru(settings_obj.postal_code)
+        messages.success(request, f"{count} Rabatte wurden aktualisiert.")
+    except Exception as error:
+        messages.error(request, f"Rabatte konnten nicht geladen werden: {error}")
+
+    return redirect("deals:list")

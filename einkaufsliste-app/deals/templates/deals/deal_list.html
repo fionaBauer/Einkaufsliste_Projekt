@@ -10,6 +10,13 @@
 <div class="page">
     <div class="page-header">
         <h1 class="page-title">Rabatte</h1>
+
+        <form method="post" action="{% url 'deals:sync' %}">
+            {% csrf_token %}
+            <button type="submit" class="filter-btn">
+                Rabatte laden
+            </button>
+        </form>
     </div>
 
     <form method="get" class="filter-bar">
