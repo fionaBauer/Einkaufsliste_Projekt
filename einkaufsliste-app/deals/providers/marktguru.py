@@ -33,25 +33,38 @@ class MarktguruProvider:
             offset = 0
 
             while True:
-                response = requests.get(
-                    self.base_url,
-                    params={
-                        "as": "web",
-                        "limit": limit,
-                        "offset": offset,
-                        "q": term,
-                        "zipCode": self.zip_code,
-                    },
-                    headers={
-                        "x-apikey": self.api_key,
-                        "x-clientkey": self.client_key,
-                        "User-Agent": "Mozilla/5.0",
-                    },
-                    timeout=50,
-                )
+                try:
+                    response = requests.get(
+                        self.base_url,
+                        params={
+                            "as": "web",
+                            "limit": limit,
+                            "offset": offset,
+                            "q": term,
+                            "zipCode": self.zip_code,
+                        },
+                        headers={
+                            "x-apikey": self.api_key,
+                            "x-clientkey": self.client_key,
+                            "User-Agent": "Mozilla/5.0",
+                        },
+                        timeout=50,
+                    )
 
-                response.raise_for_status()
-                data = response.json()
+                    if response.status_code == 429:
+                        print(f"[{term}] Rate limit (429) – übersprungen")
+                        break
+
+                    if not response.ok:
+                        print(f"[{term}] HTTP {response.status_code} – übersprungen")
+                        break
+
+                    response.raise_for_status()
+                    data = response.json()
+
+                except requests.RequestException as e:
+                    print(f"[{term}] Netzwerkfehler: {e} – übersprungen")
+                    break
 
                 results = data.get("results", [])
                 total_results = data.get("totalResults", 0)
