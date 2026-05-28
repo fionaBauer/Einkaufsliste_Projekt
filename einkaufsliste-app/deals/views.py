@@ -1,4 +1,4 @@
-import subprocess
+import threading
 
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
@@ -43,12 +43,15 @@ def sync_deals_view(request):
         messages.error(request, "Bitte speichere zuerst deine Postleitzahl.")
         return redirect("user_settings:settings")
 
+    zip_code = settings_obj.postal_code
+
     try:
-        subprocess.Popen([
-            "python",
-            "manage.py",
-            "sync_marktguru_deals",
-        ])
+        thread = threading.Thread(
+            target=sync_marktguru,
+            args=(zip_code,),
+            daemon=True,
+        )
+        thread.start()
 
         messages.success(
             request,
