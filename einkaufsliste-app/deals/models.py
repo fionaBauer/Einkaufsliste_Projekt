@@ -57,8 +57,8 @@ class Deal(models.Model):
     )
 
     discount_text = models.CharField(max_length=100, blank=True)
-    product_url = models.URLField(blank=True)
-    image_url = models.URLField(blank=True)
+    product_url = models.URLField(max_length=500, blank=True)
+    image_url = models.URLField(max_length=500, blank=True)
 
     valid_from = models.DateField(null=True, blank=True)
     valid_until = models.DateField(null=True, blank=True)
