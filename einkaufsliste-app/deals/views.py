@@ -1,3 +1,5 @@
+import subprocess
+
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import redirect, render
@@ -42,8 +44,16 @@ def sync_deals_view(request):
         return redirect("user_settings:settings")
 
     try:
-        count = sync_marktguru(settings_obj.postal_code)
-        messages.success(request, f"{count} Rabatte wurden aktualisiert.")
+        subprocess.Popen([
+            "python",
+            "manage.py",
+            "sync_marktguru_deals",
+        ])
+
+        messages.success(
+            request,
+            "Rabatte werden jetzt im Hintergrund aktualisiert."
+        )
     except Exception as error:
         messages.error(request, f"Rabatte konnten nicht geladen werden: {error}")
 
