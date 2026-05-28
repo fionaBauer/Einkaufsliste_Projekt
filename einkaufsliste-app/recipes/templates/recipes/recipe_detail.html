@@ -8,10 +8,15 @@
 {% endblock %}
 
 {% block content %}
+    <a href="{% url 'recipes:recipe_list' %}" class="back-link">← Zurück zur Übersicht</a>
+
     <div class="page">
-        <div class="top-bar">
-            <a href="{% url 'recipes:recipe_list' %}" class="back-link">← Zurück zur Übersicht</a>
+        {% if recipe.image %}
+        <div class="recipe-hero-banner">
+            <img src="{{ recipe.image.url }}" alt="{{ recipe.name }}" class="recipe-hero-img">
+            <div class="recipe-hero-overlay"></div>
         </div>
+        {% endif %}
 
         <div class="recipe-header">
             <div>

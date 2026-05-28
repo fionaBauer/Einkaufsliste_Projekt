@@ -73,6 +73,16 @@
                                 data-recipe-servings="{{ recipe.servings }}">
                         </div>
 
+                        {% if recipe.image %}
+                        <div class="recipe-thumbnail">
+                            <img src="{{ recipe.image.url }}" alt="{{ recipe.name }}" class="recipe-thumb-img">
+                        </div>
+                        {% else %}
+                        <div class="recipe-thumbnail recipe-thumbnail--empty">
+                            <span class="recipe-thumb-placeholder">🍽</span>
+                        </div>
+                        {% endif %}
+
                         <div class="recipe-main">
                             <a href="{% url 'recipes:recipe_detail' recipe.pk %}" class="recipe-name">
                                 {{ recipe.name }}

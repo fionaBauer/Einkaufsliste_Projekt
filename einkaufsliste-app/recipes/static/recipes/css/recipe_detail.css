@@ -12,18 +12,26 @@
     box-shadow: 0 4px 18px rgba(0, 0, 0, 0.08);
 }
 
-.top-bar {
-    margin-bottom: 20px;
-}
-
 .back-link {
+    display: inline-block;
+    margin: 0 auto 14px auto;
+    max-width: 900px;
+    width: 100%;
+    padding: 0 4px;
     color: #555;
     text-decoration: none;
     font-size: 14px;
+    box-sizing: border-box;
 }
 
 .back-link:hover {
+    color: #111;
     text-decoration: underline;
+}
+
+/* remove old top-bar spacing since link is now outside */
+.top-bar {
+    display: none;
 }
 
 .recipe-header {
@@ -380,4 +388,34 @@ label {
 
 .hidden {
     display: none;
+}
+/* ── Hero Banner ── */
+.recipe-hero-banner {
+    position: relative;
+    width: calc(100% + 48px);
+    margin: -24px -24px 28px -24px;
+    height: 260px;
+    overflow: hidden;
+    border-radius: 16px 16px 0 0;
+}
+
+.recipe-hero-img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+}
+
+.recipe-hero-overlay {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(to bottom, transparent 40%, rgba(0,0,0,0.18) 100%);
+}
+
+@media (max-width: 700px) {
+    .recipe-hero-banner {
+        width: calc(100% + 32px);
+        margin: -16px -16px 20px -16px;
+        height: 200px;
+    }
 }

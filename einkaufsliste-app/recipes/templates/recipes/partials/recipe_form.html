@@ -6,12 +6,18 @@
     {% endif %}
 </h2>
 
-<form method="post" action="{{ request.path }}">
+<form method="post" action="{{ request.path }}" enctype="multipart/form-data">
     {% csrf_token %}
 
     {% for field in form %}
         <div class="form-group">
             {{ field.label_tag }}
+            {% if field.name == "image" and form.instance.image %}
+                <div class="current-image-preview">
+                    <img src="{{ form.instance.image.url }}" alt="Aktuelles Bild" class="image-preview-thumb">
+                    <span class="image-preview-label">Aktuelles Bild – neues Bild auswählen zum Ersetzen</span>
+                </div>
+            {% endif %}
             {{ field }}
             {{ field.errors }}
         </div>
@@ -22,3 +28,26 @@
         <button type="submit" class="btn btn-primary">Speichern</button>
     </div>
 </form>
+
+<style>
+.current-image-preview {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 8px;
+    padding: 8px;
+    background: #fafafa;
+    border-radius: 10px;
+    border: 1px solid #ececec;
+}
+.image-preview-thumb {
+    width: 56px;
+    height: 56px;
+    object-fit: cover;
+    border-radius: 8px;
+}
+.image-preview-label {
+    font-size: 13px;
+    color: #666;
+}
+</style>
