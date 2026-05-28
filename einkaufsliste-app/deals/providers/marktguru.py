@@ -47,7 +47,7 @@ class MarktguruProvider:
                         "x-clientkey": self.client_key,
                         "User-Agent": "Mozilla/5.0",
                     },
-                    timeout=20,
+                    timeout=50,
                 )
 
                 response.raise_for_status()

@@ -20,7 +20,7 @@ class OpenPricesProvider:
                     "search": term,
                     "size": limit,
                 },
-                timeout=15,
+                timeout=50,
                 headers={
                     "User-Agent": "EinkaufslisteProjekt/1.0"
                 },
