@@ -3,6 +3,11 @@ from django.db import models
 from ingredients.models import Ingredient, Unit
 
 
+def recipe_image_path(instance, filename):
+    ext = filename.rsplit(".", 1)[-1].lower()
+    return f"recipe_images/household_{instance.household_id}/{instance.pk or 'new'}.{ext}"
+
+
 class Recipe(models.Model):
     household = models.ForeignKey(
         "households.Household",
@@ -12,7 +17,7 @@ class Recipe(models.Model):
     name = models.CharField(max_length=150)
     servings = models.PositiveIntegerField(default=1)
     instructions = models.TextField(blank=True)
-    image = models.ImageField(upload_to="recipe_images/", blank=True, null=True)
+    image = models.ImageField(upload_to=recipe_image_path, blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
     ingredients = models.ManyToManyField(

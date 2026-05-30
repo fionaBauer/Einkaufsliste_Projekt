@@ -1,6 +1,11 @@
 {% extends "base.html" %}
+{% load static %}
 
 {% block title %}Einstellungen{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'user_settings/css/settings.css' %}">
+{% endblock %}
 
 {% block content %}
 <div class="page">
@@ -8,22 +13,46 @@
         <h1 class="page-title">Einstellungen</h1>
     </div>
 
-    <form method="post" class="form-card">
+    {% if messages %}
+        {% for message in messages %}
+            <div class="alert alert-success">{{ message }}</div>
+        {% endfor %}
+    {% endif %}
+
+    {% if error %}
+        <div class="alert alert-error">{{ error }}</div>
+    {% endif %}
+
+    <form method="post" class="settings-form">
         {% csrf_token %}
 
-        <div class="form-group">
-            <label for="{{ form.postal_code.id_for_label }}">
-                {{ form.postal_code.label }}
-            </label>
-            {{ form.postal_code }}
-            <p class="form-help">
-                Diese PLZ wird genutzt, um Angebote in deiner Umgebung zu laden.
-            </p>
+        <div class="settings-section">
+            <h2 class="settings-section-title">Konto</h2>
+
+            <div class="settings-item">
+                <label class="settings-label" for="username">Benutzername</label>
+                <input
+                    type="text"
+                    id="username"
+                    name="username"
+                    value="{{ request.user.username }}"
+                    class="settings-input">
+            </div>
         </div>
 
-        <button type="submit" class="filter-btn">
-            Speichern
-        </button>
+        <div class="settings-section">
+            <h2 class="settings-section-title">Standort</h2>
+
+            <div class="settings-item">
+                <label class="settings-label" for="{{ form.postal_code.id_for_label }}">
+                    {{ form.postal_code.label }}
+                </label>
+                {{ form.postal_code }}
+                <p class="settings-help">Wird genutzt, um Angebote in deiner Umgebung zu laden.</p>
+            </div>
+        </div>
+
+        <button type="submit" class="btn btn-primary">Speichern</button>
     </form>
 </div>
 {% endblock %}
