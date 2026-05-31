@@ -51,6 +51,7 @@ INSTALLED_APPS = [
     "inventory",
     "core",
     "deals",
+    "meal_plan",
     "user_settings.apps.UserSettingsConfig",
 ]
 

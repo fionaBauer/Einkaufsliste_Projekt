@@ -1,0 +1,128 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Wochenplanung{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'meal_plan/css/planner.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="planner-page">
+
+    <!-- Header -->
+    <div class="planner-header">
+        <div class="planner-header-left">
+            <h1 class="planner-title">Planung</h1>
+            <div class="view-toggle">
+                <button class="view-btn active" data-view="week">Woche</button>
+                <button class="view-btn" data-view="month">Monat</button>
+            </div>
+        </div>
+        <div class="planner-header-right">
+            <button class="nav-btn" id="prev-btn">&#8249;</button>
+            <span class="period-label" id="period-label"></span>
+            <button class="nav-btn" id="next-btn">&#8250;</button>
+            <button class="shopping-btn" id="create-shopping-btn" title="Einkaufsliste für diese Woche erstellen">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 01-8 0"/></svg>
+                Einkaufsliste
+            </button>
+        </div>
+    </div>
+
+    <!-- Week view -->
+    <div id="week-view" class="calendar-grid week-grid">
+        <!-- Filled by JS -->
+    </div>
+
+    <!-- Month view -->
+    <div id="month-view" class="calendar-grid month-grid hidden">
+        <!-- Filled by JS -->
+    </div>
+
+</div>
+
+<!-- Add slot modal -->
+<div class="modal-overlay hidden" id="add-modal">
+    <div class="modal">
+        <h2 class="modal-title">Rezept hinzufügen</h2>
+        <div class="modal-meta" id="add-modal-meta"></div>
+
+        <div class="form-group">
+            <label class="settings-label">Rezept</label>
+            <input type="text" id="recipe-search" class="settings-input" placeholder="Rezept suchen...">
+            <div class="recipe-dropdown hidden" id="recipe-dropdown"></div>
+        </div>
+
+        <div class="form-group">
+            <label class="settings-label">Wiederholung</label>
+            <select id="add-recurrence" class="settings-input">
+                <option value="none">Einmalig</option>
+                <option value="weekly">Wöchentlich</option>
+                <option value="monthly">Monatlich</option>
+            </select>
+        </div>
+
+        <div class="form-group">
+            <label class="settings-label">Notiz (optional)</label>
+            <input type="text" id="add-note" class="settings-input" placeholder="z. B. doppelte Portion">
+        </div>
+
+        <div class="modal-actions">
+            <button class="btn btn-secondary" id="add-cancel">Abbrechen</button>
+            <button class="btn btn-primary" id="add-confirm">Hinzufügen</button>
+        </div>
+    </div>
+</div>
+
+<!-- Slot settings panel -->
+<div class="modal-overlay hidden" id="slot-modal">
+    <div class="modal">
+        <h2 class="modal-title" id="slot-modal-title"></h2>
+        <p class="slot-modal-date" id="slot-modal-date"></p>
+
+        <div class="form-group">
+            <label class="settings-label">Wiederholung</label>
+            <select id="slot-recurrence" class="settings-input">
+                <option value="none">Einmalig</option>
+                <option value="weekly">Wöchentlich</option>
+                <option value="monthly">Monatlich</option>
+            </select>
+        </div>
+
+        <div class="form-group">
+            <label class="settings-label">Notiz</label>
+            <input type="text" id="slot-note" class="settings-input" placeholder="z. B. doppelte Portion">
+        </div>
+
+        <div class="modal-actions slot-modal-actions">
+            <button class="btn btn-danger" id="slot-delete">Löschen</button>
+            <div style="display:flex;gap:8px;">
+                <button class="btn btn-secondary" id="slot-cancel">Abbrechen</button>
+                <button class="btn btn-primary" id="slot-save">Speichern</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Data for JS -->
+<div
+    id="meal-plan-config"
+    style="display:none"
+    data-csrf-token="{{ csrf_token }}"
+    data-slots-url="{% url 'meal_plan:slots_api' %}"
+    data-create-url="{% url 'meal_plan:slot_create' %}"
+    data-update-url="{% url 'meal_plan:slot_update' pk=0 %}"
+    data-delete-url="{% url 'meal_plan:slot_delete' pk=0 %}"
+    data-shopping-url="{% url 'meal_plan:create_shopping_list' %}"
+    data-recipe-detail-url="{% url 'recipes:recipe_detail' pk=0 %}"
+></div>
+{{ recipes_data|json_script:"meal-plan-recipes" }}
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    window.MEAL_PLAN = {};
+</script>
+<script src="{% static 'meal_plan/js/planner.js' %}"></script>
+{% endblock %}

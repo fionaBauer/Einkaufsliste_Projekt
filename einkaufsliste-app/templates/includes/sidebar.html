@@ -40,6 +40,12 @@
                 class="sidebar-link {% if '/deals' in request.path %}active{% endif %}">
                 Rabatte
             </a>
+
+            <a
+                href="{% url 'meal_plan:planner' %}"
+                class="sidebar-link {% if '/meal-plan' in request.path %}active{% endif %}">
+                Planung
+            </a>
         </nav>
     </div>
 
