@@ -1,3 +1,5 @@
+import uuid
+
 from decimal import Decimal
 from django.db import models
 from ingredients.models import Ingredient, Unit
@@ -5,8 +7,8 @@ from ingredients.models import Ingredient, Unit
 
 def recipe_image_path(instance, filename):
     ext = filename.rsplit(".", 1)[-1].lower()
-    return f"recipe_images/household_{instance.household_id}/{instance.pk or 'new'}.{ext}"
-
+    unique = uuid.uuid4().hex[:8]
+    return f"recipe_images/household_{instance.household_id}/{unique}.{ext}"
 
 class Recipe(models.Model):
     household = models.ForeignKey(
