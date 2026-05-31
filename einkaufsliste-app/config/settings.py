@@ -51,8 +51,8 @@ INSTALLED_APPS = [
     "inventory",
     "core",
     "deals",
-    "meal_plan",
     "user_settings.apps.UserSettingsConfig",
+    "meal_plan.apps.MealPlanConfig",
 ]
 
 AUTH_USER_MODEL = "accounts.User"
@@ -187,4 +187,4 @@ DEFAULT_FROM_EMAIL = "Prepio <noreply@prepio.de>"
 
 # Media files (user uploads)
 MEDIA_URL = "/media/"
-MEDIA_ROOT = BASE_DIR / "media"
+MEDIA_ROOT = Path("/home/deploy/media/einkaufsliste/")
