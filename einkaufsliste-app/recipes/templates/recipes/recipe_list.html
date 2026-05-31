@@ -220,22 +220,29 @@
     </form>
     {% if suggested_recipes %}
         <section class="shopping-section">
-            <h2 class="section-title">Vorgeschlagene Rezepte</h2>
+            <h2 class="section-title">💡 Passend zu aktuellen Rabatten</h2>
 
             <div class="recipe-list">
                 {% for suggestion in suggested_recipes %}
                     <div class="recipe-item">
+                        {% if suggestion.recipe.image %}
+                        <div class="recipe-thumbnail">
+                            <img src="{{ suggestion.recipe.image.url }}" alt="{{ suggestion.recipe.name }}" class="recipe-thumb-img">
+                        </div>
+                        {% else %}
+                        <div class="recipe-thumbnail recipe-thumbnail--empty">
+                            <span class="recipe-thumb-placeholder">🍽</span>
+                        </div>
+                        {% endif %}
                         <div class="recipe-main">
                             <a href="{% url 'recipes:recipe_detail' suggestion.recipe.pk %}" class="recipe-name">
                                 {{ suggestion.recipe.name }}
                             </a>
-                            <span class="recipe-meta">
-                                Passend zu aktuellen Rabatten
-                            </span>
-
-                            <div class="recipe-meta">
+                            <div class="deal-tags">
                                 {% for deal in suggestion.deals %}
-                                    {{ deal.title }} bei {{ deal.store.name }} – {{ deal.deal_price }} €{% if not forloop.last %}<br>{% endif %}
+                                    <span class="deal-tag">
+                                        % {{ deal.store.name }} – {{ deal.deal_price }} €
+                                    </span>
                                 {% endfor %}
                             </div>
                         </div>

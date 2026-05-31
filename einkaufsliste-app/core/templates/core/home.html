@@ -1,79 +1,148 @@
 {% extends "base.html" %}
 {% load static %}
 
-{% block title %}Start{% endblock %}
+{% block title %}Home{% endblock %}
 
 {% block extra_css %}
 <link rel="stylesheet" href="{% static 'core/css/home.css' %}">
 {% endblock %}
 
 {% block content %}
-<div class="page">
-    <h1 class="page-title">Dashboard</h1>
+<div class="home-page">
 
-    <div class="card">
-        <h2>Schnell starten</h2>
+    <!-- Greeting -->
+    <div class="home-greeting">
+        <p class="greeting-sub">Hallo, {{ request.user.username }} 👋</p>
+        <h1 class="greeting-title">Was kochst du heute?</h1>
+    </div>
 
-        <div class="quick-actions">
-            <button type="button" class="action-card" id="homeLinkBtn">
-                🔗 Rezept aus Link
-            </button>
+    <!-- Quick Actions -->
+    <div class="quick-actions-row">
+        <button class="quick-action-pill" id="homeLinkBtn">
+            <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M10 13a5 5 0 007.54.54l3-3a5 5 0 00-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 00-7.54-.54l-3 3a5 5 0 007.07 7.07l1.71-1.71"/></svg>
+            Rezept aus Link
+        </button>
+        <a href="{% url 'recipes:recipe_list' %}" class="quick-action-pill">
+            <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            Neues Rezept
+        </a>
+        <a href="{% url 'shopping:list' %}" class="quick-action-pill">
+            <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 01-8 0"/></svg>
+            Einkaufsliste
+            {% if shopping_count > 0 %}<span class="pill-badge">{{ shopping_count }}</span>{% endif %}
+        </a>
+    </div>
 
-            <a href="{% url 'recipes:recipe_list' %}" class="action-card">
-                ➕ Rezept erstellen
-            </a>
-
-            <a href="{% url 'shopping:list' %}" class="action-card">
-                🛒 Einkaufsliste
-            </a>
+    <!-- Today's meals -->
+    {% if todays_meals %}
+    <section class="home-section">
+        <div class="section-header-row">
+            <h2 class="home-section-title">Heute auf dem Plan</h2>
+            <a href="{% url 'meal_plan:planner' %}" class="section-link">Planung →</a>
         </div>
-    </div>
-
-    <div class="card">
-        <h2>Letzte Rezepte</h2>
-
-        {% if recent_recipes %}
-            <ul class="recipe-list">
-                {% for recipe in recent_recipes %}
-                    <li>
-                        <a href="{% url 'recipes:recipe_detail' recipe.id %}">
-                            {{ recipe.name }}
-                        </a>
-                    </li>
-                {% endfor %}
-            </ul>
-        {% else %}
-            <p class="empty-state">Noch keine Rezepte vorhanden.</p>
-        {% endif %}
-    </div>
-
-    <div class="card">
-        <h2>Bereiche</h2>
-
-        <div class="quick-actions">
-            <a href="{% url 'recipes:recipe_list' %}" class="action-card">🍝 Rezepte</a>
-            <a href="{% url 'shopping:list' %}" class="action-card">🛒 Einkaufsliste</a>
-            <a href="{% url 'inventory:list' %}" class="action-card">📦 Inventar</a>
+        <div class="today-meals">
+            {% for slot in todays_meals %}
+            <a href="{% url 'recipes:recipe_detail' slot.recipe.pk %}" class="today-meal-card">
+                {% if slot.recipe.image %}
+                    <img src="{{ slot.recipe.image.url }}" alt="{{ slot.recipe.name }}" class="today-meal-img">
+                {% else %}
+                    <div class="today-meal-img today-meal-placeholder">🍽️</div>
+                {% endif %}
+                <div class="today-meal-info">
+                    <span class="today-meal-time">{{ slot.get_meal_display }}</span>
+                    <span class="today-meal-name">{{ slot.recipe.name }}</span>
+                </div>
+            </a>
+            {% endfor %}
         </div>
-    </div>
+    </section>
+    {% endif %}
+
+    <!-- Inventory suggestions -->
+    {% if inventory_suggestions %}
+    <section class="home-section">
+        <div class="section-header-row">
+            <h2 class="home-section-title">Aus deinem Vorrat</h2>
+            <a href="{% url 'inventory:list' %}" class="section-link">Inventar →</a>
+        </div>
+        <div class="suggestion-cards">
+            {% for s in inventory_suggestions %}
+            <a href="{% url 'recipes:recipe_detail' s.recipe.pk %}" class="suggestion-card">
+                {% if s.recipe.image %}
+                    <img src="{{ s.recipe.image.url }}" alt="{{ s.recipe.name }}" class="suggestion-img">
+                {% else %}
+                    <div class="suggestion-img suggestion-placeholder">🍽️</div>
+                {% endif %}
+                <div class="suggestion-info">
+                    <span class="suggestion-name">{{ s.recipe.name }}</span>
+                    <span class="suggestion-meta">
+                        Du hast {% for name in s.matched %}{{ name }}{% if not forloop.last %}, {% endif %}{% endfor %} bereits
+                    </span>
+                    <span class="suggestion-badge">{{ s.match_count }}/{{ s.total }} Zutaten</span>
+                </div>
+            </a>
+            {% endfor %}
+        </div>
+    </section>
+    {% elif not has_inventory %}
+    <section class="home-section">
+        <div class="empty-card">
+            <p class="empty-icon">📦</p>
+            <p class="empty-text">Trag dein Inventar ein um personalisierte Rezeptvorschläge zu sehen</p>
+            <a href="{% url 'inventory:list' %}" class="btn btn-primary" style="margin-top:4px">Inventar pflegen</a>
+        </div>
+    </section>
+    {% endif %}
+
+    <!-- Top Deals -->
+    {% if top_deals %}
+    <section class="home-section">
+        <div class="section-header-row">
+            <h2 class="home-section-title">Aktuelle Rabatte</h2>
+            <a href="{% url 'deals:list' %}" class="section-link">Alle →</a>
+        </div>
+        <div class="deals-grid">
+            {% for deal in top_deals %}
+            <div class="deal-card">
+                <div class="deal-card-top">
+                    {% if deal.image_url %}
+                        <img src="{{ deal.image_url }}" alt="{{ deal.title }}" class="deal-card-img">
+                    {% else %}
+                        <div class="deal-card-img deal-card-placeholder">%</div>
+                    {% endif %}
+                    {% if deal.savings %}
+                        <span class="deal-savings-badge">-{{ deal.savings|floatformat:2 }} €</span>
+                    {% endif %}
+                </div>
+                <div class="deal-card-body">
+                    <span class="deal-card-store">{{ deal.store.name }}</span>
+                    <span class="deal-card-title">{{ deal.title|truncatechars:40 }}</span>
+                    <div class="deal-card-prices">
+                        {% if deal.original_price %}
+                            <span class="deal-original">{{ deal.original_price|floatformat:2 }} €</span>
+                        {% endif %}
+                        <span class="deal-price">{{ deal.deal_price|floatformat:2 }} €</span>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </section>
+    {% endif %}
+
 </div>
 
+<!-- Link Modal -->
 <div class="modal-overlay" id="homeLinkModal">
     <div class="modal">
-        <h2>Rezept aus Link erstellen</h2>
-
+        <h2 class="modal-title">Rezept aus Link</h2>
         <div class="form-group">
-            <label for="home-link-input">Link</label>
-            <input type="url" id="home-link-input" placeholder="Link einfügen...">
+            <label class="settings-label">Link einfügen</label>
+            <input type="url" id="home-link-input" class="settings-input" placeholder="https://...">
         </div>
-
         <div class="modal-actions">
-            <button type="button" class="btn btn-secondary" id="closeHomeLinkModal">
-                Abbrechen
-            </button>
-            <button type="button" class="btn btn-primary" id="submitHomeLink">
-                Erstellen
-            </button>
+            <button type="button" class="btn btn-secondary" id="closeHomeLinkModal">Abbrechen</button>
+            <button type="button" class="btn btn-primary" id="submitHomeLink">Erstellen</button>
         </div>
     </div>
 </div>
