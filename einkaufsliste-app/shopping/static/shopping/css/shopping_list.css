@@ -307,3 +307,61 @@ label {
 .hidden {
     display: none;
 }
+/* ── Mobile Shopping List ── */
+@media (max-width: 768px) {
+    .page { max-width: 100%; }
+
+    .page-title { font-size: 22px; }
+
+    /* Stack store savings nicely */
+    .store-savings-box {
+        border-radius: 14px;
+        padding: 14px;
+    }
+
+    /* Shopping items: bigger touch targets */
+    .shopping-item {
+        padding: 12px 4px;
+    }
+
+    .shopping-name {
+        font-size: 15px;
+    }
+
+    /* Action buttons: stack vertically, full width */
+    .shopping-bulk-actions {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        margin-top: 16px;
+    }
+
+    .shopping-bulk-actions .btn,
+    .shopping-bulk-actions button {
+        width: 100%;
+        padding: 12px;
+        font-size: 14px;
+        border-radius: 12px;
+        text-align: center;
+        justify-content: center;
+    }
+
+    /* i and % badges: smaller */
+    .deal-badge, .info-badge {
+        font-size: 10px;
+        padding: 2px 5px;
+    }
+
+    /* Section title */
+    .section-title { font-size: 18px; }
+
+    /* Quantity display */
+    .shopping-content {
+        gap: 8px;
+    }
+
+    .shopping-quantity {
+        font-size: 13px;
+        white-space: nowrap;
+    }
+}

@@ -500,3 +500,90 @@ textarea {
     line-height: 1;
     opacity: 0.4;
 }
+
+/* ── Mobile Recipe List ── */
+@media (max-width: 768px) {
+    .page { max-width: 100%; }
+
+    .filter-bar {
+        gap: 8px;
+        margin-bottom: 16px;
+    }
+
+    .filter-bar .search-group { min-width: 0; }
+
+    .filter-bar .sort-select { min-width: 0; }
+
+    .filter-btn {
+        padding: 10px 14px;
+        font-size: 14px;
+    }
+
+    /* Recipe cards on mobile */
+    .recipe-item {
+        display: grid;
+        grid-template-columns: 36px 56px 1fr;
+        grid-template-rows: auto auto;
+        grid-template-areas:
+            "check thumb name"
+            "check thumb actions";
+        gap: 4px 10px;
+        padding: 12px 0;
+        align-items: center;
+    }
+
+    .recipe-select { grid-area: check; align-self: center; }
+
+    .recipe-thumbnail {
+        grid-area: thumb;
+        width: 56px;
+        height: 56px;
+        align-self: center;
+    }
+
+    .recipe-main {
+        grid-area: name;
+        min-width: 0;
+        gap: 2px;
+    }
+
+    .recipe-name {
+        font-size: 15px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        display: block;
+    }
+
+    .recipe-meta { font-size: 12px; }
+
+    .recipe-actions {
+        grid-area: actions;
+        display: flex;
+        gap: 6px;
+        justify-content: flex-start;
+    }
+
+    .action-btn {
+        font-size: 12px;
+        padding: 5px 10px;
+        border-radius: 6px;
+    }
+
+    .shopping-actions {
+        position: fixed;
+        bottom: calc(64px + env(safe-area-inset-bottom) + 8px);
+        left: 12px;
+        right: 12px;
+        margin: 0;
+        justify-content: stretch;
+    }
+
+    .shopping-actions .btn {
+        width: 100%;
+        padding: 14px;
+        font-size: 15px;
+        border-radius: 14px;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+    }
+}
