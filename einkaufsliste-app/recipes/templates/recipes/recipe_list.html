@@ -241,7 +241,7 @@
                             <div class="deal-tags">
                                 {% for deal in suggestion.deals %}
                                     <span class="deal-tag">
-                                        % {{ deal.store.name }} – {{ deal.deal_price }} €
+                                        {{ deal.title|truncatechars:25 }} · {{ deal.store.name }} {{ deal.deal_price }} €
                                     </span>
                                 {% endfor %}
                             </div>
