@@ -335,6 +335,14 @@ html, body {
     display: none;
 }
 
+.tab-more-menu {
+    display: none;
+}
+
+.tab-more-overlay {
+    display: none;
+}
+
 .tab-item svg,
 .tab-more-btn svg {
     width: 22px;
@@ -428,6 +436,10 @@ html, body {
 
     .tab-more-menu.open {
         display: flex;
+    }
+
+    .tab-more-overlay.open {
+        display: block;
     }
 
     .tab-more-item {
