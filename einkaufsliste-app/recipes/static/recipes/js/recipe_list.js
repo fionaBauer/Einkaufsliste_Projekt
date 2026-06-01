@@ -51,6 +51,7 @@ let extractedRecipeData = null;
                 const html = await response.text();
                 modalBody.innerHTML = html;
                 openModal();
+                setTimeout(initInlineIngredients, 0);
             } catch (error) {
                 modalBody.innerHTML = "<p>Beim Laden ist ein Fehler aufgetreten.</p>";
                 openModal();
@@ -112,6 +113,11 @@ let extractedRecipeData = null;
             const form = event.target;
 
             if (!modalBody.contains(form)) {
+                return;
+            }
+
+            // If inline ingredients are present, let initInlineIngredients handle it
+            if (form.id === "recipe-main-form" && document.getElementById("inline-ingredients-list")?.children.length > 0) {
                 return;
             }
 
@@ -517,3 +523,107 @@ let extractedRecipeData = null;
         }
     }
 });
+
+function initInlineIngredients() {
+    const list = document.getElementById("inline-ingredients-list");
+    const addBtn = document.getElementById("add-inline-ingredient");
+    const form = document.getElementById("recipe-main-form");
+    if (!list || !addBtn || !form) return;
+
+    const UNITS = [
+        ["g", "g"], ["kg", "kg"], ["ml", "ml"], ["l", "l"],
+        ["pcs", "Stück"], ["el", "EL"], ["tl", "TL"]
+    ];
+
+    function createRow() {
+        const row = document.createElement("div");
+        row.className = "inline-ingredient-row";
+
+        const nameInput = document.createElement("input");
+        nameInput.type = "text";
+        nameInput.placeholder = "Zutat";
+        nameInput.name = "inline_ingredient_name[]";
+
+        const qtyInput = document.createElement("input");
+        qtyInput.type = "number";
+        qtyInput.placeholder = "Menge";
+        qtyInput.name = "inline_ingredient_qty[]";
+        qtyInput.min = "0";
+        qtyInput.step = "0.01";
+
+        const unitSelect = document.createElement("select");
+        unitSelect.name = "inline_ingredient_unit[]";
+        UNITS.forEach(([val, label]) => {
+            const opt = document.createElement("option");
+            opt.value = val;
+            opt.textContent = label;
+            unitSelect.appendChild(opt);
+        });
+
+        const removeBtn = document.createElement("button");
+        removeBtn.type = "button";
+        removeBtn.className = "inline-remove-btn";
+        removeBtn.innerHTML = "×";
+        removeBtn.addEventListener("click", () => row.remove());
+
+        row.appendChild(nameInput);
+        row.appendChild(qtyInput);
+        row.appendChild(unitSelect);
+        row.appendChild(removeBtn);
+        list.appendChild(row);
+        nameInput.focus();
+    }
+
+    addBtn.addEventListener("click", createRow);
+
+    form.addEventListener("submit", async function(e) {
+        const rows = list.querySelectorAll(".inline-ingredient-row");
+        if (rows.length === 0) return;
+
+        e.preventDefault();
+
+        const formData = new FormData(form);
+        let recipeId = null;
+
+        try {
+            const res = await fetch(form.action, {
+                method: "POST",
+                body: formData,
+                headers: { "X-Requested-With": "XMLHttpRequest" },
+            });
+
+            if (res.headers.get("content-type")?.includes("application/json")) {
+                const data = await res.json();
+                if (!data.success) return;
+                recipeId = data.recipe_id;
+            }
+
+            if (!recipeId) { form.submit(); return; }
+        } catch(err) { form.submit(); return; }
+
+        const csrfToken = form.querySelector("[name=csrfmiddlewaretoken]").value;
+        const ingredientCreateUrl = `/recipes/${recipeId}/ingredients/create/`;
+
+        for (const row of rows) {
+            const name = row.querySelector("input[type=text]").value.trim();
+            const qty = row.querySelector("input[type=number]").value.trim();
+            const unit = row.querySelector("select").value;
+            if (!name) continue;
+
+            const data = new FormData();
+            data.append("csrfmiddlewaretoken", csrfToken);
+            data.append("ingredient_search", name);
+            data.append("quantity", qty || "1");
+            data.append("unit", unit);
+            data.append("notes", "");
+
+            await fetch(ingredientCreateUrl, {
+                method: "POST",
+                body: data,
+                headers: { "X-Requested-With": "XMLHttpRequest" },
+            });
+        }
+
+        window.location.href = `/recipes/${recipeId}/`;
+    });
+}

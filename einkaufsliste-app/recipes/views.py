@@ -84,7 +84,7 @@ class RecipeCreateView(LoginRequiredMixin, CreateView):
         form.instance.household = self.request.user.households.first()
         self.object = form.save()
         if self.request.headers.get("X-Requested-With") == "XMLHttpRequest":
-            return JsonResponse({"success": True})
+            return JsonResponse({"success": True, "recipe_id": self.object.pk})
         return super().form_valid(form)
 
     def form_invalid(self, form):
