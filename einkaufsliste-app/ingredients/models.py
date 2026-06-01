@@ -7,11 +7,13 @@ class Unit(models.TextChoices):
     MILLILITER = "ml", "Milliliter"
     LITER = "l", "Liter"
     PIECE = "pcs", "Stück"
+    PACKAGE = "pkg", "Packung"
     TABLESPOON = "el", "Esslöffel"
     TEASPOON = "tl", "Teelöffel"
 
 
 class IngredientCategory(models.TextChoices):
+    FRUIT_VEG = "fruit_veg", "Obst & Gemüse"
     SPICES = "spices", "Gewürze"
     FRIDGE = "fridge", "Kühlschrank"
     DRINKS = "drinks", "Getränke"

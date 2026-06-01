@@ -10,7 +10,7 @@ from recipes.models import Recipe
 from deals.services import attach_deals_to_shopping_items, calculate_store_savings
 from .forms import ShoppingListItemForm
 from .models import ShoppingList, ShoppingListItem
-from .utils import to_base_unit, from_base_unit
+from .utils import to_base_unit, from_base_unit, merge_units, DISCRETE_UNITS, SPOON_TO_G, SPOON_TO_ML
 
 
 @login_required
@@ -126,6 +126,7 @@ def _add_recipes_to_existing_shopping_list(household, shopping_list_obj, recipe_
     )
 
     servings_map = servings_map or {}
+    # key: ingredient_id → list of (quantity, unit) tuples
     aggregated_items = defaultdict(list)
 
     for recipe in recipes:
@@ -134,14 +135,11 @@ def _add_recipes_to_existing_shopping_list(household, shopping_list_obj, recipe_
 
         for item in recipe.recipe_ingredients.all():
             scaled_quantity = item.quantity * factor
-            base_quantity, base_unit = to_base_unit(scaled_quantity, item.unit)
-            key = (item.ingredient_id, base_unit)
-
-            aggregated_items[key].append({
+            aggregated_items[item.ingredient_id].append({
                 "recipe_id": recipe.id,
                 "recipe_name": recipe.name,
-                "quantity": base_quantity,
-                "unit": base_unit,
+                "quantity": scaled_quantity,
+                "unit": item.unit,
             })
 
     inventory_items = {
@@ -149,66 +147,66 @@ def _add_recipes_to_existing_shopping_list(household, shopping_list_obj, recipe_
         for item in InventoryItem.objects.filter(household=household).select_related("ingredient")
     }
 
-    for (ingredient_id, base_unit), source_entries in aggregated_items.items():
-        required_base_quantity = sum(entry["quantity"] for entry in source_entries)
+    for ingredient_id, source_entries in aggregated_items.items():
+        # Merge all quantities using merge_units
+        merged_qty, merged_unit = source_entries[0]["quantity"], source_entries[0]["unit"]
+        for entry in source_entries[1:]:
+            merged_qty, merged_unit = merge_units(merged_qty, merged_unit, entry["quantity"], entry["unit"])
+
+        required_quantity, required_unit = merged_qty, merged_unit
         inventory_item = inventory_items.get(ingredient_id)
 
         normalized_source_details = []
         for entry in source_entries:
-            display_quantity, display_unit = from_base_unit(entry["quantity"], entry["unit"])
             normalized_source_details.append({
                 "recipe_id": entry["recipe_id"],
                 "recipe_name": entry["recipe_name"],
-                "quantity": str(display_quantity),
-                "unit": display_unit,
+                "quantity": str(entry["quantity"]),
+                "unit": entry["unit"],
             })
 
         if not inventory_item:
-            quantity, unit = from_base_unit(required_base_quantity, base_unit)
             _merge_or_create_shopping_item(
                 shopping_list_obj=shopping_list_obj,
                 ingredient_id=ingredient_id,
-                quantity=quantity,
-                unit=unit,
+                quantity=required_quantity,
+                unit=required_unit,
                 status=ShoppingListItem.STATUS_TO_BUY,
                 source_details=normalized_source_details,
             )
             continue
 
         if inventory_item.quantity is None:
-            quantity, unit = from_base_unit(required_base_quantity, base_unit)
             _merge_or_create_shopping_item(
                 shopping_list_obj=shopping_list_obj,
                 ingredient_id=ingredient_id,
-                quantity=quantity,
-                unit=unit,
+                quantity=required_quantity,
+                unit=required_unit,
                 status=ShoppingListItem.STATUS_CHECK,
                 source_details=normalized_source_details,
             )
             continue
 
-        inventory_base_quantity, inventory_base_unit = to_base_unit(
-            inventory_item.quantity,
-            inventory_item.unit,
-        )
+        inv_base_qty, inv_base_unit = to_base_unit(inventory_item.quantity, inventory_item.unit)
+        req_base_qty, req_base_unit = to_base_unit(required_quantity, required_unit)
 
-        if inventory_base_unit != base_unit:
-            quantity, unit = from_base_unit(required_base_quantity, base_unit)
+        if inv_base_unit != req_base_unit:
+            # Incompatible units (e.g. pcs vs g) — add to list with CHECK status
             _merge_or_create_shopping_item(
                 shopping_list_obj=shopping_list_obj,
                 ingredient_id=ingredient_id,
-                quantity=quantity,
-                unit=unit,
+                quantity=required_quantity,
+                unit=required_unit,
                 status=ShoppingListItem.STATUS_CHECK,
                 source_details=normalized_source_details,
             )
             continue
 
-        if inventory_base_quantity >= required_base_quantity:
+        if inv_base_qty >= req_base_qty:
             continue
 
-        missing_base_quantity = required_base_quantity - inventory_base_quantity
-        quantity, unit = from_base_unit(missing_base_quantity, base_unit)
+        missing_base_qty = req_base_qty - inv_base_qty
+        quantity, unit = from_base_unit(missing_base_qty, req_base_unit)
 
         _merge_or_create_shopping_item(
             shopping_list_obj=shopping_list_obj,
