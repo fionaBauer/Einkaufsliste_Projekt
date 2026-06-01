@@ -11,7 +11,6 @@
 <div class="page">
     <div class="page-header">
         <h1 class="page-title">Inventar</h1>
-
         <div class="header-actions">
             <button type="button" class="action-header-btn" id="openConsumeRecipeModalBtn">
                 Rezept verbrauchen
@@ -20,81 +19,105 @@
         </div>
     </div>
 
+    <!-- Search -->
     <form method="get" class="filter-bar">
         <div class="filter-group search-group">
-            <input
-                type="text"
-                name="q"
-                placeholder="Lebensmittel suchen..."
-                value="{{ search_query }}"
-                class="search-input"
-            >
+            <input type="text" name="q" placeholder="Lebensmittel suchen..."
+                value="{{ search_query }}" class="search-input">
         </div>
-
-        <div class="filter-group">
-            <select name="sort" class="sort-select">
-                {% for value, label in sort_options %}
-                    <option value="{{ value }}" {% if sort == value %}selected{% endif %}>
-                        {{ label }}
-                    </option>
-                {% endfor %}
-            </select>
-        </div>
-
-        <button type="submit" class="filter-btn">Anwenden</button>
-
-        {% if search_query or sort != "name_asc" %}
+        <button type="submit" class="filter-btn">Suchen</button>
+        {% if search_query %}
             <a href="{% url 'inventory:list' %}" class="reset-link">Zurücksetzen</a>
         {% endif %}
     </form>
 
     {% if grouped_inventory_items %}
+        <!-- Category Cards Grid -->
+        <div class="category-grid" id="category-grid">
+            {% for category_label, category_items in grouped_inventory_items.items %}
+            {% with category_items|length as count %}
+            <div class="category-card" data-category="{{ category_label }}">
+                <div class="category-card-icon">
+                    {% if "Obst" in category_label %}🥦
+                    {% elif "Gewürz" in category_label %}🧂
+                    {% elif "Kühl" in category_label %}🧀
+                    {% elif "Getränk" in category_label %}🥤
+                    {% elif "Vorrat" in category_label %}🫙
+                    {% elif "Tiefkühl" in category_label %}🧊
+                    {% elif "Back" in category_label %}🫘
+                    {% elif "Snack" in category_label %}🍫
+                    {% else %}📦{% endif %}
+                </div>
+                <div class="category-card-info">
+                    <span class="category-card-name">{{ category_label }}</span>
+                    <span class="category-card-count">{{ count }} Einträge</span>
+                </div>
+                <svg class="category-card-arrow" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"/></svg>
+            </div>
+            {% endwith %}
+            {% endfor %}
+        </div>
+
+        <!-- Detail Panels (hidden by default, shown when card clicked) -->
         {% for category_label, category_items in grouped_inventory_items.items %}
-            <section class="category-section">
-                <h2 class="category-title">{{ category_label }}</h2>
+        <div class="category-detail hidden" id="detail-{{ forloop.counter }}">
+            <div class="detail-header">
+                <button class="detail-back-btn" data-category="{{ category_label }}">
+                    ← Zurück
+                </button>
+                <h2 class="detail-title">
+                    {% if "Obst" in category_label %}🥦
+                    {% elif "Gewürz" in category_label %}🧂
+                    {% elif "Kühl" in category_label %}🧀
+                    {% elif "Getränk" in category_label %}🥤
+                    {% elif "Vorrat" in category_label %}🫙
+                    {% elif "Tiefkühl" in category_label %}🧊
+                    {% elif "Back" in category_label %}🫘
+                    {% elif "Snack" in category_label %}🍫
+                    {% else %}📦{% endif %}
+                    {{ category_label }}
+                </h2>
+            </div>
 
-                <ul class="inventory-list">
-                    {% for item in category_items %}
-                        <li class="inventory-item">
-                            <div class="inventory-main">
-                                <span class="inventory-name">{{ item.ingredient.name }}</span>
-                                <span class="inventory-quantity">
-                                    {% if item.quantity %}
-                                        {{ item.quantity }} {{ item.unit }}
-                                    {% else %}
-                                        Vorhanden, Menge unbekannt
-                                    {% endif %}
-                                </span>
-                            </div>
-
-                            <div class="inventory-actions">
-                                <button
-                                    type="button"
-                                    class="action-btn edit-btn open-edit-modal-btn"
-                                    data-id="{{ item.id }}"
-                                    data-ingredient="{{ item.ingredient.id }}"
-                                    data-quantity="{{ item.quantity|default:'' }}"
-                                    data-unit="{{ item.unit|default:'' }}"
-                                >
-                                    Bearbeiten
-                                </button>
-
-                                <form method="post" class="delete-form" onsubmit="return confirm('Möchtest du diesen Inventar-Eintrag wirklich löschen?');">
-                                    {% csrf_token %}
-                                    <input type="hidden" name="action" value="delete">
-                                    <input type="hidden" name="item_id" value="{{ item.id }}">
-                                    <button type="submit" class="action-btn delete-btn">Löschen</button>
-                                </form>
-                            </div>
-                        </li>
-                    {% endfor %}
-                </ul>
-            </section>
+            <ul class="inventory-list">
+                {% for item in category_items %}
+                <li class="inventory-item">
+                    <div class="inventory-main">
+                        <span class="inventory-name">{{ item.ingredient.name }}</span>
+                        <span class="inventory-quantity">
+                            {% if item.quantity %}
+                                {{ item.quantity }} {{ item.unit }}
+                            {% else %}
+                                Vorhanden
+                            {% endif %}
+                        </span>
+                    </div>
+                    <div class="inventory-actions">
+                        <button type="button" class="action-btn edit-btn open-edit-modal-btn"
+                            data-id="{{ item.id }}"
+                            data-ingredient="{{ item.ingredient.id }}"
+                            data-quantity="{{ item.quantity|default:'' }}"
+                            data-unit="{{ item.unit|default:'' }}">
+                            Bearbeiten
+                        </button>
+                        <form method="post" class="delete-form"
+                            onsubmit="return confirm('Eintrag löschen?');">
+                            {% csrf_token %}
+                            <input type="hidden" name="action" value="delete">
+                            <input type="hidden" name="item_id" value="{{ item.id }}">
+                            <button type="submit" class="action-btn delete-btn">Löschen</button>
+                        </form>
+                    </div>
+                </li>
+                {% endfor %}
+            </ul>
+        </div>
         {% endfor %}
+
     {% else %}
         <div class="empty-state">
             {% if search_query %}
-                Keine Inventar-Einträge für „{{ search_query }}“ gefunden.
+                Keine Einträge für „{{ search_query }}" gefunden.
             {% else %}
                 Noch keine Lebensmittel im Inventar gespeichert.
             {% endif %}
@@ -106,53 +129,36 @@
 <div class="modal-overlay {% if create_modal_open %}active{% endif %}" id="createModal">
     <div class="modal">
         <h2>Inventar-Eintrag hinzufügen</h2>
-
         <form method="post">
             {% csrf_token %}
             <input type="hidden" name="action" value="create">
-
             <div class="form-group">
                 {{ create_form.ingredient_search.label_tag }}
                 {{ create_form.ingredient_search }}
                 {{ create_form.ingredient }}
-
                 <div class="custom-search-dropdown hidden" id="inventoryIngredientDropdownCreate">
                     {% for ingredient in create_form.fields.ingredient.queryset %}
-                        <button
-                            type="button"
-                            class="custom-search-option"
-                            data-id="{{ ingredient.id }}"
-                            data-name="{{ ingredient.name }}">
+                        <button type="button" class="custom-search-option"
+                            data-id="{{ ingredient.id }}" data-name="{{ ingredient.name }}">
                             {{ ingredient.name }}
                         </button>
                     {% endfor %}
                 </div>
-
                 <div class="inline-helper">
-                    <button
-                        type="button"
-                        class="btn btn-secondary open-ingredient-create-btn"
+                    <button type="button" class="btn btn-secondary open-ingredient-create-btn"
                         data-url="{% url 'ingredients:modal_create' %}">
                         Neue Zutat anlegen
                     </button>
                 </div>
-
-                {{ create_form.ingredient_search.errors }}
-                {{ create_form.ingredient.errors }}
             </div>
-
             <div class="form-group">
                 {{ create_form.quantity.label_tag }}
                 {{ create_form.quantity }}
-                {{ create_form.quantity.errors }}
             </div>
-
             <div class="form-group">
                 {{ create_form.unit.label_tag }}
                 {{ create_form.unit }}
-                {{ create_form.unit.errors }}
             </div>
-
             <div class="modal-actions">
                 <button type="button" class="btn btn-secondary" id="closeCreateModalBtn">Abbrechen</button>
                 <button type="submit" class="btn btn-primary">Speichern</button>
@@ -165,101 +171,69 @@
 <div class="modal-overlay {% if edit_modal_open %}active{% endif %}" id="editModal">
     <div class="modal">
         <h2>Inventar-Eintrag bearbeiten</h2>
-
         <form method="post">
             {% csrf_token %}
             <input type="hidden" name="action" value="edit">
             <input type="hidden" name="item_id" id="editItemId" value="{{ edit_item_id|default:'' }}">
-
             <div class="form-group">
                 {{ edit_form.ingredient_search.label_tag }}
                 {{ edit_form.ingredient_search }}
                 {{ edit_form.ingredient }}
-
                 <div class="custom-search-dropdown hidden" id="inventoryIngredientDropdownEdit">
                     {% for ingredient in edit_form.fields.ingredient.queryset %}
-                        <button
-                            type="button"
-                            class="custom-search-option"
-                            data-id="{{ ingredient.id }}"
-                            data-name="{{ ingredient.name }}">
+                        <button type="button" class="custom-search-option"
+                            data-id="{{ ingredient.id }}" data-name="{{ ingredient.name }}">
                             {{ ingredient.name }}
                         </button>
                     {% endfor %}
                 </div>
-
                 <div class="inline-helper">
-                    <button
-                        type="button"
-                        class="btn btn-secondary open-ingredient-create-btn"
+                    <button type="button" class="btn btn-secondary open-ingredient-create-btn"
                         data-url="{% url 'ingredients:modal_create' %}">
                         Neue Zutat anlegen
                     </button>
                 </div>
-
-                {{ edit_form.ingredient_search.errors }}
-                {{ edit_form.ingredient.errors }}
             </div>
-
             <div class="form-group">
                 {{ edit_form.quantity.label_tag }}
                 {{ edit_form.quantity }}
-                {{ edit_form.quantity.errors }}
             </div>
-
             <div class="form-group">
                 {{ edit_form.unit.label_tag }}
                 {{ edit_form.unit }}
-                {{ edit_form.unit.errors }}
             </div>
-
             <div class="modal-actions">
                 <button type="button" class="btn btn-secondary" id="closeEditModalBtn">Abbrechen</button>
-                <button type="submit" class="btn btn-primary">Änderungen speichern</button>
+                <button type="submit" class="btn btn-primary">Speichern</button>
             </div>
         </form>
     </div>
 </div>
 
+<!-- CONSUME RECIPE MODAL -->
 <div class="modal-overlay" id="consumeRecipeModal">
     <div class="modal modal-wide">
         <h2>Rezept verbrauchen</h2>
-
         <div class="form-group">
             <label for="consume_recipe_search">Rezept</label>
-            <input
-                type="text"
-                id="consume_recipe_search"
-                class="form-control recipe-search-input"
-                placeholder="Rezept suchen..."
-                autocomplete="off"
-            >
+            <input type="text" id="consume_recipe_search" class="form-control recipe-search-input"
+                placeholder="Rezept suchen..." autocomplete="off">
             <input type="hidden" id="consume_recipe_id">
-
             <datalist id="consume-recipe-options">
                 {% for recipe in recipes_for_consume %}
                     <option value="{{ recipe.name }}" data-id="{{ recipe.id }}"></option>
                 {% endfor %}
             </datalist>
         </div>
-
         <div class="form-group">
             <label for="consume_servings">Portionen</label>
             <input type="number" id="consume_servings" min="1" value="1">
         </div>
-
         <div class="modal-actions">
-            <button type="button" class="btn btn-secondary" id="closeConsumeRecipeModalBtn">
-                Abbrechen
-            </button>
-            <button type="button" class="btn btn-secondary" id="loadConsumeRecipePreviewBtn">
-                Zutaten laden
-            </button>
-            <button type="button" class="btn btn-primary hidden" id="applyConsumeRecipeBtn">
-                Verbrauch anwenden
-            </button>
+            <button type="button" class="btn btn-secondary" id="closeConsumeRecipeModalBtn">Abbrechen</button>
+            <button type="button" class="btn btn-secondary" id="loadConsumeRecipePreviewBtn">Zutaten laden</button>
+            <button type="button" class="btn btn-primary hidden" id="applyConsumeRecipeBtn">Verbrauch anwenden</button>
         </div>
-
         <div id="consumeRecipePreviewContainer" class="consume-preview-container hidden"></div>
     </div>
 </div>
@@ -269,6 +243,33 @@
         <div id="ingredientCreateModalBody"></div>
     </div>
 </div>
+
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+    const grid = document.getElementById("category-grid");
+    const details = document.querySelectorAll(".category-detail");
+
+    function showGrid() {
+        grid && grid.classList.remove("hidden");
+        details.forEach(d => d.classList.add("hidden"));
+    }
+
+    function showDetail(idx) {
+        grid && grid.classList.add("hidden");
+        details.forEach(d => d.classList.add("hidden"));
+        const detail = document.getElementById("detail-" + idx);
+        if (detail) detail.classList.remove("hidden");
+    }
+
+    document.querySelectorAll(".category-card").forEach((card, i) => {
+        card.addEventListener("click", () => showDetail(i + 1));
+    });
+
+    document.querySelectorAll(".detail-back-btn").forEach(btn => {
+        btn.addEventListener("click", showGrid);
+    });
+});
+</script>
 {% endblock %}
 
 {% block extra_js %}

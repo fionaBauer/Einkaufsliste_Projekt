@@ -42,40 +42,100 @@
     </form>
 
     {% if grouped_ingredients %}
+        <!-- Category Cards -->
+        <div class="category-grid" id="category-grid">
+            {% for category_label, category_items in grouped_ingredients.items %}
+            {% with category_items|length as count %}
+            <div class="category-card" data-category="{{ category_label }}">
+                <div class="category-card-icon">
+                    {% if "Obst" in category_label %}🥦
+                    {% elif "Gewürz" in category_label %}🧂
+                    {% elif "Kühl" in category_label %}🧀
+                    {% elif "Getränk" in category_label %}🥤
+                    {% elif "Vorrat" in category_label %}🫙
+                    {% elif "Tiefkühl" in category_label %}🧊
+                    {% elif "Back" in category_label %}🫘
+                    {% elif "Snack" in category_label %}🍫
+                    {% else %}📦{% endif %}
+                </div>
+                <div class="category-card-info">
+                    <span class="category-card-name">{{ category_label }}</span>
+                    <span class="category-card-count">{{ count }} Zutaten</span>
+                </div>
+                <svg class="category-card-arrow" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"/></svg>
+            </div>
+            {% endwith %}
+            {% endfor %}
+        </div>
+
+        <!-- Detail Panels -->
         {% for category_label, category_items in grouped_ingredients.items %}
-            <section class="category-section">
-                <h2 class="category-title">{{ category_label }}</h2>
-
-                <ul class="ingredient-list">
-                    {% for ingredient in category_items %}
-                        <li class="ingredient-item">
-                            <div class="ingredient-main">
-                                <span class="ingredient-name">{{ ingredient.name }}</span>
-                            </div>
-
-                            <div class="ingredient-actions">
-                                <button
-                                    type="button"
-                                    class="action-btn edit-btn open-edit-modal-btn"
-                                    data-id="{{ ingredient.id }}"
-                                    data-name="{{ ingredient.name }}"
-                                    data-category="{{ ingredient.category }}"
-                                >
-                                    Bearbeiten
-                                </button>
-
-                                <form method="post" class="delete-form" onsubmit="return confirm('Möchtest du diese Zutat wirklich löschen?');">
-                                    {% csrf_token %}
-                                    <input type="hidden" name="action" value="delete">
-                                    <input type="hidden" name="ingredient_id" value="{{ ingredient.id }}">
-                                    <button type="submit" class="action-btn delete-btn">Löschen</button>
-                                </form>
-                            </div>
-                        </li>
-                    {% endfor %}
-                </ul>
-            </section>
+        <div class="category-detail hidden" id="ing-detail-{{ forloop.counter }}">
+            <div class="detail-header">
+                <button class="detail-back-btn">← Zurück</button>
+                <h2 class="detail-title">
+                    {% if "Obst" in category_label %}🥦
+                    {% elif "Gewürz" in category_label %}🧂
+                    {% elif "Kühl" in category_label %}🧀
+                    {% elif "Getränk" in category_label %}🥤
+                    {% elif "Vorrat" in category_label %}🫙
+                    {% elif "Tiefkühl" in category_label %}🧊
+                    {% elif "Back" in category_label %}🫘
+                    {% elif "Snack" in category_label %}🍫
+                    {% else %}📦{% endif %}
+                    {{ category_label }}
+                </h2>
+            </div>
+            <ul class="ingredient-list">
+                {% for ingredient in category_items %}
+                <li class="ingredient-item">
+                    <div class="ingredient-main">
+                        <span class="ingredient-name">{{ ingredient.name }}</span>
+                    </div>
+                    <div class="ingredient-actions">
+                        <button type="button" class="action-btn edit-btn open-edit-modal-btn"
+                            data-id="{{ ingredient.id }}"
+                            data-name="{{ ingredient.name }}"
+                            data-category="{{ ingredient.category }}">
+                            Bearbeiten
+                        </button>
+                        <form method="post" class="delete-form"
+                            onsubmit="return confirm('Zutat löschen?');">
+                            {% csrf_token %}
+                            <input type="hidden" name="action" value="delete">
+                            <input type="hidden" name="ingredient_id" value="{{ ingredient.id }}">
+                            <button type="submit" class="action-btn delete-btn">Löschen</button>
+                        </form>
+                    </div>
+                </li>
+                {% endfor %}
+            </ul>
+        </div>
         {% endfor %}
+
+        <script>
+        document.addEventListener("DOMContentLoaded", function() {
+            const grid = document.getElementById("category-grid");
+            const details = document.querySelectorAll(".category-detail");
+            function showGrid() {
+                grid && grid.classList.remove("hidden");
+                details.forEach(d => d.classList.add("hidden"));
+            }
+            function showDetail(idx) {
+                grid && grid.classList.add("hidden");
+                details.forEach(d => d.classList.add("hidden"));
+                const detail = document.getElementById("ing-detail-" + idx);
+                if (detail) detail.classList.remove("hidden");
+            }
+            document.querySelectorAll(".category-card").forEach((card, i) => {
+                card.addEventListener("click", () => showDetail(i + 1));
+            });
+            document.querySelectorAll(".detail-back-btn").forEach(btn => {
+                btn.addEventListener("click", showGrid);
+            });
+        });
+        </script>
+
     {% else %}
         <div class="empty-state">
             {% if search_query %}
