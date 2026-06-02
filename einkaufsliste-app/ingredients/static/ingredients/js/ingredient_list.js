@@ -6,58 +6,87 @@ document.addEventListener("DOMContentLoaded", () => {
     const closeCreateModalBtn = document.getElementById("closeCreateModalBtn");
     const closeEditModalBtn = document.getElementById("closeEditModalBtn");
 
-    const editButtons = document.querySelectorAll(".open-edit-modal-btn");
-
     const editIngredientId = document.getElementById("editIngredientId");
     const editName = document.getElementById("edit_name");
     const editCategory = document.getElementById("edit_category");
 
     if (openCreateModalBtn) {
-        openCreateModalBtn.addEventListener("click", () => {
-            createModal.classList.add("active");
-        });
+        openCreateModalBtn.addEventListener("click", () => createModal.classList.add("active"));
     }
-
     if (closeCreateModalBtn) {
-        closeCreateModalBtn.addEventListener("click", () => {
-            createModal.classList.remove("active");
-        });
+        closeCreateModalBtn.addEventListener("click", () => createModal.classList.remove("active"));
     }
-
     if (closeEditModalBtn) {
-        closeEditModalBtn.addEventListener("click", () => {
-            editModal.classList.remove("active");
-        });
+        closeEditModalBtn.addEventListener("click", () => editModal.classList.remove("active"));
     }
 
-    editButtons.forEach((button) => {
-        button.addEventListener("click", () => {
-            if (editIngredientId) {
-                editIngredientId.value = button.dataset.id;
-            }
-            if (editName) {
-                editName.value = button.dataset.name || "";
-            }
-            if (editCategory) {
-                editCategory.value = button.dataset.category || "";
-            }
-
-            editModal.classList.add("active");
-        });
+    // Use event delegation for edit buttons (works after category-detail render)
+    document.addEventListener("click", e => {
+        const btn = e.target.closest(".open-edit-modal-btn");
+        if (!btn) return;
+        if (editIngredientId) editIngredientId.value = btn.dataset.id;
+        if (editName) editName.value = btn.dataset.name || "";
+        if (editCategory) editCategory.value = btn.dataset.category || "";
+        editModal.classList.add("active");
     });
 
-    [createModal, editModal].forEach((modal) => {
+    // AJAX submit for edit and delete — stay on same category view
+    document.addEventListener("submit", async e => {
+        const form = e.target;
+
+        // Edit form
+        if (form.closest("#editModal")) {
+            e.preventDefault();
+            const formData = new FormData(form);
+            try {
+                const res = await fetch(window.location.href, {
+                    method: "POST", body: formData,
+                    headers: { "X-Requested-With": "XMLHttpRequest" },
+                });
+                const data = await res.json();
+                if (data.success) {
+                    editModal.classList.remove("active");
+                    // Update name in the detail list
+                    const ingId = form.querySelector('[name="ingredient_id"]')?.value;
+                    const newName = form.querySelector('[name="name"]')?.value;
+                    if (ingId && newName) {
+                        document.querySelectorAll(`.open-edit-modal-btn[data-id="${ingId}"]`).forEach(b => {
+                            b.dataset.name = newName;
+                            const nameEl = b.closest(".ingredient-item")?.querySelector(".ingredient-name");
+                            if (nameEl) nameEl.textContent = newName;
+                        });
+                    }
+                }
+            } catch(err) { console.error(err); }
+            return;
+        }
+
+        // Delete form
+        if (form.classList.contains("delete-form")) {
+            e.preventDefault();
+            if (!confirm("Zutat löschen?")) return;
+            const formData = new FormData(form);
+            try {
+                const res = await fetch(window.location.href, {
+                    method: "POST", body: formData,
+                    headers: { "X-Requested-With": "XMLHttpRequest" },
+                });
+                const data = await res.json();
+                if (data.success) {
+                    form.closest(".ingredient-item")?.remove();
+                }
+            } catch(err) { console.error(err); }
+            return;
+        }
+    });
+
+    [createModal, editModal].forEach(modal => {
         if (!modal) return;
-
-        modal.addEventListener("click", (event) => {
-            if (event.target === modal) {
-                modal.classList.remove("active");
-            }
-        });
+        modal.addEventListener("click", e => { if (e.target === modal) modal.classList.remove("active"); });
     });
 
-    document.addEventListener("keydown", (event) => {
-        if (event.key === "Escape") {
+    document.addEventListener("keydown", e => {
+        if (e.key === "Escape") {
             createModal?.classList.remove("active");
             editModal?.classList.remove("active");
         }

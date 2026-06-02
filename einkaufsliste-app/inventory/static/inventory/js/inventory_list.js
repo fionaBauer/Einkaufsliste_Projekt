@@ -318,6 +318,56 @@ document.addEventListener("DOMContentLoaded", () => {
     document.addEventListener("submit", async (event) => {
         const form = event.target;
 
+        // Handle edit form via AJAX
+        if (form.closest("#editModal")) {
+            event.preventDefault();
+            const formData = new FormData(form);
+            try {
+                const res = await fetch(form.action || window.location.href, {
+                    method: "POST",
+                    body: formData,
+                    headers: { "X-Requested-With": "XMLHttpRequest" },
+                });
+                const data = await res.json();
+                if (data.success) {
+                    editModal.classList.remove("active");
+                    // Update the item name in the list without full reload
+                    const itemId = form.querySelector('[name="item_id"]')?.value;
+                    const newName = form.querySelector(".ingredient-search-input")?.value;
+                    const newQty = form.querySelector('[name="quantity"]')?.value;
+                    const newUnit = form.querySelector('[name="unit"]')?.value;
+                    if (itemId && newName) {
+                        const nameEl = document.querySelector(`.inventory-item[data-item-id="${itemId}"] .inventory-name`);
+                        const qtyEl = document.querySelector(`.inventory-item[data-item-id="${itemId}"] .inventory-quantity`);
+                        if (nameEl) nameEl.textContent = newName;
+                        if (qtyEl) qtyEl.textContent = newQty ? `${newQty} ${newUnit}` : "Vorhanden";
+                    }
+                }
+            } catch(e) { console.error(e); }
+            return;
+        }
+
+        // Handle delete form via AJAX
+        if (form.closest(".delete-form") && form.querySelector('[name="action"][value="delete"]')) {
+            event.preventDefault();
+            const formData = new FormData(form);
+            try {
+                const res = await fetch(window.location.href, {
+                    method: "POST",
+                    body: formData,
+                    headers: { "X-Requested-With": "XMLHttpRequest" },
+                });
+                const data = await res.json();
+                if (data.success) {
+                    // Remove item from list without reload
+                    const itemId = form.querySelector('[name="item_id"]')?.value;
+                    const itemEl = document.querySelector(`.inventory-item[data-item-id="${itemId}"]`);
+                    if (itemEl) itemEl.remove();
+                }
+            } catch(e) { console.error(e); }
+            return;
+        }
+
         if (!ingredientCreateModalBody.contains(form)) {
             return;
         }

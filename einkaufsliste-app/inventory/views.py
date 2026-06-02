@@ -1,8 +1,8 @@
 from collections import OrderedDict
 
 from django.contrib.auth.decorators import login_required
+from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
-
 from ingredients.models import IngredientCategory
 from .forms import InventoryItemForm
 from .models import InventoryItem
@@ -84,6 +84,8 @@ def inventory_list(request):
 
             if edit_form.is_valid():
                 edit_form.save()
+                if request.headers.get("X-Requested-With") == "XMLHttpRequest":
+                    return JsonResponse({"success": True})
                 return redirect("inventory:list")
             edit_modal_open = True
 
@@ -91,6 +93,8 @@ def inventory_list(request):
             item_id = request.POST.get("item_id")
             inventory_item = get_object_or_404(InventoryItem, pk=item_id, household=household)
             inventory_item.delete()
+            if request.headers.get("X-Requested-With") == "XMLHttpRequest":
+                return JsonResponse({"success": True})
             return redirect("inventory:list")
 
     if edit_form is None:

@@ -32,8 +32,9 @@ def home(request):
     # Inventory-based recipe suggestions
     inventory_items = InventoryItem.objects.filter(
         household=household
-    ).select_related("ingredient")[:20]
+    ).select_related("ingredient")
 
+    has_inventory = inventory_items.exists()
     inventory_ingredient_ids = set(i.ingredient_id for i in inventory_items)
 
     # Find recipes where most ingredients are in inventory
@@ -50,7 +51,7 @@ def home(request):
             continue
         matches = recipe_ingredient_ids & inventory_ingredient_ids
         match_ratio = len(matches) / len(recipe_ingredient_ids)
-        if match_ratio >= 0.4 and len(matches) >= 1:
+        if match_ratio >= 0.25 and len(matches) >= 1:
             matched_names = [
                 i.ingredient.name for i in inventory_items
                 if i.ingredient_id in matches
@@ -79,7 +80,7 @@ def home(request):
         "shopping_count": shopping_count,
         "today": today,
         "household": household,
-        "has_inventory": inventory_items.exists(),
+        "has_inventory": has_inventory,
     })
 
 

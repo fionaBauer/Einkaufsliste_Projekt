@@ -57,6 +57,8 @@ def ingredient_list(request):
 
             if edit_form.is_valid():
                 edit_form.save()
+                if request.headers.get("X-Requested-With") == "XMLHttpRequest":
+                    return JsonResponse({"success": True})
                 return redirect("ingredients:list")
             edit_modal_open = True
 
@@ -64,6 +66,8 @@ def ingredient_list(request):
             ingredient_id = request.POST.get("ingredient_id")
             ingredient = get_object_or_404(Ingredient, pk=ingredient_id)
             ingredient.delete()
+            if request.headers.get("X-Requested-With") == "XMLHttpRequest":
+                return JsonResponse({"success": True})
             return redirect("ingredients:list")
 
     if edit_form is None:
