@@ -14,14 +14,14 @@ const UNITS = [
 function openBarcodeScanner(mode, shoppingListId) {
     barcodeMode = mode;
     barcodeShoppingListId = shoppingListId || null;
-    document.getElementById("barcodeScannerModal").classList.add("active");
+    document.getElementById("barcodeScannerModal").classList.remove("hidden");
     loadHtml5QrCode();
 }
 
 function closeBarcodeScanner() {
     stopScanner();
-    document.getElementById("barcodeScannerModal").classList.remove("active");
-    document.getElementById("barcodeResultModal").classList.remove("active");
+    document.getElementById("barcodeScannerModal").classList.add("hidden");
+    document.getElementById("barcodeResultModal").classList.add("hidden");
 }
 
 function loadHtml5QrCode() {
@@ -62,7 +62,7 @@ function startScanner() {
             },
             (decodedText) => {
                 stopScanner();
-                document.getElementById("barcodeScannerModal").classList.remove("active");
+                document.getElementById("barcodeScannerModal").classList.add("hidden");
                 handleBarcode(decodedText);
             },
             (errorMessage) => { /* ignore scan errors */ }
@@ -103,8 +103,8 @@ function showBarcodeResult(data) {
             <p style="color:#888;font-size:14px;">Barcode: ${data.barcode}</p>
             <p style="font-size:14px;">Produkt konnte nicht identifiziert werden.</p>
         `;
-        actions.innerHTML = `<button class="btn btn-secondary" onclick="document.getElementById('barcodeResultModal').classList.remove('active')">Schließen</button>`;
-        modal.classList.add("active");
+        actions.innerHTML = `<button class="btn btn-secondary" onclick="document.getElementById('barcodeResultModal').classList.add('hidden')">Schließen</button>`;
+        modal.classList.remove("hidden");
         return;
     }
 
@@ -162,7 +162,7 @@ function showBarcodeResult(data) {
 
     if (barcodeMode === "inventory") {
         actions.innerHTML = `
-            <button class="btn btn-secondary" onclick="document.getElementById('barcodeResultModal').classList.remove('active')">Abbrechen</button>
+            <button class="btn btn-secondary" onclick="document.getElementById('barcodeResultModal').classList.add('hidden')">Abbrechen</button>
             <button class="btn btn-primary" onclick='addBarcodeToInventory(${JSON.stringify(data)})'>Zum Inventar</button>
         `;
     } else {
@@ -170,13 +170,13 @@ function showBarcodeResult(data) {
             ? `<button class="btn btn-secondary" onclick="removeFromInventory(${data.inventory_id})">Aus Inventar entfernen</button>`
             : "";
         actions.innerHTML = `
-            <button class="btn btn-secondary" onclick="document.getElementById('barcodeResultModal').classList.remove('active')">Abbrechen</button>
+            <button class="btn btn-secondary" onclick="document.getElementById('barcodeResultModal').classList.add('hidden')">Abbrechen</button>
             ${removeBtn}
             <button class="btn btn-primary" onclick='addBarcodeToShopping(${JSON.stringify(data)})'>Zur Einkaufsliste</button>
         `;
     }
 
-    modal.classList.add("active");
+    modal.classList.remove("hidden");
 }
 
 async function addBarcodeToInventory(data) {
@@ -190,7 +190,7 @@ async function addBarcodeToInventory(data) {
     });
     const result = await res.json();
     if (result.success) {
-        document.getElementById("barcodeResultModal").classList.remove("active");
+        document.getElementById("barcodeResultModal").classList.add("hidden");
         showGlobalToast(`${name} zum Inventar hinzugefügt`, "success");
         setTimeout(() => window.location.reload(), 800);
     }
@@ -207,7 +207,7 @@ async function addBarcodeToShopping(data) {
     });
     const result = await res.json();
     if (result.success) {
-        document.getElementById("barcodeResultModal").classList.remove("active");
+        document.getElementById("barcodeResultModal").classList.add("hidden");
         showGlobalToast(`${name} zur Einkaufsliste hinzugefügt`, "success");
         setTimeout(() => window.location.reload(), 800);
     }
@@ -241,7 +241,17 @@ function showGlobalToast(message, type = "success") {
 }
 
 document.addEventListener("DOMContentLoaded", () => {
+    // Ensure modals start closed
+    document.getElementById("barcodeScannerModal")?.classList.add("hidden");
+    document.getElementById("barcodeResultModal")?.classList.add("hidden");
+
     document.getElementById("barcodeCloseBtn")?.addEventListener("click", closeBarcodeScanner);
+
+window.addEventListener("pageshow", () => {
+    document.getElementById("barcodeScannerModal")?.classList.add("hidden");
+    document.getElementById("barcodeResultModal")?.classList.add("hidden");
+    stopScanner();
+});
     document.getElementById("barcodeScannerModal")?.addEventListener("click", e => {
         if (e.target === document.getElementById("barcodeScannerModal")) closeBarcodeScanner();
     });
