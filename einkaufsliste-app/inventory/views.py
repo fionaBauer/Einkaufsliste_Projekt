@@ -6,6 +6,7 @@ from django.shortcuts import get_object_or_404, redirect, render
 from ingredients.models import IngredientCategory
 from .forms import InventoryItemForm
 from .models import InventoryItem
+from django.views.decorators.http import require_POST
 
 from recipes.views import _from_base_unit, _to_base_unit
 
@@ -314,3 +315,62 @@ def apply_recipe_consumption(request):
             "success": False,
             "error": f"Verbrauch konnte nicht angewendet werden: {str(error)}",
         }, status=500)
+
+
+@login_required
+@require_POST
+def barcode_add(request):
+    """Add a scanned product to inventory."""
+    import json
+    data = json.loads(request.body)
+    household = request.user.households.first()
+
+    matched_name = (data.get("matched_name") or "").strip()
+    product_name = (data.get("product_name") or "").strip()
+    quantity = data.get("quantity")
+    unit = data.get("unit") or "g"
+
+    if not matched_name:
+        return JsonResponse({"success": False, "error": "Kein Name"}, status=400)
+
+    from recipes.views import _get_or_create_matching_ingredient
+    from ingredients.models import Unit as UnitChoices
+    ingredient = _get_or_create_matching_ingredient(matched_name, unit)
+
+    try:
+        from decimal import Decimal
+        qty = Decimal(str(quantity)) if quantity else None
+    except Exception:
+        qty = None
+
+    valid_units = [u[0] for u in UnitChoices.choices]
+    if unit not in valid_units:
+        unit = ingredient.default_unit or "g"
+
+    # Add note with exact product name if different
+    notes = product_name if product_name.lower() != matched_name.lower() else ""
+
+    item, created = InventoryItem.objects.get_or_create(
+        household=household,
+        ingredient=ingredient,
+        defaults={"quantity": qty, "unit": unit, "notes": notes},
+    )
+
+    if not created and qty:
+        from decimal import Decimal
+        item.quantity = (item.quantity or Decimal("0")) + qty
+        if notes:
+            item.notes = notes
+        item.save()
+
+    return JsonResponse({"success": True, "created": created})
+
+
+@login_required
+@require_POST
+def barcode_remove(request, item_id):
+    """Remove an inventory item (after scanning for shopping list)."""
+    household = request.user.households.first()
+    item = get_object_or_404(InventoryItem, pk=item_id, household=household)
+    item.delete()
+    return JsonResponse({"success": True})

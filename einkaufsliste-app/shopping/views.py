@@ -3,7 +3,9 @@ from decimal import Decimal
 
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
+from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
+from django.views.decorators.http import require_POST
 
 from inventory.models import InventoryItem, Unit
 from recipes.models import Recipe
@@ -394,3 +396,61 @@ def _merge_source_details(existing_sources, new_sources):
             merged.append(new_source)
 
     return merged
+
+
+@login_required
+@require_POST
+def barcode_add(request):
+    """Add a scanned product to the active shopping list."""
+    import json
+    from decimal import Decimal
+    data = json.loads(request.body)
+    household = request.user.households.first()
+
+    matched_name = (data.get("matched_name") or "").strip()
+    product_name = (data.get("product_name") or "").strip()
+    quantity = data.get("quantity")
+    unit = data.get("unit") or "g"
+    shopping_list_id = data.get("shopping_list_id")
+
+    if not matched_name:
+        return JsonResponse({"success": False, "error": "Kein Name"}, status=400)
+
+    from recipes.views import _get_or_create_matching_ingredient
+    ingredient = _get_or_create_matching_ingredient(matched_name, unit)
+
+    try:
+        qty = Decimal(str(quantity)) if quantity else Decimal("1")
+    except Exception:
+        qty = Decimal("1")
+
+    # Get shopping list
+    if shopping_list_id:
+        shopping_list_obj = ShoppingList.objects.filter(pk=shopping_list_id, household=household).first()
+    else:
+        shopping_list_obj = _get_or_create_active_shopping_list(household)
+
+    if not shopping_list_obj:
+        return JsonResponse({"success": False, "error": "Keine Einkaufsliste"}, status=400)
+
+    notes = product_name if product_name.lower() != matched_name.lower() else ""
+
+    # Check if already in list
+    existing = ShoppingListItem.objects.filter(
+        shopping_list=shopping_list_obj,
+        ingredient=ingredient,
+    ).first()
+
+    if existing:
+        existing.quantity = (existing.quantity or Decimal("0")) + qty
+        existing.save()
+    else:
+        ShoppingListItem.objects.create(
+            shopping_list=shopping_list_obj,
+            ingredient=ingredient,
+            quantity=qty,
+            unit=unit,
+            status=ShoppingListItem.STATUS_TO_BUY,
+        )
+
+    return JsonResponse({"success": True, "shopping_list_id": shopping_list_obj.pk})

@@ -96,3 +96,55 @@ def register(request):
     else:
         form = RegisterForm()
     return render(request, "registration/register.html", {"form": form})
+
+
+from django.views.decorators.http import require_POST as _require_POST
+from django.http import JsonResponse as _JsonResponse
+from django.views.decorators.csrf import csrf_exempt as _csrf_exempt
+
+@login_required
+def barcode_lookup(request):
+    """Look up a barcode and match against existing ingredients."""
+    from core.barcode import lookup_barcode, match_ingredient_name
+    from ingredients.models import Ingredient
+
+    barcode = request.GET.get("barcode", "").strip()
+    if not barcode:
+        return _JsonResponse({"found": False, "error": "Kein Barcode angegeben"}, status=400)
+
+    result = lookup_barcode(barcode)
+
+    if not result["found"]:
+        return _JsonResponse({"found": False, "barcode": barcode})
+
+    # Match against existing ingredients
+    household = request.user.households.first()
+    all_ingredients = Ingredient.objects.all()
+    matched_name = match_ingredient_name(result["product_name"], all_ingredients)
+
+    # Check if ingredient already exists
+    from ingredients.models import Unit
+    existing = Ingredient.objects.filter(name__iexact=matched_name).first()
+
+    # Check inventory
+    from inventory.models import InventoryItem
+    inventory_item = None
+    if existing and household:
+        inventory_item = InventoryItem.objects.filter(
+            household=household,
+            ingredient=existing
+        ).first()
+
+    return _JsonResponse({
+        "found": True,
+        "barcode": barcode,
+        "product_name": result["product_name"],
+        "matched_name": matched_name,
+        "brand": result.get("brand", ""),
+        "quantity": result.get("quantity", ""),
+        "ingredient_id": existing.id if existing else None,
+        "in_inventory": inventory_item is not None,
+        "inventory_quantity": str(inventory_item.quantity) if inventory_item and inventory_item.quantity else None,
+        "inventory_unit": inventory_item.unit if inventory_item else None,
+        "inventory_id": inventory_item.id if inventory_item else None,
+    })

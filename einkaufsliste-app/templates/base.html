@@ -87,8 +87,34 @@
         {% endfor %}
     </div>
 
+    <!-- Barcode Scanner Modal -->
+    <div class="modal-overlay" id="barcodeScannerModal">
+        <div class="modal barcode-modal">
+            <div class="barcode-modal-header">
+                <h2 class="barcode-modal-title">Barcode scannen</h2>
+                <button type="button" class="barcode-close-btn" id="barcodeCloseBtn">×</button>
+            </div>
+            <div id="barcodeQrReader" style="width:100%;"></div>
+            <div class="barcode-manual-wrap">
+                <input type="text" id="barcodeManualInput" class="barcode-manual-input"
+                    placeholder="Barcode manuell eingeben..." inputmode="numeric">
+                <button type="button" class="btn btn-secondary" id="barcodeManualBtn">Suchen</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Barcode Result Modal -->
+    <div class="modal-overlay" id="barcodeResultModal">
+        <div class="modal">
+            <h2 class="barcode-result-title" id="barcodeResultTitle">Produkt gefunden</h2>
+            <div class="barcode-result-body" id="barcodeResultBody"></div>
+            <div class="modal-actions" id="barcodeResultActions"></div>
+        </div>
+    </div>
+
     {% block extra_js %}{% endblock %}
 
+    <script src="{% static 'global/js/barcode.js' %}"></script>
     <script>
     document.addEventListener("DOMContentLoaded", function() {
         const trigger = document.getElementById("tab-more-trigger");
