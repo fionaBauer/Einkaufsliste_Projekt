@@ -126,3 +126,12 @@ def ingredient_create_modal(request):
             "category": ingredient.category,
         }
     })
+
+from django.http import JsonResponse as _JsonResponse
+from django.contrib.auth.decorators import login_required as _login_required
+
+@_login_required
+def ingredient_api_list(request):
+    """Returns all ingredients as JSON for autocomplete."""
+    ingredients = Ingredient.objects.values("id", "name", "default_unit").order_by("name")
+    return _JsonResponse(list(ingredients), safe=False)

@@ -208,7 +208,63 @@ class RecipeIngredientDeleteView(LoginRequiredMixin, DeleteView):
             return JsonResponse({"success": True})
 
         return redirect("recipes:recipe_detail", pk=recipe_pk)
-    
+
+
+@login_required
+@require_POST
+def inline_ingredient_create(request, recipe_pk):
+    """API for inline ingredient creation during recipe creation."""
+    import json as json_module
+    household = request.user.households.first()
+    recipe = get_object_or_404(Recipe, pk=recipe_pk, household=household)
+
+    content_type = request.content_type or ""
+    if "application/json" in content_type:
+        data = json_module.loads(request.body)
+        name = (data.get("name") or "").strip()
+        quantity = data.get("quantity")
+        unit = data.get("unit") or Unit.GRAM
+        notes = (data.get("notes") or "").strip()
+    else:
+        name = (request.POST.get("ingredient_search") or request.POST.get("name") or "").strip()
+        quantity = request.POST.get("quantity")
+        unit = request.POST.get("unit") or Unit.GRAM
+        notes = (request.POST.get("notes") or "").strip()
+
+    if not name:
+        return JsonResponse({"success": False, "error": "Name fehlt"}, status=400)
+
+    ingredient = _get_or_create_matching_ingredient(
+        ingredient_name=name,
+        default_unit=unit or Unit.GRAM,
+    )
+
+    try:
+        qty = Decimal(str(quantity)) if quantity else Decimal("1")
+    except Exception:
+        qty = Decimal("1")
+
+    valid_units = [u[0] for u in Unit.choices]
+    if unit not in valid_units:
+        unit = ingredient.default_unit or Unit.GRAM
+
+    ri, created = RecipeIngredient.objects.get_or_create(
+        recipe=recipe,
+        ingredient=ingredient,
+        defaults={"quantity": qty, "unit": unit, "notes": notes},
+    )
+
+    if not created:
+        ri.quantity += qty
+        ri.save()
+
+    return JsonResponse({
+        "success": True,
+        "ingredient_id": ingredient.id,
+        "ingredient_name": ingredient.name,
+    })
+
+
 @login_required
 @require_POST
 def extract_recipe_from_link(request):

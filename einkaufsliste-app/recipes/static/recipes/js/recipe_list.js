@@ -524,6 +524,7 @@ let extractedRecipeData = null;
     }
 });
 
+
 function initInlineIngredients() {
     const list = document.getElementById("inline-ingredients-list");
     const addBtn = document.getElementById("add-inline-ingredient");
@@ -532,27 +533,63 @@ function initInlineIngredients() {
 
     const UNITS = [
         ["g", "g"], ["kg", "kg"], ["ml", "ml"], ["l", "l"],
-        ["pcs", "Stück"], ["el", "EL"], ["tl", "TL"]
+        ["pcs", "Stück"], ["pkg", "Packung"], ["el", "EL"], ["tl", "TL"]
     ];
+
+    // Fetch existing ingredients for autocomplete
+    let ingredientSuggestions = [];
+    fetch("/ingredients/api/list/").then(r => r.ok ? r.json() : []).then(data => {
+        ingredientSuggestions = data;
+    }).catch(() => {});
 
     function createRow() {
         const row = document.createElement("div");
         row.className = "inline-ingredient-row";
 
+        const nameWrap = document.createElement("div");
+        nameWrap.style.position = "relative";
+        nameWrap.style.flex = "1";
+        nameWrap.style.minWidth = "0";
+
         const nameInput = document.createElement("input");
         nameInput.type = "text";
         nameInput.placeholder = "Zutat";
-        nameInput.name = "inline_ingredient_name[]";
+        nameInput.autocomplete = "off";
+        nameInput.style.width = "100%";
+
+        const suggestions = document.createElement("div");
+        suggestions.style.cssText = "position:absolute;top:100%;left:0;right:0;background:white;border:1.5px solid #e5e5e5;border-radius:8px;box-shadow:0 4px 12px rgba(0,0,0,0.1);z-index:100;max-height:160px;overflow-y:auto;display:none;";
+
+        nameInput.addEventListener("input", () => {
+            const q = nameInput.value.toLowerCase().trim();
+            suggestions.innerHTML = "";
+            if (!q || !ingredientSuggestions.length) { suggestions.style.display = "none"; return; }
+            const matches = ingredientSuggestions.filter(i => i.name.toLowerCase().includes(q)).slice(0, 6);
+            if (!matches.length) { suggestions.style.display = "none"; return; }
+            matches.forEach(ing => {
+                const opt = document.createElement("div");
+                opt.textContent = ing.name;
+                opt.style.cssText = "padding:8px 12px;cursor:pointer;font-size:13px;";
+                opt.addEventListener("mousedown", e => { e.preventDefault(); nameInput.value = ing.name; suggestions.style.display = "none"; });
+                opt.addEventListener("mouseover", () => opt.style.background = "#f5f5f5");
+                opt.addEventListener("mouseout", () => opt.style.background = "");
+                suggestions.appendChild(opt);
+            });
+            suggestions.style.display = "block";
+        });
+
+        nameInput.addEventListener("blur", () => setTimeout(() => { suggestions.style.display = "none"; }, 150));
+        nameWrap.appendChild(nameInput);
+        nameWrap.appendChild(suggestions);
 
         const qtyInput = document.createElement("input");
         qtyInput.type = "number";
         qtyInput.placeholder = "Menge";
-        qtyInput.name = "inline_ingredient_qty[]";
         qtyInput.min = "0";
         qtyInput.step = "0.01";
+        qtyInput.style.width = "70px";
 
         const unitSelect = document.createElement("select");
-        unitSelect.name = "inline_ingredient_unit[]";
         UNITS.forEach(([val, label]) => {
             const opt = document.createElement("option");
             opt.value = val;
@@ -566,7 +603,7 @@ function initInlineIngredients() {
         removeBtn.innerHTML = "×";
         removeBtn.addEventListener("click", () => row.remove());
 
-        row.appendChild(nameInput);
+        row.appendChild(nameWrap);
         row.appendChild(qtyInput);
         row.appendChild(unitSelect);
         row.appendChild(removeBtn);
@@ -591,36 +628,32 @@ function initInlineIngredients() {
                 body: formData,
                 headers: { "X-Requested-With": "XMLHttpRequest" },
             });
-
             if (res.headers.get("content-type")?.includes("application/json")) {
                 const data = await res.json();
                 if (!data.success) return;
                 recipeId = data.recipe_id;
             }
-
             if (!recipeId) { form.submit(); return; }
         } catch(err) { form.submit(); return; }
 
         const csrfToken = form.querySelector("[name=csrfmiddlewaretoken]").value;
-        const ingredientCreateUrl = `/recipes/${recipeId}/ingredients/create/`;
+        const ingredientCreateUrl = `/recipes/${recipeId}/ingredients/inline-create/`;
 
         for (const row of rows) {
-            const name = row.querySelector("input[type=text]").value.trim();
-            const qty = row.querySelector("input[type=number]").value.trim();
-            const unit = row.querySelector("select").value;
+            const nameInput = row.querySelector("input[type=text]");
+            const name = nameInput ? nameInput.value.trim() : "";
+            const qty = row.querySelector("input[type=number]")?.value.trim();
+            const unit = row.querySelector("select")?.value;
             if (!name) continue;
-
-            const data = new FormData();
-            data.append("csrfmiddlewaretoken", csrfToken);
-            data.append("ingredient_search", name);
-            data.append("quantity", qty || "1");
-            data.append("unit", unit);
-            data.append("notes", "");
 
             await fetch(ingredientCreateUrl, {
                 method: "POST",
-                body: data,
-                headers: { "X-Requested-With": "XMLHttpRequest" },
+                headers: {
+                    "Content-Type": "application/json",
+                    "X-CSRFToken": csrfToken,
+                    "X-Requested-With": "XMLHttpRequest",
+                },
+                body: JSON.stringify({ name, quantity: qty || "1", unit: unit || "g", notes: "" }),
             });
         }
 
