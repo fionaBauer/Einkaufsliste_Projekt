@@ -65,7 +65,8 @@
                             <span class="ingredient-meta">
                                 <span
                                     class="scaled-quantity"
-                                    data-base-quantity="{{ item.quantity|floatformat:2 }}">
+                                    data-base-quantity="{{ item.quantity|floatformat:2 }}"
+                                    data-unit="{{ item.unit }}">
                                     {{ item.quantity }}
                                 </span>
                                 {{ item.unit }}

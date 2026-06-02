@@ -267,13 +267,20 @@ document.addEventListener("DOMContentLoaded", () => {
 
         quantityElements.forEach((element) => {
             const baseQuantity = parseFloat(element.dataset.baseQuantity);
+            const unit = element.dataset.unit || "";
 
             if (isNaN(baseQuantity)) {
                 return;
             }
 
             const scaledQuantity = baseQuantity * factor;
-            element.textContent = formatQuantity(scaledQuantity);
+
+            // Stück und Packung: immer aufrunden auf ganze Zahlen
+            if (unit === "pcs" || unit === "pkg") {
+                element.textContent = String(Math.ceil(scaledQuantity));
+            } else {
+                element.textContent = formatQuantity(scaledQuantity);
+            }
         });
     }
 
