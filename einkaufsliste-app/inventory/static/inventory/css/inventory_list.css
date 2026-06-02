@@ -518,3 +518,57 @@ label {
     .category-card-icon { font-size: 24px; }
     .category-card-name { font-size: 13px; }
 }
+
+/* ── Consume Recipe Modal Fix ── */
+#consumeRecipeModal .modal {
+    max-height: 85vh;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+}
+
+#consumeRecipeModal .consume-preview-container {
+    overflow-y: auto;
+    max-height: 300px;
+    margin-top: 16px;
+}
+
+#consume_recipe_search {
+    width: 100%;
+    padding: 10px 12px;
+    border: 1.5px solid #e5e5e5;
+    border-radius: 10px;
+    font-size: 15px;
+    box-sizing: border-box;
+    font-family: inherit;
+}
+
+#consume_recipe_search:focus {
+    outline: none;
+    border-color: #111;
+}
+
+#consume_servings {
+    width: 100%;
+    padding: 10px 12px;
+    border: 1.5px solid #e5e5e5;
+    border-radius: 10px;
+    font-size: 15px;
+    box-sizing: border-box;
+    font-family: inherit;
+}
+
+@media (max-width: 768px) {
+    #consumeRecipeModal .modal-overlay,
+    #consumeRecipeModal.modal-overlay {
+        align-items: flex-end;
+        padding: 0;
+    }
+
+    #consumeRecipeModal .modal {
+        width: 100%;
+        max-width: 100%;
+        border-radius: 20px 20px 0 0;
+        max-height: 88vh;
+    }
+}

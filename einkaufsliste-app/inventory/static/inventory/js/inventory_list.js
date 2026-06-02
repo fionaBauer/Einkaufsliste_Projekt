@@ -270,10 +270,7 @@ document.addEventListener("DOMContentLoaded", () => {
             }
 
             if (editIngredientSearch) {
-                const selectedOption = editModal.querySelector(
-                    `#inventory-ingredient-options-edit option[data-id="${button.dataset.ingredient}"]`
-                );
-                editIngredientSearch.value = selectedOption ? selectedOption.value : "";
+                editIngredientSearch.value = button.dataset.name || "";
             }
 
             if (editQuantity) {
