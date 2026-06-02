@@ -323,7 +323,7 @@ document.addEventListener("DOMContentLoaded", () => {
             event.preventDefault();
             const formData = new FormData(form);
             try {
-                const res = await fetch(form.action || window.location.href, {
+                const res = await fetch(window.location.href, {
                     method: "POST",
                     body: formData,
                     headers: { "X-Requested-With": "XMLHttpRequest" },
@@ -377,7 +377,7 @@ document.addEventListener("DOMContentLoaded", () => {
         const formData = new FormData(form);
 
         try {
-            const response = await fetch(form.action, {
+            const response = await fetch(window.location.href, {
                 method: form.method || "POST",
                 body: formData,
                 headers: {
