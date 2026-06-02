@@ -103,10 +103,15 @@ class RecipeUpdateView(LoginRequiredMixin, UpdateView):
         household = self.request.user.households.first()
         return Recipe.objects.filter(household=household)
 
+    def get_context_data(self, **kwargs):
+        ctx = super().get_context_data(**kwargs)
+        ctx["unit_choices"] = Unit.choices
+        return ctx
+
     def form_valid(self, form):
         self.object = form.save()
         if self.request.headers.get("X-Requested-With") == "XMLHttpRequest":
-            return JsonResponse({"success": True})
+            return JsonResponse({"success": True, "recipe_id": self.object.pk})
         return super().form_valid(form)
 
     def form_invalid(self, form):
@@ -208,6 +213,47 @@ class RecipeIngredientDeleteView(LoginRequiredMixin, DeleteView):
             return JsonResponse({"success": True})
 
         return redirect("recipes:recipe_detail", pk=recipe_pk)
+
+
+@login_required
+@require_POST
+def inline_ingredient_update(request, recipe_pk, ri_pk):
+    """Update an existing RecipeIngredient inline."""
+    import json as json_module
+    household = request.user.households.first()
+    recipe = get_object_or_404(Recipe, pk=recipe_pk, household=household)
+    ri = get_object_or_404(RecipeIngredient, pk=ri_pk, recipe=recipe)
+
+    data = json_module.loads(request.body)
+    name = (data.get("name") or "").strip()
+    quantity = data.get("quantity")
+    unit = data.get("unit") or Unit.GRAM
+
+    if name:
+        ingredient = _get_or_create_matching_ingredient(name, unit)
+        ri.ingredient = ingredient
+
+    try:
+        ri.quantity = Decimal(str(quantity)) if quantity else Decimal("1")
+    except Exception:
+        ri.quantity = Decimal("1")
+
+    valid_units = [u[0] for u in Unit.choices]
+    ri.unit = unit if unit in valid_units else Unit.GRAM
+    ri.save()
+
+    return JsonResponse({"success": True})
+
+
+@login_required
+@require_POST
+def inline_ingredient_delete(request, recipe_pk, ri_pk):
+    """Delete a RecipeIngredient inline."""
+    household = request.user.households.first()
+    recipe = get_object_or_404(Recipe, pk=recipe_pk, household=household)
+    ri = get_object_or_404(RecipeIngredient, pk=ri_pk, recipe=recipe)
+    ri.delete()
+    return JsonResponse({"success": True})
 
 
 @login_required

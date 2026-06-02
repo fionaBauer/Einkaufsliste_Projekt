@@ -11,6 +11,8 @@ from .views import (
     extract_recipe_from_link,
     create_recipe_from_extracted_data,
     inline_ingredient_create,
+    inline_ingredient_update,
+    inline_ingredient_delete,
     ffmpeg_debug
 )
 
@@ -26,6 +28,8 @@ urlpatterns = [
 
     path("<int:recipe_pk>/ingredients/create/", RecipeIngredientCreateView.as_view(), name="recipeingredient_create"),
     path("<int:recipe_pk>/ingredients/inline-create/", inline_ingredient_create, name="recipeingredient_inline_create"),
+    path("<int:recipe_pk>/ingredients/inline-update/<int:ri_pk>/", inline_ingredient_update, name="recipeingredient_inline_update"),
+    path("<int:recipe_pk>/ingredients/inline-delete/<int:ri_pk>/", inline_ingredient_delete, name="recipeingredient_inline_delete"),
     path("ingredients/<int:pk>/edit/", RecipeIngredientUpdateView.as_view(), name="recipeingredient_edit"),
     path("ingredients/<int:pk>/delete/", RecipeIngredientDeleteView.as_view(), name="recipeingredient_delete"),
 

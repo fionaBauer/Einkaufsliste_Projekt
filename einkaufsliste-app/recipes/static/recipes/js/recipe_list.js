@@ -2,6 +2,15 @@ document.addEventListener("DOMContentLoaded", () => {
     const modalOverlay = document.getElementById("modal-overlay");
     const modalBody = document.getElementById("modal-body");
 
+    // ── Card selected effect ──
+    document.addEventListener("change", (event) => {
+        const checkbox = event.target;
+        if (checkbox.name !== "recipes") return;
+        const card = checkbox.closest(".recipe-card");
+        if (!card) return;
+        card.classList.toggle("selected", checkbox.checked);
+    });
+
     const shoppingModal = document.getElementById("shoppingCreateModal");
     const openShoppingModalBtn = document.getElementById("openShoppingModalBtn");
     const closeShoppingModalBtn = document.getElementById("closeShoppingModalBtn");
@@ -101,7 +110,7 @@ let extractedRecipeData = null;
         }
 
         document.addEventListener("click", (event) => {
-            const trigger = event.target.closest(".open-edit-modal, .open-delete-modal");
+            const trigger = event.target.closest(".open-edit-modal, .open-delete-modal, .open-modal-btn");
             if (!trigger) {
                 return;
             }
@@ -116,8 +125,8 @@ let extractedRecipeData = null;
                 return;
             }
 
-            // If inline ingredients are present, let initInlineIngredients handle it
-            if (form.id === "recipe-main-form" && document.getElementById("inline-ingredients-list")?.children.length > 0) {
+            // If recipe-main-form, let initInlineIngredients handle it
+            if (form.id === "recipe-main-form") {
                 return;
             }
 
@@ -620,10 +629,12 @@ function initInlineIngredients() {
         e.preventDefault();
 
         const formData = new FormData(form);
-        let recipeId = null;
+        const existingRecipeId = form.dataset.recipeId || null;
+        let recipeId = existingRecipeId;
 
+        // Save recipe metadata first
         try {
-            const res = await fetch(form.action, {
+            const res = await fetch(window.location.href, {
                 method: "POST",
                 body: formData,
                 headers: { "X-Requested-With": "XMLHttpRequest" },
@@ -631,30 +642,51 @@ function initInlineIngredients() {
             if (res.headers.get("content-type")?.includes("application/json")) {
                 const data = await res.json();
                 if (!data.success) return;
-                recipeId = data.recipe_id;
+                recipeId = data.recipe_id || existingRecipeId;
             }
             if (!recipeId) { form.submit(); return; }
         } catch(err) { form.submit(); return; }
 
         const csrfToken = form.querySelector("[name=csrfmiddlewaretoken]").value;
-        const ingredientCreateUrl = `/recipes/${recipeId}/ingredients/inline-create/`;
+
+        // Track which existing IDs are still present
+        const presentExistingIds = new Set();
 
         for (const row of rows) {
             const nameInput = row.querySelector("input[type=text]");
             const name = nameInput ? nameInput.value.trim() : "";
             const qty = row.querySelector("input[type=number]")?.value.trim();
             const unit = row.querySelector("select")?.value;
-            if (!name) continue;
+            const existingId = row.dataset.existingId;
 
-            await fetch(ingredientCreateUrl, {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                    "X-CSRFToken": csrfToken,
-                    "X-Requested-With": "XMLHttpRequest",
-                },
-                body: JSON.stringify({ name, quantity: qty || "1", unit: unit || "g", notes: "" }),
-            });
+            if (!name) {
+                // Delete if it was existing
+                if (existingId) {
+                    await fetch(`/recipes/${recipeId}/ingredients/inline-delete/${existingId}/`, {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json", "X-CSRFToken": csrfToken },
+                        body: JSON.stringify({}),
+                    });
+                }
+                continue;
+            }
+
+            if (existingId) {
+                // Update existing
+                presentExistingIds.add(existingId);
+                await fetch(`/recipes/${recipeId}/ingredients/inline-update/${existingId}/`, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json", "X-CSRFToken": csrfToken },
+                    body: JSON.stringify({ name, quantity: qty || "1", unit: unit || "g" }),
+                });
+            } else {
+                // Create new
+                await fetch(`/recipes/${recipeId}/ingredients/inline-create/`, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json", "X-CSRFToken": csrfToken },
+                    body: JSON.stringify({ name, quantity: qty || "1", unit: unit || "g", notes: "" }),
+                });
+            }
         }
 
         window.location.href = `/recipes/${recipeId}/`;

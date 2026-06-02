@@ -26,90 +26,72 @@
                 </p>
             </div>
 
-            <div class="servings-box">
-                <label for="target-servings" class="servings-label">Portionen anpassen</label>
-
-                <div class="servings-controls">
-                    <button type="button" class="servings-btn" id="decrease-servings">−</button>
-                    <input
-                        type="number"
-                        id="target-servings"
-                        class="servings-input"
-                        min="1"
-                        value="{{ recipe.servings }}">
-                    <button type="button" class="servings-btn" id="increase-servings">+</button>
-                </div>
-
-                <button type="button" class="reset-servings-btn" id="reset-servings">
-                    Zurücksetzen
+            <div class="recipe-header-actions">
+                <button type="button" class="btn btn-secondary open-modal-btn"
+                    data-url="{% url 'recipes:recipe_edit' recipe.pk %}">
+                    Bearbeiten
+                </button>
+                <button type="button" class="btn btn-danger open-modal-btn"
+                    data-url="{% url 'recipes:recipe_delete' recipe.pk %}">
+                    Löschen
                 </button>
             </div>
         </div>
 
+        <!-- Servings -->
+        <div class="servings-box">
+            <span class="servings-label">Portionen anpassen</span>
+            <div class="servings-controls">
+                <button type="button" class="servings-btn" id="decrease-servings">−</button>
+                <input type="number" id="target-servings" class="servings-input"
+                    min="1" value="{{ recipe.servings }}">
+                <button type="button" class="servings-btn" id="increase-servings">+</button>
+            </div>
+            <button type="button" class="reset-servings-btn" id="reset-servings">Zurücksetzen</button>
+        </div>
+
+        <!-- Ingredients -->
         <section class="section">
             <div class="section-header">
                 <h2 class="section-title">Zutaten</h2>
-                <button
-                    type="button"
-                    class="add-button open-modal-btn"
-                    data-url="{% url 'recipes:recipeingredient_create' recipe.pk %}">
-                    +
-                </button>
             </div>
 
             <div class="ingredient-list">
                 {% for item in recipe.recipe_ingredients.all %}
-                    <div class="ingredient-item">
-                        <div class="ingredient-main">
-                            <span class="ingredient-name">{{ item.ingredient.name }}</span>
-                            <span class="ingredient-meta">
-                                <span
-                                    class="scaled-quantity"
-                                    data-base-quantity="{{ item.quantity|floatformat:2 }}"
-                                    data-unit="{{ item.unit }}">
-                                    {{ item.quantity }}
-                                </span>
-                                {{ item.unit }}
-                                {% if item.notes %}• {{ item.notes }}{% endif %}
+                <div class="ingredient-item">
+                    <div class="ingredient-main">
+                        <span class="ingredient-name">{{ item.ingredient.name }}</span>
+                        <span class="ingredient-meta">
+                            <span class="scaled-quantity"
+                                data-base-quantity="{{ item.quantity|floatformat:2 }}"
+                                data-unit="{{ item.unit }}">
+                                {{ item.quantity }}
                             </span>
-                        </div>
-
-                        <div class="ingredient-actions">
-                            <button
-                                type="button"
-                                class="action-btn edit-btn open-modal-btn"
-                                data-url="{% url 'recipes:recipeingredient_edit' item.pk %}">
-                                Bearbeiten
-                            </button>
-                            <button
-                                type="button"
-                                class="action-btn delete-btn open-modal-btn"
-                                data-url="{% url 'recipes:recipeingredient_delete' item.pk %}">
-                                Löschen
-                            </button>
-                        </div>
+                            {{ item.unit }}
+                            {% if item.notes %}• {{ item.notes }}{% endif %}
+                        </span>
                     </div>
+                </div>
                 {% empty %}
                     <p class="empty-state">Noch keine Zutaten hinzugefügt.</p>
                 {% endfor %}
             </div>
         </section>
 
+        <!-- Instructions -->
         <section class="section">
             <div class="section-header">
                 <h2 class="section-title">Anleitung</h2>
             </div>
-
             {% if recipe.instructions %}
-                <div class="instructions-box">
-                    {{ recipe.instructions|linebreaks }}
-                </div>
+                <div class="instructions-box">{{ recipe.instructions|linebreaks }}</div>
             {% else %}
                 <p class="empty-state">Keine Anleitung hinterlegt.</p>
             {% endif %}
         </section>
     </div>
 
+    <!-- Modal -->
     <div id="modal-overlay" class="modal-overlay">
         <div class="modal">
             <div id="modal-body"></div>

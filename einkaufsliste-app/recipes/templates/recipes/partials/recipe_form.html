@@ -6,7 +6,8 @@
     {% endif %}
 </h2>
 
-<form method="post" action="{{ request.path }}" enctype="multipart/form-data" id="recipe-main-form">
+<form method="post" action="{{ request.path }}" enctype="multipart/form-data" id="recipe-main-form"
+    {% if form.instance.pk %}data-recipe-id="{{ form.instance.pk }}"{% endif %}>
     {% csrf_token %}
 
     {% for field in form %}
@@ -23,17 +24,36 @@
         </div>
     {% endfor %}
 
-    {% if not form.instance.pk %}
-    <!-- Zutaten direkt beim Erstellen -->
+    <!-- Zutaten (beim Erstellen und Bearbeiten) -->
     <div class="inline-ingredients-section">
         <div class="inline-ingredients-header">
             <span class="inline-ingredients-label">Zutaten</span>
             <button type="button" class="inline-add-btn" id="add-inline-ingredient">+</button>
         </div>
-        <div id="inline-ingredients-list"></div>
+        <div id="inline-ingredients-list">
+            {% if form.instance.pk %}
+                {% for item in form.instance.recipe_ingredients.all %}
+                <div class="inline-ingredient-row" data-existing-id="{{ item.pk }}">
+                    <div style="position:relative;flex:1;min-width:0;">
+                        <input type="text" value="{{ item.ingredient.name }}" placeholder="Zutat"
+                            style="width:100%;">
+                    </div>
+                    <input type="number" value="{{ item.quantity }}" placeholder="Menge"
+                        min="0" step="0.01" style="width:70px;">
+                    <select style="width:90px;">
+                        {% for val, label in unit_choices %}
+                        <option value="{{ val }}" {% if val == item.unit %}selected{% endif %}>{{ label }}</option>
+                        {% endfor %}
+                    </select>
+                    <button type="button" class="inline-remove-btn" title="Löschen">×</button>
+                </div>
+                {% endfor %}
+            {% endif %}
+        </div>
+        {% if not form.instance.pk %}
         <p class="inline-ingredients-hint">Optional – du kannst Zutaten auch später noch hinzufügen</p>
+        {% endif %}
     </div>
-    {% endif %}
 
     <div class="modal-actions">
         <button type="button" class="btn btn-secondary modal-close-btn">Abbrechen</button>
@@ -43,132 +63,43 @@
 
 <style>
 .current-image-preview {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    margin-bottom: 8px;
-    padding: 8px;
-    background: #fafafa;
-    border-radius: 10px;
-    border: 1px solid #ececec;
+    display: flex; align-items: center; gap: 12px;
+    margin-bottom: 8px; padding: 8px;
+    background: #fafafa; border-radius: 10px; border: 1px solid #ececec;
 }
-.image-preview-thumb {
-    width: 56px;
-    height: 56px;
-    object-fit: cover;
-    border-radius: 8px;
-}
-.image-preview-label {
-    font-size: 13px;
-    color: #666;
-}
-
-/* Inline ingredients */
+.image-preview-thumb { width: 56px; height: 56px; object-fit: cover; border-radius: 8px; }
+.image-preview-label { font-size: 13px; color: #666; }
 .inline-ingredients-section {
-    margin: 8px 0 16px;
-    border: 1.5px solid #ebebeb;
-    border-radius: 14px;
-    overflow: hidden;
+    margin: 8px 0 16px; border: 1.5px solid #ebebeb; border-radius: 14px; overflow: hidden;
 }
-
 .inline-ingredients-header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 10px 14px;
-    background: #f9f9f9;
-    border-bottom: 1px solid #ebebeb;
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 10px 14px; background: #f9f9f9; border-bottom: 1px solid #ebebeb;
 }
-
-.inline-ingredients-label {
-    font-size: 13px;
-    font-weight: 700;
-    color: #555;
-    text-transform: uppercase;
-    letter-spacing: 0.4px;
-}
-
+.inline-ingredients-label { font-size: 13px; font-weight: 700; color: #555; text-transform: uppercase; letter-spacing: 0.4px; }
 .inline-add-btn {
-    width: 26px;
-    height: 26px;
-    border-radius: 50%;
-    border: none;
-    background: #1a1a1a;
-    color: white;
-    font-size: 18px;
-    line-height: 1;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    transition: background 0.15s;
+    width: 26px; height: 26px; border-radius: 50%; border: none;
+    background: #1a1a1a; color: white; font-size: 18px; cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
 }
-
 .inline-add-btn:hover { background: #333; }
-
-#inline-ingredients-list {
-    display: flex;
-    flex-direction: column;
-}
-
+#inline-ingredients-list { display: flex; flex-direction: column; }
 .inline-ingredient-row {
-    display: grid;
-    grid-template-columns: 1fr 70px 90px 28px;
-    gap: 6px;
-    padding: 8px 10px;
-    border-bottom: 1px solid #f0f0f0;
-    align-items: center;
+    display: grid; grid-template-columns: 1fr 70px 90px 28px;
+    gap: 6px; padding: 8px 10px; border-bottom: 1px solid #f0f0f0; align-items: center;
 }
-
 .inline-ingredient-row:last-child { border-bottom: none; }
-
 .inline-ingredient-row input,
 .inline-ingredient-row select {
-    padding: 7px 9px;
-    border: 1.5px solid #e5e5e5;
-    border-radius: 8px;
-    font-size: 13px;
-    width: 100%;
-    box-sizing: border-box;
-    font-family: inherit;
+    padding: 7px 9px; border: 1.5px solid #e5e5e5; border-radius: 8px;
+    font-size: 13px; box-sizing: border-box; font-family: inherit;
 }
-
 .inline-ingredient-row input:focus,
-.inline-ingredient-row select:focus {
-    outline: none;
-    border-color: #999;
-}
-
+.inline-ingredient-row select:focus { outline: none; border-color: #999; }
 .inline-remove-btn {
-    background: none;
-    border: none;
-    color: #ccc;
-    font-size: 18px;
-    cursor: pointer;
-    padding: 0;
-    line-height: 1;
-    transition: color 0.15s;
-    display: flex;
-    align-items: center;
-    justify-content: center;
+    background: none; border: none; color: #ccc; font-size: 18px;
+    cursor: pointer; padding: 0; display: flex; align-items: center; justify-content: center;
 }
-
 .inline-remove-btn:hover { color: #e53e3e; }
-
-.inline-ingredients-hint {
-    padding: 8px 14px;
-    font-size: 11px;
-    color: #aaa;
-    margin: 0;
-    background: #fafafa;
-    border-top: 1px solid #ebebeb;
-}
-
-@media (max-width: 480px) {
-    .inline-ingredient-row {
-        grid-template-columns: 1fr 60px 80px 24px;
-        gap: 4px;
-        padding: 6px 8px;
-    }
-}
+.inline-ingredients-hint { padding: 8px 14px; font-size: 11px; color: #aaa; margin: 0; background: #fafafa; border-top: 1px solid #ebebeb; }
 </style>
