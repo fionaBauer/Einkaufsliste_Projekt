@@ -424,3 +424,88 @@ label {
         flex: 1;
     }
 }
+
+/* ── Scan pill button ── */
+.scan-pill-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: #f5f5f5;
+    border: 1.5px solid #e5e5e5;
+    border-radius: 100px;
+    padding: 9px 16px;
+    font-size: 13px;
+    font-weight: 600;
+    color: #1a1a1a;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: background 0.15s;
+    font-family: inherit;
+}
+
+.scan-pill-btn:hover { background: #ececec; }
+
+.header-actions {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+/* ── Store savings redesign ── */
+.savings-section {
+    margin-top: 24px;
+    padding-top: 20px;
+    border-top: 1.5px solid #f0f0f0;
+}
+
+.savings-title {
+    font-size: 15px;
+    font-weight: 700;
+    color: #1a1a1a;
+    margin: 0 0 12px;
+}
+
+.savings-cards {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.savings-card {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: #f9f9f9;
+    border: 1.5px solid #ebebeb;
+    border-radius: 12px;
+    padding: 12px 14px;
+    gap: 12px;
+}
+
+.savings-card-left {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.savings-store {
+    font-size: 14px;
+    font-weight: 700;
+    color: #1a1a1a;
+}
+
+.savings-deals {
+    font-size: 12px;
+    color: #8a8a8a;
+}
+
+.savings-badge {
+    background: #d4edda;
+    color: #276740;
+    font-size: 13px;
+    font-weight: 700;
+    border-radius: 8px;
+    padding: 4px 10px;
+    white-space: nowrap;
+    flex-shrink: 0;
+}

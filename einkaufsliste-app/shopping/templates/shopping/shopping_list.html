@@ -11,11 +11,9 @@
 <div class="page">
     <div class="page-header">
         <h1 class="page-title">Einkaufsliste</h1>
-        <div style="display:flex;gap:8px;align-items:center;">
-            <button type="button" class="action-header-btn scan-btn"
-                id="shoppingScanBtn"
-                data-list-id="{{ shopping_list_obj.pk|default:'' }}"
-                title="Barcode scannen">
+        <div class="header-actions">
+            <button type="button" class="scan-pill-btn" id="shoppingScanBtn"
+                data-list-id="{{ shopping_list_obj.pk|default:'' }}" title="Barcode scannen">
                 📷 Scannen
             </button>
             <button class="add-button" id="openCreateModalBtn" type="button">+</button>
@@ -163,6 +161,11 @@
                                         </span>
                                     </span>
                                 </label>
+                                <button type="submit" name="action" value="delete_item"
+                                    class="shopping-item-delete-btn" title="Entfernen">
+                                    <input type="hidden" name="delete_item_id" value="{{ item.id }}">
+                                    ×
+                                </button>
                             </li>
                         {% endfor %}
                     </ul>
@@ -178,20 +181,16 @@
                 </button>
             </div>
             {% if store_savings %}
-                <section class="shopping-section savings-section">
-                    <h2 class="section-title">Wo lohnt sich der Einkauf am meisten?</h2>
-
-                    <div class="savings-list">
+                <section class="savings-section">
+                    <h2 class="savings-title">🛒 Wo lohnt sich der Einkauf?</h2>
+                    <div class="savings-cards">
                         {% for store_entry in store_savings %}
                             <div class="savings-card">
-                                <div>
-                                    <strong>{{ store_entry.store.name }}</strong>
-                                    <span class="savings-meta">
-                                        {{ store_entry.deals|length }} passende Rabatt(e)
-                                    </span>
+                                <div class="savings-card-left">
+                                    <span class="savings-store">{{ store_entry.store.name }}</span>
+                                    <span class="savings-deals">{{ store_entry.deals|length }} Rabatt{% if store_entry.deals|length != 1 %}e{% endif %}</span>
                                 </div>
-
-                                <div class="savings-amount">
+                                <div class="savings-badge">
                                     {{ store_entry.total_savings|floatformat:2 }} € sparen
                                 </div>
                             </div>
