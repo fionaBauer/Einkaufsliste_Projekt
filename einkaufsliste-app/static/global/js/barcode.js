@@ -167,7 +167,7 @@ function showBarcodeResult(data) {
         `;
     } else {
         let removeBtn = data.in_inventory
-            ? `<button class="btn btn-secondary" onclick="removeFromInventory(${data.inventory_id})">Aus Inventar entfernen</button>`
+            ? `<button class="btn btn-secondary" onclick="removeFromInventory(${data.inventory_id}, ${JSON.stringify(data.inventory_quantity)}, ${JSON.stringify(data.inventory_unit)})">Aus Inventar entfernen</button>`
             : "";
         actions.innerHTML = `
             <button class="btn btn-secondary" onclick="document.getElementById('barcodeResultModal').classList.add('hidden')">Abbrechen</button>
@@ -213,16 +213,26 @@ async function addBarcodeToShopping(data) {
     }
 }
 
-async function removeFromInventory(inventoryId) {
+async function removeFromInventory(inventoryId, inventoryQty, inventoryUnit) {
+    const scannedQty = parseFloat(document.getElementById("barcode-qty")?.value || "1");
+    const scannedUnit = document.getElementById("barcode-unit")?.value || inventoryUnit;
+
     const res = await fetch(`/inventory/barcode-remove/${inventoryId}/`, {
         method: "POST",
         headers: { "Content-Type": "application/json", "X-CSRFToken": getCsrfToken() },
-        body: JSON.stringify({}),
+        body: JSON.stringify({
+            subtract_quantity: scannedQty,
+            subtract_unit: scannedUnit,
+        }),
     });
     const result = await res.json();
     if (result.success) {
+        if (result.deleted) {
+            showGlobalToast("Aus Inventar entfernt", "success");
+        } else {
+            showGlobalToast(`Inventar aktualisiert: noch ${result.remaining} ${result.unit} übrig`, "success");
+        }
         document.querySelector(".barcode-result-inventory")?.remove();
-        showGlobalToast("Aus Inventar entfernt", "success");
     }
 }
 

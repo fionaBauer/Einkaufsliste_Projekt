@@ -3,10 +3,10 @@ from collections import OrderedDict
 from django.contrib.auth.decorators import login_required
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
+from django.views.decorators.http import require_POST
 from ingredients.models import IngredientCategory
 from .forms import InventoryItemForm
 from .models import InventoryItem
-from django.views.decorators.http import require_POST
 
 from recipes.views import _from_base_unit, _to_base_unit
 
@@ -369,8 +369,53 @@ def barcode_add(request):
 @login_required
 @require_POST
 def barcode_remove(request, item_id):
-    """Remove an inventory item (after scanning for shopping list)."""
+    """Subtract scanned quantity from inventory item, delete if depleted."""
+    import json
+    from decimal import Decimal
+    from shopping.utils import to_base_unit
+
+    data = json.loads(request.body)
     household = request.user.households.first()
     item = get_object_or_404(InventoryItem, pk=item_id, household=household)
-    item.delete()
-    return JsonResponse({"success": True})
+
+    subtract_qty = data.get("subtract_quantity")
+    subtract_unit = data.get("subtract_unit") or item.unit
+
+    # If no quantity tracked in inventory, just delete
+    if item.quantity is None:
+        item.delete()
+        return JsonResponse({"success": True, "deleted": True})
+
+    try:
+        sub_qty = Decimal(str(subtract_qty)) if subtract_qty else item.quantity
+    except Exception:
+        sub_qty = item.quantity
+
+    # Convert to same base unit for subtraction
+    inv_base, inv_unit = to_base_unit(item.quantity, item.unit)
+    sub_base, sub_unit_base = to_base_unit(sub_qty, subtract_unit)
+
+    if inv_unit == sub_unit_base:
+        remaining_base = inv_base - sub_base
+    else:
+        # Incompatible units — just delete
+        item.delete()
+        return JsonResponse({"success": True, "deleted": True})
+
+    if remaining_base <= 0:
+        item.delete()
+        return JsonResponse({"success": True, "deleted": True})
+
+    # Convert back
+    from shopping.utils import from_base_unit
+    remaining_qty, remaining_unit = from_base_unit(remaining_base, inv_unit)
+    item.quantity = remaining_qty
+    item.unit = remaining_unit
+    item.save()
+
+    return JsonResponse({
+        "success": True,
+        "deleted": False,
+        "remaining": str(remaining_qty.normalize()),
+        "unit": remaining_unit,
+    })
