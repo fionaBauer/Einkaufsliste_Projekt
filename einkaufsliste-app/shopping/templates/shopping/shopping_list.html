@@ -87,6 +87,11 @@
                                         </span>
                                     </span>
                                 </label>
+                                <button type="submit" name="action" value="delete_item"
+                                    class="shopping-item-delete-btn" title="Entfernen">
+                                    <input type="hidden" name="delete_item_id" value="{{ item.id }}">
+                                    ×
+                                </button>
                             </li>
                         {% endfor %}
                     </ul>
@@ -165,14 +170,11 @@
             {% endif %}
 
             <div class="shopping-actions">
-                <button type="submit" name="action" value="delete_selected" class="btn btn-secondary">
-                    Ausgewählte löschen
+                <button type="submit" name="action" value="clean" class="btn btn-secondary">
+                    + Inventar
                 </button>
-                <button type="submit" name="action" value="clear_all" class="btn btn-secondary">
+                <button type="submit" name="action" value="clear_all" class="btn btn-danger">
                     Alles löschen
-                </button>
-                <button type="submit" name="action" value="clean" class="btn btn-danger">
-                    Abgehakte entfernen
                 </button>
             </div>
             {% if store_savings %}

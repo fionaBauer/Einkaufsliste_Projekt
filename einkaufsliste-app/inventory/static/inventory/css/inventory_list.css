@@ -572,3 +572,41 @@ label {
         max-height: 88vh;
     }
 }
+
+/* ── Inventory header mobile fix ── */
+@media (max-width: 768px) {
+    .page-header {
+        flex-wrap: wrap;
+        gap: 10px;
+    }
+
+    .header-actions {
+        width: 100%;
+        display: flex;
+        gap: 8px;
+        flex-wrap: nowrap;
+    }
+
+    .header-actions .action-header-btn {
+        flex: 1;
+        padding: 9px 8px;
+        font-size: 13px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        text-align: center;
+    }
+
+    .header-actions .add-button {
+        flex-shrink: 0;
+    }
+}
+
+/* ── Equal size category cards ── */
+.category-grid {
+    grid-auto-rows: 1fr;
+}
+
+.category-card {
+    height: 100%;
+}

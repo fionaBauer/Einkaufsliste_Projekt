@@ -15,28 +15,11 @@
     </div>
     <form method="get" class="filter-bar">
         <div class="filter-group search-group">
-            <input
-                type="text"
-                name="q"
-                placeholder="Zutat suchen..."
-                value="{{ search_query }}"
-                class="search-input"
-            >
+            <input type="text" name="q" placeholder="Zutat suchen..."
+                value="{{ search_query }}" class="search-input">
         </div>
-
-        <div class="filter-group">
-            <select name="sort" class="sort-select">
-                {% for value, label in sort_options %}
-                    <option value="{{ value }}" {% if sort == value %}selected{% endif %}>
-                        {{ label }}
-                    </option>
-                {% endfor %}
-            </select>
-        </div>
-
-        <button type="submit" class="filter-btn">Anwenden</button>
-
-        {% if search_query or sort != "name_asc" %}
+        <button type="submit" class="filter-btn">Suchen</button>
+        {% if search_query %}
             <a href="{% url 'ingredients:list' %}" class="reset-link">Zurücksetzen</a>
         {% endif %}
     </form>

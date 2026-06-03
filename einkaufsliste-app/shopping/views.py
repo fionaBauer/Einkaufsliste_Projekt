@@ -63,6 +63,12 @@ def shopping_list_detail(request, pk):
                 return redirect("shopping:detail", pk=shopping_list_obj.pk)
             create_modal_open = True
 
+        elif action == "delete_item":
+            item_id = request.POST.get("delete_item_id")
+            if item_id:
+                shopping_list_obj.items.filter(id=item_id).delete()
+            return redirect("shopping:detail", pk=shopping_list_obj.pk)
+
         elif action == "delete_selected":
             if checked_ids:
                 deleted_count = shopping_list_obj.items.filter(id__in=checked_ids).count()
