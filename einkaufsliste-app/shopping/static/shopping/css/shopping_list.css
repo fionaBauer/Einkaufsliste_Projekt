@@ -509,3 +509,25 @@ label {
     white-space: nowrap;
     flex-shrink: 0;
 }
+
+/* ── Savings card clickable ── */
+.savings-card {
+    cursor: pointer;
+    transition: box-shadow 0.15s, transform 0.12s;
+}
+
+.savings-card:hover {
+    box-shadow: 0 4px 16px rgba(0,0,0,0.08);
+    transform: translateY(-1px);
+}
+
+.savings-chevron {
+    font-size: 20px;
+    color: #ccc;
+    margin-left: 4px;
+    flex-shrink: 0;
+}
+
+/* ── Savings detail modal uses hidden class (planner compat) ── */
+#savingsDetailModal.hidden { display: none !important; }
+#savingsDetailModal:not(.hidden) { display: flex !important; }

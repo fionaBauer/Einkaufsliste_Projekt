@@ -348,13 +348,11 @@ input:focus, select:focus, textarea:focus { outline: none; border-color: #111; }
     .modal-wide { max-width: 100%; }
 
     .shopping-actions {
-        position: fixed;
-        bottom: calc(64px + env(safe-area-inset-bottom) + 8px);
-        left: 12px; right: 12px;
-        margin: 0;
+        position: static;
+        margin: 16px 0 24px;
     }
     .shopping-actions .btn {
         width: 100%; padding: 14px; font-size: 15px;
-        border-radius: 14px; box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+        border-radius: 14px;
     }
 }
