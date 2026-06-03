@@ -1,8 +1,13 @@
+/* ============================================================
+   Zutaten – Seitenstyles
+   ============================================================ */
+
 .page {
     max-width: 1000px;
     margin: 0 auto;
 }
 
+/* ── Header ── */
 .page-header {
     display: flex;
     justify-content: space-between;
@@ -25,8 +30,10 @@
     color: white;
     font-size: 28px;
     cursor: pointer;
+    flex-shrink: 0;
 }
 
+/* ── Suche / Filterleiste ── */
 .filter-bar {
     display: flex;
     flex-wrap: wrap;
@@ -35,11 +42,17 @@
     align-items: center;
 }
 
-.filter-group { display: flex; align-items: center; }
-.search-group { flex: 1; min-width: 220px; }
+.filter-group {
+    display: flex;
+    align-items: center;
+}
 
-.search-input,
-.sort-select {
+.search-group {
+    flex: 1;
+    min-width: 220px;
+}
+
+.search-input {
     width: 100%;
     padding: 10px 12px;
     border: 1px solid #ccc;
@@ -47,8 +60,6 @@
     font-size: 15px;
     box-sizing: border-box;
 }
-
-.sort-select { min-width: 180px; }
 
 .filter-btn {
     padding: 10px 16px;
@@ -60,13 +71,22 @@
     font-size: 15px;
 }
 
-.reset-link { color: #555; text-decoration: none; font-size: 14px; }
-.reset-link:hover { text-decoration: underline; }
+.reset-link {
+    color: #555;
+    text-decoration: none;
+    font-size: 14px;
+}
 
-/* ── Category Card Grid ── */
+.reset-link:hover {
+    text-decoration: underline;
+}
+
+/* ── Kategorie-Kärtchen (Grid) ── */
 .category-grid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    grid-auto-rows: 1fr;          /* gleich hohe Zeilen */
+    align-items: stretch;
     gap: 12px;
     margin-top: 8px;
 }
@@ -75,25 +95,33 @@
     display: flex;
     align-items: center;
     gap: 14px;
+    height: 100%;                 /* füllt die ausgeglichene Zeile */
+    min-height: 72px;
     background: white;
     border: 1.5px solid #ebebeb;
     border-radius: 16px;
     padding: 16px;
     cursor: pointer;
+    box-sizing: border-box;
     transition: border-color 0.15s, box-shadow 0.15s, transform 0.12s;
 }
 
 .category-card:hover {
     border-color: #d0d0d0;
-    box-shadow: 0 4px 16px rgba(0,0,0,0.08);
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
     transform: translateY(-1px);
 }
 
-.category-card-icon { font-size: 28px; line-height: 1; flex-shrink: 0; }
+.category-card-icon {
+    font-size: 28px;
+    line-height: 1;
+    flex-shrink: 0;
+}
 
 .category-card-info {
     display: flex;
     flex-direction: column;
+    justify-content: center;
     gap: 2px;
     flex: 1;
     min-width: 0;
@@ -103,22 +131,26 @@
     font-size: 14px;
     font-weight: 700;
     color: #1a1a1a;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
 }
 
-.category-card-count { font-size: 12px; color: #8a8a8a; }
-.category-card-arrow { color: #ccc; flex-shrink: 0; }
+.category-card-count {
+    font-size: 12px;
+    color: #8a8a8a;
+}
 
-/* ── Detail Panel ── */
+.category-card-arrow {
+    color: #ccc;
+    flex-shrink: 0;
+}
+
+/* ── Detail-Panel ── */
 .category-detail {
     animation: slideIn 0.18s ease;
 }
 
 @keyframes slideIn {
     from { opacity: 0; transform: translateX(12px); }
-    to { opacity: 1; transform: translateX(0); }
+    to   { opacity: 1; transform: translateX(0); }
 }
 
 .detail-header {
@@ -141,7 +173,10 @@
     transition: background 0.15s;
 }
 
-.detail-back-btn:hover { background: #f5f5f5; color: #1a1a1a; }
+.detail-back-btn:hover {
+    background: #f5f5f5;
+    color: #1a1a1a;
+}
 
 .detail-title {
     margin: 0;
@@ -150,7 +185,7 @@
     color: #1a1a1a;
 }
 
-/* ── Ingredient List (detail view) ── */
+/* ── Zutatenliste ── */
 .ingredient-list {
     list-style: none;
     padding: 0;
@@ -170,13 +205,26 @@
     gap: 16px;
 }
 
-.ingredient-item:last-child { border-bottom: none; }
+.ingredient-item:last-child {
+    border-bottom: none;
+}
 
-.ingredient-main { display: flex; flex-direction: column; gap: 4px; }
-.ingredient-name { font-size: 16px; font-weight: 600; }
-.ingredient-unit, .ingredient-meta { color: #666; font-size: 14px; }
+.ingredient-main {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
 
-.ingredient-actions { display: flex; gap: 8px; flex-shrink: 0; }
+.ingredient-name {
+    font-size: 16px;
+    font-weight: 600;
+}
+
+.ingredient-actions {
+    display: flex;
+    gap: 8px;
+    flex-shrink: 0;
+}
 
 .action-btn {
     border: none;
@@ -187,23 +235,40 @@
     font-weight: 500;
 }
 
-.edit-btn { background: #f0f0f0; color: #333; }
-.delete-btn { background: #fde8e8; color: #b91c1c; }
+.edit-btn {
+    background: #f0f0f0;
+    color: #333;
+}
 
-.empty-state { color: #777; text-align: center; padding: 32px 0; }
+.delete-btn {
+    background: #fde8e8;
+    color: #b91c1c;
+}
 
-/* ── Modals ── */
+.delete-form {
+    display: inline;
+}
+
+.empty-state {
+    color: #777;
+    text-align: center;
+    padding: 32px 0;
+}
+
+/* ── Modale ── */
 .modal-overlay {
     display: none;
     position: fixed;
     inset: 0;
-    background: rgba(0,0,0,0.45);
+    background: rgba(0, 0, 0, 0.45);
     justify-content: center;
     align-items: center;
     z-index: 1000;
 }
 
-.modal-overlay.active { display: flex; }
+.modal-overlay.active {
+    display: flex;
+}
 
 .modal {
     background: white;
@@ -211,12 +276,23 @@
     max-width: 420px;
     border-radius: 16px;
     padding: 24px;
-    box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
 }
 
-.modal h2 { margin-top: 0; margin-bottom: 20px; }
+.modal h2 {
+    margin-top: 0;
+    margin-bottom: 20px;
+}
 
-.form-group { margin-bottom: 16px; }
+.form-group {
+    margin-bottom: 16px;
+}
+
+label {
+    display: block;
+    margin-bottom: 6px;
+    font-weight: bold;
+}
 
 .modal-actions {
     display: flex;
@@ -225,150 +301,53 @@
     margin-top: 20px;
 }
 
-.btn { padding: 10px 16px; border: none; border-radius: 10px; cursor: pointer; font-size: 15px; }
-.btn-secondary { background: #eaeaea; }
-.btn-primary { background: black; color: white; }
+.btn {
+    padding: 10px 16px;
+    border: none;
+    border-radius: 10px;
+    cursor: pointer;
+    font-size: 15px;
+}
 
-.errorlist { color: #c00000; padding-left: 18px; margin-top: 6px; }
-.delete-form { display: inline; }
+.btn-secondary {
+    background: #eaeaea;
+}
 
-.hidden { display: none !important; }
+.btn-primary {
+    background: black;
+    color: white;
+}
 
-/* ── Mobile ── */
+.errorlist {
+    color: #c00000;
+    padding-left: 18px;
+    margin-top: 6px;
+    margin-bottom: 0;
+}
+
+/* ── Utility ── */
+.hidden {
+    display: none !important;
+}
+
+/* ============================================================
+   Mobile
+   ============================================================ */
 @media (max-width: 768px) {
+    /* zwei exakt gleich breite Spalten */
     .category-grid {
-        grid-template-columns: repeat(2, 1fr);
+        grid-template-columns: repeat(2, minmax(0, 1fr));
         gap: 10px;
     }
 
-    .category-card { padding: 14px 12px; gap: 10px; }
-    .category-card-icon { font-size: 24px; }
-    .category-card-name { font-size: 13px; }
+    /* Modal als Bottom-Sheet */
+    .modal-overlay {
+        align-items: flex-end;
+    }
 
-    .modal-overlay { align-items: flex-end; }
     .modal {
         width: 100%;
         max-width: 100%;
         border-radius: 20px 20px 0 0;
-    }
-}
-
-/* ── Equal size category cards ── */
-.category-grid {
-    grid-auto-rows: 1fr;
-}
-
-.category-card {
-    height: 100%;
-}
-
-/* ── Scan pill button ── */
-.scan-pill-btn {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    background: #f5f5f5;
-    border: 1.5px solid #e5e5e5;
-    border-radius: 100px;
-    padding: 9px 16px;
-    font-size: 13px;
-    font-weight: 600;
-    color: #1a1a1a;
-    cursor: pointer;
-    white-space: nowrap;
-    font-family: inherit;
-}
-
-/* ── Equal height cards ── */
-.category-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-    gap: 12px;
-    grid-auto-rows: 1fr;
-}
-
-.category-card {
-    min-height: 72px;
-    align-items: center;
-}
-
-@media (max-width: 768px) {
-    .category-grid { grid-template-columns: repeat(2, 1fr); }
-}
-
-/* ── Category Cards ── */
-.category-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-    gap: 12px;
-    grid-auto-rows: 1fr;
-}
-
-.category-card {
-    display: flex;
-    align-items: center;
-    gap: 14px;
-    background: white;
-    border: 1.5px solid #ebebeb;
-    border-radius: 16px;
-    padding: 16px;
-    cursor: pointer;
-    min-height: 72px;
-    transition: border-color 0.15s, box-shadow 0.15s, transform 0.12s;
-}
-
-.category-card:hover {
-    border-color: #d0d0d0;
-    box-shadow: 0 4px 16px rgba(0,0,0,0.08);
-    transform: translateY(-1px);
-}
-
-.category-card-icon { font-size: 28px; line-height: 1; flex-shrink: 0; }
-.category-card-info { display: flex; flex-direction: column; gap: 2px; flex: 1; min-width: 0; }
-.category-card-name { font-size: 14px; font-weight: 700; color: #1a1a1a; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.category-card-count { font-size: 12px; color: #8a8a8a; }
-.category-card-arrow { color: #ccc; flex-shrink: 0; }
-
-.category-detail { animation: slideIn 0.18s ease; }
-@keyframes slideIn { from { opacity: 0; transform: translateX(12px); } to { opacity: 1; transform: translateX(0); } }
-.detail-header { display: flex; align-items: center; gap: 14px; margin-bottom: 20px; }
-.detail-back-btn { background: none; border: 1.5px solid #ebebeb; border-radius: 10px; padding: 7px 14px; font-size: 13px; font-weight: 600; color: #555; cursor: pointer; white-space: nowrap; transition: background 0.15s; }
-.detail-back-btn:hover { background: #f5f5f5; color: #1a1a1a; }
-.detail-title { margin: 0; font-size: 20px; font-weight: 700; color: #1a1a1a; }
-.hidden { display: none !important; }
-
-@media (max-width: 768px) {
-    .category-grid { grid-template-columns: repeat(2, 1fr); gap: 10px; }
-    .category-card { padding: 14px 12px; gap: 10px; }
-    .category-card-icon { font-size: 24px; }
-    .category-card-name { font-size: 13px; }
-}
-/* ============================================================
-   MOBILE FIX: equal-size category cards
-   (authoritative — appended last to win cascade)
-   ============================================================ */
-.category-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-    gap: 12px;
-    grid-auto-rows: 1fr;           /* every row the same height */
-    align-items: stretch;
-}
-
-.category-card {
-    height: 100%;                  /* fill the equalised row */
-    min-height: 72px;
-    align-items: center;
-    box-sizing: border-box;
-}
-
-.category-card-info {
-    justify-content: center;
-}
-
-@media (max-width: 768px) {
-    .category-grid {
-        grid-template-columns: repeat(2, 1fr);
-        gap: 10px;
     }
 }

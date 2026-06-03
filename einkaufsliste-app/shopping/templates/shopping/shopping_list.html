@@ -185,10 +185,8 @@
                     <h2 class="savings-title">🛒 Wo lohnt sich der Einkauf?</h2>
                     <div class="savings-cards">
                         {% for store_entry in store_savings %}
-                            <div class="savings-card" onclick="showSavingsDetail(this)"
-                                data-store="{{ store_entry.store.name }}"
-                                data-savings="{{ store_entry.total_savings|floatformat:2 }}"
-                                data-deals="{% for d in store_entry.deals %}{{ d.title }}|||{{ d.deal_price }}€{% if not forloop.last %};;;{% endif %}{% endfor %}">
+                            <div class="savings-card"
+                                onclick="showSavingsDetail('savings-detail-{{ forloop.counter }}', '{{ store_entry.store.name|escapejs }}')">
                                 <div class="savings-card-left">
                                     <span class="savings-store">{{ store_entry.store.name }}</span>
                                     <span class="savings-deals">{{ store_entry.deals|length }} Rabatt{% if store_entry.deals|length != 1 %}e{% endif %} verfügbar</span>
@@ -197,6 +195,46 @@
                                     {{ store_entry.total_savings|floatformat:2 }} € sparen
                                 </div>
                                 <span class="savings-chevron">›</span>
+
+                                <!-- Hidden detail, copied into the modal on click -->
+                                <template id="savings-detail-{{ forloop.counter }}">
+                                    <p class="savings-detail-intro">
+                                        Du kannst hier insgesamt
+                                        <strong>{{ store_entry.total_savings|floatformat:2 }} €</strong> sparen.
+                                    </p>
+                                    <ul class="savings-deal-list">
+                                        {% for d in store_entry.deals %}
+                                            <li class="savings-deal">
+                                                <div class="savings-deal-head">
+                                                    <span class="savings-deal-title">{{ d.deal.title }}</span>
+                                                    {% if d.savings %}
+                                                        <span class="savings-deal-amount">−{{ d.savings|floatformat:2 }} €</span>
+                                                    {% endif %}
+                                                </div>
+
+                                                <div class="savings-deal-prices">
+                                                    {% if d.deal.original_price %}
+                                                        <span class="savings-deal-old">{{ d.deal.original_price|floatformat:2 }} €</span>
+                                                    {% endif %}
+                                                    {% if d.deal.deal_price %}
+                                                        <span class="savings-deal-new">{{ d.deal.deal_price|floatformat:2 }} €</span>
+                                                    {% endif %}
+                                                    {% if d.deal.discount_text %}
+                                                        <span class="savings-deal-tag">{{ d.deal.discount_text }}</span>
+                                                    {% endif %}
+                                                </div>
+
+                                                <div class="savings-deal-reason">
+                                                    Passt zu <strong>{{ d.item.ingredient.name }}</strong> auf deiner Liste{% if d.item.quantity %} ({{ d.item.quantity|floatformat:2 }} {{ d.item.unit }}){% endif %}.
+                                                </div>
+
+                                                {% if d.deal.description %}
+                                                    <div class="savings-deal-desc">{{ d.deal.description }}</div>
+                                                {% endif %}
+                                            </li>
+                                        {% endfor %}
+                                    </ul>
+                                </template>
                             </div>
                         {% endfor %}
                     </div>
@@ -292,30 +330,15 @@
 {% block extra_js %}
 <script src="{% static 'shopping/js/shopping_list.js' %}"></script>
 <script>
-function showSavingsDetail(card) {
-    const store = card.dataset.store;
-    const savings = card.dataset.savings;
-    const dealsRaw = card.dataset.deals;
-
-    const deals = dealsRaw ? dealsRaw.split(";;;").map(d => {
-        const parts = d.split("|||");
-        return { title: parts[0], price: parts[1] };
-    }) : [];
-
-    document.getElementById("savingsDetailTitle").textContent = store;
+function showSavingsDetail(detailId, storeName) {
+    const tpl = document.getElementById(detailId);
+    document.getElementById("savingsDetailTitle").textContent = storeName;
 
     const body = document.getElementById("savingsDetailBody");
-    body.innerHTML = `
-        <p style="color:#8a8a8a;font-size:13px;margin:0 0 14px;">Du kannst hier insgesamt <strong style="color:#276740">${savings} €</strong> sparen.</p>
-        <div style="display:flex;flex-direction:column;gap:8px;">
-            ${deals.map(d => `
-                <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 12px;background:#f9f9f9;border-radius:10px;border:1.5px solid #ebebeb;">
-                    <span style="font-size:13px;font-weight:500;color:#1a1a1a;flex:1;margin-right:12px;">${d.title}</span>
-                    <span style="font-size:13px;font-weight:700;color:#276740;white-space:nowrap;">${d.price}</span>
-                </div>
-            `).join("")}
-        </div>
-    `;
+    body.innerHTML = "";
+    if (tpl && "content" in tpl) {
+        body.appendChild(tpl.content.cloneNode(true));
+    }
 
     document.getElementById("savingsDetailModal").classList.remove("hidden");
 }

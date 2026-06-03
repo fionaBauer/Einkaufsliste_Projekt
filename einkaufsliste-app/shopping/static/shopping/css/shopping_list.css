@@ -531,3 +531,96 @@ label {
 /* ── Savings detail modal uses hidden class (planner compat) ── */
 #savingsDetailModal.hidden { display: none !important; }
 #savingsDetailModal:not(.hidden) { display: flex !important; }
+/* ── Savings detail modal content ── */
+.savings-detail-intro {
+    color: #8a8a8a;
+    font-size: 14px;
+    margin: 0 0 16px;
+}
+
+.savings-detail-intro strong {
+    color: #276740;
+}
+
+.savings-deal-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.savings-deal {
+    background: #f9f9f9;
+    border: 1.5px solid #ebebeb;
+    border-radius: 12px;
+    padding: 12px 14px;
+}
+
+.savings-deal-head {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 12px;
+}
+
+.savings-deal-title {
+    font-size: 15px;
+    font-weight: 700;
+    color: #1a1a1a;
+}
+
+.savings-deal-amount {
+    font-size: 14px;
+    font-weight: 700;
+    color: #276740;
+    white-space: nowrap;
+    flex-shrink: 0;
+}
+
+.savings-deal-prices {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 6px;
+}
+
+.savings-deal-old {
+    font-size: 13px;
+    color: #999;
+    text-decoration: line-through;
+}
+
+.savings-deal-new {
+    font-size: 15px;
+    font-weight: 700;
+    color: #1a1a1a;
+}
+
+.savings-deal-tag {
+    background: #d4edda;
+    color: #276740;
+    font-size: 12px;
+    font-weight: 700;
+    border-radius: 6px;
+    padding: 2px 8px;
+}
+
+.savings-deal-reason {
+    font-size: 13px;
+    color: #555;
+    margin-top: 8px;
+}
+
+.savings-deal-reason strong {
+    color: #1a1a1a;
+}
+
+.savings-deal-desc {
+    font-size: 12px;
+    color: #8a8a8a;
+    margin-top: 6px;
+    line-height: 1.4;
+}
