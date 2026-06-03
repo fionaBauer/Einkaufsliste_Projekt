@@ -343,3 +343,32 @@
     .category-card-icon { font-size: 24px; }
     .category-card-name { font-size: 13px; }
 }
+/* ============================================================
+   MOBILE FIX: equal-size category cards
+   (authoritative — appended last to win cascade)
+   ============================================================ */
+.category-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 12px;
+    grid-auto-rows: 1fr;           /* every row the same height */
+    align-items: stretch;
+}
+
+.category-card {
+    height: 100%;                  /* fill the equalised row */
+    min-height: 72px;
+    align-items: center;
+    box-sizing: border-box;
+}
+
+.category-card-info {
+    justify-content: center;
+}
+
+@media (max-width: 768px) {
+    .category-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 10px;
+    }
+}
