@@ -707,6 +707,37 @@ def _merge_quantities_with_units(existing_quantity, existing_unit, new_quantity,
     return existing_quantity, existing_unit
 
 @login_required
+@require_POST
+def extract_recipe_from_text(request):
+    try:
+        data = json.loads(request.body)
+        text = (data.get("text") or "").strip()
+
+        if not text:
+            return JsonResponse(
+                {"success": False, "error": "Bitte füge einen Rezepttext ein."},
+                status=400,
+            )
+
+        from .services.reclip.llm_extractor import extract_recipe_from_webpage_text
+        result = extract_recipe_from_webpage_text(
+            page_title=None,
+            page_text=text,
+            source_url="",
+        )
+
+        return JsonResponse({"success": True, "recipe": result})
+
+    except Exception as error:
+        import traceback
+        traceback.print_exc()
+        return JsonResponse(
+            {"success": False, "error": f"Extraktion fehlgeschlagen: {str(error)}"},
+            status=500,
+        )
+
+
+@login_required
 def ffmpeg_debug(request):
     return JsonResponse({
         "ffmpeg": shutil.which("ffmpeg"),

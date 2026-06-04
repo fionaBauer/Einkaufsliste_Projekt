@@ -182,14 +182,35 @@
 <!-- Link Modal -->
 <div class="modal-overlay" id="linkCreateModal">
     <div class="modal">
-        <h2>Rezept aus Link erstellen</h2>
-        <div class="form-group">
-            <label for="recipe-link-input">Link</label>
-            <input type="url" id="recipe-link-input" class="search-input" placeholder="Rezept-Link einfügen...">
+        <h2>Rezept hinzufügen</h2>
+
+        <div class="import-tabs">
+            <button class="import-tab active" data-tab="link">🔗 Link</button>
+            <button class="import-tab" data-tab="text">📋 Text einfügen</button>
         </div>
-        <div class="modal-actions">
-            <button type="button" class="btn btn-secondary" id="closeLinkModalBtn">Abbrechen</button>
-            <button type="button" class="btn btn-primary" id="create-from-link-btn">Rezept erstellen</button>
+
+        <div class="import-tab-panel" id="import-panel-link">
+            <div class="form-group">
+                <label for="recipe-link-input">Rezept-Link</label>
+                <input type="url" id="recipe-link-input" class="search-input" placeholder="https://...">
+            </div>
+            <div class="modal-actions">
+                <button type="button" class="btn btn-secondary" id="closeLinkModalBtn">Abbrechen</button>
+                <button type="button" class="btn btn-primary" id="create-from-link-btn">Rezept erstellen</button>
+            </div>
+        </div>
+
+        <div class="import-tab-panel hidden" id="import-panel-text">
+            <div class="form-group">
+                <label for="recipe-text-input">Rezepttext</label>
+                <textarea id="recipe-text-input" class="search-input recipe-text-input"
+                    placeholder="Rezepttext hier einfügen – z.B. aus einer App, einem Screenshot oder einer Notiz…"
+                    rows="10"></textarea>
+            </div>
+            <div class="modal-actions">
+                <button type="button" class="btn btn-secondary" id="closeLinkModalBtnText">Abbrechen</button>
+                <button type="button" class="btn btn-primary" id="create-from-text-btn">Rezept erstellen</button>
+            </div>
         </div>
     </div>
 </div>

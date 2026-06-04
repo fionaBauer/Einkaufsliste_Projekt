@@ -520,6 +520,69 @@ let extractedRecipeData = null;
         };
     }
 
+    // ── Tab switching ──
+    const importTabs = document.querySelectorAll(".import-tab");
+    const importPanels = document.querySelectorAll(".import-tab-panel");
+    importTabs.forEach((tab) => {
+        tab.addEventListener("click", () => {
+            importTabs.forEach((t) => t.classList.remove("active"));
+            importPanels.forEach((p) => p.classList.add("hidden"));
+            tab.classList.add("active");
+            document.getElementById(`import-panel-${tab.dataset.tab}`)?.classList.remove("hidden");
+        });
+    });
+
+    // ── Close buttons for both panels ──
+    document.getElementById("closeLinkModalBtnText")?.addEventListener("click", () => closeLinkModal());
+
+    // ── Extract from text ──
+    const createFromTextBtn = document.getElementById("create-from-text-btn");
+    const recipeTextInput = document.getElementById("recipe-text-input");
+
+    if (createFromTextBtn && recipeTextInput) {
+        createFromTextBtn.addEventListener("click", async () => {
+            const text = recipeTextInput.value.trim();
+            if (!text) {
+                recipeTextInput.focus();
+                return;
+            }
+
+            const originalText = createFromTextBtn.textContent;
+            createFromTextBtn.disabled = true;
+            createFromTextBtn.textContent = "Wird analysiert…";
+
+            try {
+                const csrfToken = document.querySelector("[name=csrfmiddlewaretoken]")?.value
+                    || getCsrfTokenFromCookie();
+
+                const response = await fetch("/recipes/extract-from-text/", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                        "X-CSRFToken": csrfToken,
+                    },
+                    body: JSON.stringify({ text }),
+                });
+
+                const data = await response.json();
+
+                if (!response.ok || !data.success) {
+                    throw new Error(data.error || "Extraktion fehlgeschlagen.");
+                }
+
+                closeLinkModal();
+                renderExtractedRecipe(data.recipe);
+                openRecipeReviewModal();
+            } catch (error) {
+                console.error(error);
+                alert(error.message || "Beim Analysieren ist ein Fehler aufgetreten.");
+            } finally {
+                createFromTextBtn.disabled = false;
+                createFromTextBtn.textContent = originalText;
+            }
+        });
+    }
+
     function openLinkModal() {
         if (linkCreateModal) {
             linkCreateModal.classList.add("active");
