@@ -332,7 +332,7 @@ function openAddModal(dateStr, meal) {
     document.getElementById("add-note").value = "";
     document.getElementById("recipe-dropdown").classList.add("hidden");
 
-    modal.classList.remove("hidden");
+    modal.classList.add("active");
     setTimeout(() => document.getElementById("recipe-search").focus(), 50);
 }
 
@@ -342,12 +342,12 @@ function formatDateLabel(dateStr) {
 }
 
 document.getElementById("add-cancel").addEventListener("click", () => {
-    document.getElementById("add-modal").classList.add("hidden");
+    document.getElementById("add-modal").classList.remove("active");
 });
 
 document.getElementById("add-modal").addEventListener("click", e => {
     if (e.target === document.getElementById("add-modal")) {
-        document.getElementById("add-modal").classList.add("hidden");
+        document.getElementById("add-modal").classList.remove("active");
     }
 });
 
@@ -361,7 +361,7 @@ document.getElementById("add-confirm").addEventListener("click", async () => {
         note: document.getElementById("add-note").value,
     });
     if (result.id) {
-        document.getElementById("add-modal").classList.add("hidden");
+        document.getElementById("add-modal").classList.remove("active");
         await render();
     }
 });
@@ -425,17 +425,17 @@ function openSlotModal(slot) {
     document.getElementById("slot-modal-date").textContent = `${formatDateLabel(slot.date)} · ${slot.meal_label}`;
     document.getElementById("slot-recurrence").value = slot.recurrence;
     document.getElementById("slot-note").value = slot.note || "";
-    document.getElementById("slot-modal").classList.remove("hidden");
+    document.getElementById("slot-modal").classList.add("active");
 }
 
 document.getElementById("slot-cancel").addEventListener("click", () => {
-    document.getElementById("slot-modal").classList.add("hidden");
+    document.getElementById("slot-modal").classList.remove("active");
     editingSlot = null;
 });
 
 document.getElementById("slot-modal").addEventListener("click", e => {
     if (e.target === document.getElementById("slot-modal")) {
-        document.getElementById("slot-modal").classList.add("hidden");
+        document.getElementById("slot-modal").classList.remove("active");
         editingSlot = null;
     }
 });
@@ -447,7 +447,7 @@ document.getElementById("slot-save").addEventListener("click", async () => {
         recurrence: document.getElementById("slot-recurrence").value,
         note: document.getElementById("slot-note").value,
     });
-    document.getElementById("slot-modal").classList.add("hidden");
+    document.getElementById("slot-modal").classList.remove("active");
     editingSlot = null;
     await render();
 });
@@ -457,7 +457,7 @@ document.getElementById("slot-delete").addEventListener("click", async () => {
     if (!confirm(`"${editingSlot.recipe_name}" aus dem Plan entfernen?`)) return;
     const deleteUrl = urls.del.replace("{id}", editingSlot.id);
     await api.del(deleteUrl);
-    document.getElementById("slot-modal").classList.add("hidden");
+    document.getElementById("slot-modal").classList.remove("active");
     editingSlot = null;
     await render();
 });
