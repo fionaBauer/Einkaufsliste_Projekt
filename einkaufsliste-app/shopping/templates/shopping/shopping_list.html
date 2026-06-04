@@ -85,11 +85,12 @@
                                         </span>
                                     </span>
                                 </label>
-                                <button type="submit" name="action" value="delete_item"
-                                    class="shopping-item-delete-btn" title="Entfernen">
+                                <form method="post" class="delete-item-form">
+                                    {% csrf_token %}
+                                    <input type="hidden" name="action" value="delete_item">
                                     <input type="hidden" name="delete_item_id" value="{{ item.id }}">
-                                    ×
-                                </button>
+                                    <button type="submit" class="shopping-item-delete-btn" title="Entfernen">×</button>
+                                </form>
                             </li>
                         {% endfor %}
                     </ul>
@@ -161,11 +162,12 @@
                                         </span>
                                     </span>
                                 </label>
-                                <button type="submit" name="action" value="delete_item"
-                                    class="shopping-item-delete-btn" title="Entfernen">
+                                <form method="post" class="delete-item-form">
+                                    {% csrf_token %}
+                                    <input type="hidden" name="action" value="delete_item">
                                     <input type="hidden" name="delete_item_id" value="{{ item.id }}">
-                                    ×
-                                </button>
+                                    <button type="submit" class="shopping-item-delete-btn" title="Entfernen">×</button>
+                                </form>
                             </li>
                         {% endfor %}
                     </ul>
