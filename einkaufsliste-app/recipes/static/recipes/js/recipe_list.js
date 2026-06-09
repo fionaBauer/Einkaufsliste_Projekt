@@ -697,7 +697,7 @@ function initInlineIngredients() {
 
         // Save recipe metadata first
         try {
-            const res = await fetch(window.location.href, {
+            const res = await fetch(form.action, {
                 method: "POST",
                 body: formData,
                 headers: { "X-Requested-With": "XMLHttpRequest" },
