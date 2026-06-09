@@ -85,12 +85,10 @@
                                         </span>
                                     </span>
                                 </label>
-                                <form method="post" class="delete-item-form">
-                                    {% csrf_token %}
-                                    <input type="hidden" name="action" value="delete_item">
-                                    <input type="hidden" name="delete_item_id" value="{{ item.id }}">
-                                    <button type="submit" class="shopping-item-delete-btn" title="Entfernen">×</button>
-                                </form>
+                                <button type="submit"
+                                    form="delete-form-{{ item.id }}"
+                                    class="shopping-item-delete-btn"
+                                    title="Entfernen">×</button>
                             </li>
                         {% endfor %}
                     </ul>
@@ -162,12 +160,10 @@
                                         </span>
                                     </span>
                                 </label>
-                                <form method="post" class="delete-item-form">
-                                    {% csrf_token %}
-                                    <input type="hidden" name="action" value="delete_item">
-                                    <input type="hidden" name="delete_item_id" value="{{ item.id }}">
-                                    <button type="submit" class="shopping-item-delete-btn" title="Entfernen">×</button>
-                                </form>
+                                <button type="submit"
+                                    form="delete-form-{{ item.id }}"
+                                    class="shopping-item-delete-btn"
+                                    title="Entfernen">×</button>
                             </li>
                         {% endfor %}
                     </ul>
@@ -254,6 +250,23 @@
                 </div>
             {% endif %}
         </form>
+
+        {# External delete forms — outside the shopping-form to avoid nesting #}
+        {% for item in to_buy %}
+        <form id="delete-form-{{ item.id }}" method="post" style="display:none">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="delete_item">
+            <input type="hidden" name="delete_item_id" value="{{ item.id }}">
+        </form>
+        {% endfor %}
+        {% for item in check_quantity %}
+        <form id="delete-form-{{ item.id }}" method="post" style="display:none">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="delete_item">
+            <input type="hidden" name="delete_item_id" value="{{ item.id }}">
+        </form>
+        {% endfor %}
+
     {% endif %}
 
     {% if not to_buy and not check_quantity %}
