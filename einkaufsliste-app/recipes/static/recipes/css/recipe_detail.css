@@ -500,3 +500,22 @@ label {
         opacity: 1;
     }
 }
+.btn-icon-add {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    border: none;
+    background: #1a1a1a;
+    color: white;
+    font-size: 20px;
+    line-height: 1;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.btn-icon-add:hover {
+    background: #333;
+}

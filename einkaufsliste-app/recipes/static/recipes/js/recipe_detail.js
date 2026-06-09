@@ -165,20 +165,24 @@ document.addEventListener("DOMContentLoaded", () => {
                 },
             });
 
+            // Read body exactly once – then decide what to do with it
+            const responseText = await response.text();
             const contentType = response.headers.get("content-type") || "";
 
             if (contentType.includes("application/json")) {
-                const data = await response.json();
-
-                if (data.success) {
-                    closeModal();
-                    window.location.reload();
-                    return;
+                try {
+                    const data = JSON.parse(responseText);
+                    if (data.success) {
+                        closeModal();
+                        window.location.reload();
+                        return;
+                    }
+                } catch (_) {
+                    // fall through to show as HTML
                 }
             }
 
-            const html = await response.text();
-            modalBody.innerHTML = html;
+            modalBody.innerHTML = responseText;
             openModal();
         } catch (error) {
             modalBody.innerHTML = "<p>Beim Speichern ist ein Fehler aufgetreten.</p>";
@@ -414,7 +418,28 @@ document.addEventListener("DOMContentLoaded", () => {
         nameInput.style.width = "100%";
 
         const suggestions = document.createElement("div");
-        suggestions.style.cssText = "position:absolute;top:100%;left:0;right:0;background:white;border:1.5px solid #e5e5e5;border-radius:8px;box-shadow:0 4px 12px rgba(0,0,0,0.1);z-index:100;max-height:160px;overflow-y:auto;display:none;";
+        suggestions.style.cssText = "position:fixed;background:white;border:1.5px solid #e5e5e5;border-radius:8px;box-shadow:0 4px 12px rgba(0,0,0,0.1);z-index:9999;max-height:160px;overflow-y:auto;display:none;";
+        document.body.appendChild(suggestions);
+
+        function positionSuggestions() {
+            const rect = nameInput.getBoundingClientRect();
+            const dropdownHeight = Math.min(160, suggestions.scrollHeight || 160);
+            const spaceBelow = window.innerHeight - rect.bottom;
+            const spaceAbove = rect.top;
+
+            suggestions.style.left = rect.left + "px";
+            suggestions.style.width = rect.width + "px";
+
+            if (spaceBelow >= dropdownHeight + 8 || spaceBelow >= spaceAbove) {
+                // enough space below, or more space below than above → open downward
+                suggestions.style.top = (rect.bottom + 2) + "px";
+                suggestions.style.bottom = "auto";
+            } else {
+                // more space above → open upward
+                suggestions.style.top = "auto";
+                suggestions.style.bottom = (window.innerHeight - rect.top + 2) + "px";
+            }
+        }
 
         nameInput.addEventListener("input", () => {
             const q = nameInput.value.toLowerCase().trim();
@@ -432,11 +457,18 @@ document.addEventListener("DOMContentLoaded", () => {
                 suggestions.appendChild(opt);
             });
             suggestions.style.display = "block";
+            positionSuggestions();
         });
 
+        nameInput.addEventListener("focus", positionSuggestions);
         nameInput.addEventListener("blur", () => setTimeout(() => { suggestions.style.display = "none"; }, 150));
+
+        // Remove floating dropdown when row is removed
+        const origRemove = row.remove.bind(row);
+        row.remove = () => { suggestions.remove(); origRemove(); };
+
         nameWrap.appendChild(nameInput);
-        nameWrap.appendChild(suggestions);
+        // suggestions is appended to body, not nameWrap
 
         const qtyInput = document.createElement("input");
         qtyInput.type = "number";
@@ -467,37 +499,73 @@ document.addEventListener("DOMContentLoaded", () => {
         nameInput.focus();
     }
 
+    // Track rows deleted via × button so we can send inline-delete on save
+    const deletedExistingIds = new Set();
+
+    // Bind remove buttons on already-rendered (template) rows via delegation
+    list.addEventListener("click", (e) => {
+        const btn = e.target.closest(".inline-remove-btn");
+        if (btn) {
+            const row = btn.closest(".inline-ingredient-row");
+            if (row.dataset.existingId) {
+                deletedExistingIds.add(row.dataset.existingId);
+            }
+            row.remove();
+        }
+    });
+
     addBtn.addEventListener("click", createRow);
 
     form.addEventListener("submit", async function(e) {
-        const rows = list.querySelectorAll(".inline-ingredient-row");
-        if (rows.length === 0) return;
-
         e.preventDefault();
+        e.stopPropagation(); // prevent submitModalForm from also firing
 
         const formData = new FormData(form);
         const existingRecipeId = form.dataset.recipeId || null;
         let recipeId = existingRecipeId;
 
-        // Save recipe metadata first
+        // Save recipe metadata first – read body exactly once
         try {
-            const res = await fetch(window.location.href, {
+            const res = await fetch(form.action, {
                 method: "POST",
                 body: formData,
                 headers: { "X-Requested-With": "XMLHttpRequest" },
             });
-            if (res.headers.get("content-type")?.includes("application/json")) {
-                const data = await res.json();
-                if (!data.success) return;
-                recipeId = data.recipe_id || existingRecipeId;
+            const resText = await res.text();
+            const ct = res.headers.get("content-type") || "";
+            if (ct.includes("application/json")) {
+                try {
+                    const data = JSON.parse(resText);
+                    if (!data.success) return;
+                    recipeId = data.recipe_id || existingRecipeId;
+                } catch(_) {}
             }
-            if (!recipeId) { form.submit(); return; }
-        } catch(err) { form.submit(); return; }
+            if (!recipeId) {
+                // No AJAX recipe ID – navigate to list (no inline ingredients to save)
+                window.location.href = "/recipes/";
+                return;
+            }
+        } catch(err) {
+            window.location.href = "/recipes/";
+            return;
+        }
+
+        const rows = list.querySelectorAll(".inline-ingredient-row");
+        if (rows.length === 0) {
+            window.location.href = `/recipes/${recipeId}/`;
+            return;
+        }
 
         const csrfToken = form.querySelector("[name=csrfmiddlewaretoken]").value;
 
-        // Track which existing IDs are still present
-        const presentExistingIds = new Set();
+        // Delete rows that were removed via × button
+        for (const deletedId of deletedExistingIds) {
+            await fetch(`/recipes/${recipeId}/ingredients/inline-delete/${deletedId}/`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json", "X-CSRFToken": csrfToken },
+                body: JSON.stringify({}),
+            });
+        }
 
         for (const row of rows) {
             const nameInput = row.querySelector("input[type=text]");
@@ -507,7 +575,6 @@ document.addEventListener("DOMContentLoaded", () => {
             const existingId = row.dataset.existingId;
 
             if (!name) {
-                // Delete if it was existing
                 if (existingId) {
                     await fetch(`/recipes/${recipeId}/ingredients/inline-delete/${existingId}/`, {
                         method: "POST",
@@ -519,15 +586,12 @@ document.addEventListener("DOMContentLoaded", () => {
             }
 
             if (existingId) {
-                // Update existing
-                presentExistingIds.add(existingId);
                 await fetch(`/recipes/${recipeId}/ingredients/inline-update/${existingId}/`, {
                     method: "POST",
                     headers: { "Content-Type": "application/json", "X-CSRFToken": csrfToken },
                     body: JSON.stringify({ name, quantity: qty || "1", unit: unit || "g" }),
                 });
             } else {
-                // Create new
                 await fetch(`/recipes/${recipeId}/ingredients/inline-create/`, {
                     method: "POST",
                     headers: { "Content-Type": "application/json", "X-CSRFToken": csrfToken },
@@ -536,6 +600,7 @@ document.addEventListener("DOMContentLoaded", () => {
             }
         }
 
+        // Navigate only after ALL saves are complete
         window.location.href = `/recipes/${recipeId}/`;
     });
 }

@@ -54,6 +54,9 @@
         <section class="section">
             <div class="section-header">
                 <h2 class="section-title">Zutaten</h2>
+                <button type="button" class="btn-icon-add open-modal-btn"
+                    data-url="{% url 'recipes:recipeingredient_create' recipe.pk %}"
+                    title="Zutat hinzufügen">+</button>
             </div>
 
             <div class="ingredient-list">
