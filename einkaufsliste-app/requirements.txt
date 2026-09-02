@@ -34,3 +34,4 @@ whitenoise
 psycopg[binary]
 dj-database-url
 Pillow
+PyMuPDF==1.28.2

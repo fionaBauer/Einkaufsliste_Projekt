@@ -1,6 +1,24 @@
+const RECEIPT_UNITS = [
+    ["g", "g"], ["kg", "kg"], ["ml", "ml"], ["l", "l"],
+    ["pcs", "Stück"], ["pkg", "Packung"], ["el", "EL"], ["tl", "TL"]
+];
+
 document.addEventListener("DOMContentLoaded", () => {
     const createModal = document.getElementById("createModal");
     const editModal = document.getElementById("editModal");
+
+    const addChooserModal = document.getElementById("addChooserModal");
+    const closeAddChooserModalBtn = document.getElementById("closeAddChooserModalBtn");
+    const chooseReceiptScanBtn = document.getElementById("chooseReceiptScanBtn");
+    const chooseReceiptUploadBtn = document.getElementById("chooseReceiptUploadBtn");
+    const chooseManualAddBtn = document.getElementById("chooseManualAddBtn");
+    const receiptCameraInput = document.getElementById("receiptCameraInput");
+    const receiptFileInput = document.getElementById("receiptFileInput");
+
+    const receiptReviewModal = document.getElementById("receiptReviewModal");
+    const receiptReviewContainer = document.getElementById("receiptReviewContainer");
+    const closeReceiptReviewModalBtn = document.getElementById("closeReceiptReviewModalBtn");
+    const confirmReceiptItemsBtn = document.getElementById("confirmReceiptItemsBtn");
 
     const ingredientCreateModal = document.getElementById("ingredientCreateModal");
     const ingredientCreateModalBody = document.getElementById("ingredientCreateModalBody");
@@ -25,6 +43,10 @@ document.addEventListener("DOMContentLoaded", () => {
     const applyConsumeRecipeBtn = document.getElementById("applyConsumeRecipeBtn");
 
     let activeInventoryFormContainer = null;
+
+    const ALL_INGREDIENTS = JSON.parse(
+        document.getElementById("allIngredientsData")?.textContent || "[]"
+    );
 
     function initializeIngredientSearch(modalElement, dropdownId) {
         const searchInput = modalElement?.querySelector(".ingredient-search-input");
@@ -104,8 +126,203 @@ document.addEventListener("DOMContentLoaded", () => {
 
     if (openCreateModalBtn) {
         openCreateModalBtn.addEventListener("click", () => {
-            createModal.classList.add("active");
-            initializeIngredientSearch(createModal, "inventoryIngredientDropdownCreate");
+            addChooserModal.classList.add("active");
+        });
+    }
+
+    function openCreateModalDirectly() {
+        createModal.classList.add("active");
+        initializeIngredientSearch(createModal, "inventoryIngredientDropdownCreate");
+    }
+
+    if (closeAddChooserModalBtn) {
+        closeAddChooserModalBtn.addEventListener("click", () => {
+            addChooserModal.classList.remove("active");
+        });
+    }
+
+    if (chooseManualAddBtn) {
+        chooseManualAddBtn.addEventListener("click", () => {
+            addChooserModal.classList.remove("active");
+            openCreateModalDirectly();
+        });
+    }
+
+    if (chooseReceiptScanBtn) {
+        chooseReceiptScanBtn.addEventListener("click", () => {
+            receiptCameraInput.click();
+        });
+    }
+
+    if (chooseReceiptUploadBtn) {
+        chooseReceiptUploadBtn.addEventListener("click", () => {
+            receiptFileInput.click();
+        });
+    }
+
+    async function handleReceiptFileSelected(event) {
+        const file = event.target.files?.[0];
+        event.target.value = "";
+        if (!file) return;
+
+        addChooserModal.classList.remove("active");
+        showToast("Kassenzettel wird ausgelesen …", "success");
+
+        const formData = new FormData();
+        formData.append("file", file);
+
+        try {
+            const response = await fetch("/inventory/receipt-scan/", {
+                method: "POST",
+                body: formData,
+                headers: { "X-CSRFToken": getCsrfTokenFromCookie() },
+            });
+            const data = await response.json();
+
+            if (!response.ok || !data.success) {
+                throw new Error(data.error || "Kassenzettel konnte nicht ausgelesen werden.");
+            }
+
+            if (!data.items || data.items.length === 0) {
+                showToast("Keine Artikel erkannt, bitte manuell eingeben.", "error");
+                return;
+            }
+
+            renderReceiptReview(data.items);
+            receiptReviewModal.classList.add("active");
+        } catch (error) {
+            console.error(error);
+            showToast(error.message || "Beim Auslesen ist ein Fehler aufgetreten.", "error");
+        }
+    }
+
+    receiptCameraInput?.addEventListener("change", handleReceiptFileSelected);
+    receiptFileInput?.addEventListener("change", handleReceiptFileSelected);
+
+    function unitOptionsHtml(selectedUnit) {
+        return RECEIPT_UNITS.map(([value, label]) =>
+            `<option value="${value}" ${value === selectedUnit ? "selected" : ""}>${label}</option>`
+        ).join("");
+    }
+
+    function ingredientOptionsHtml(selectedId) {
+        const options = ALL_INGREDIENTS.map((ingredient) =>
+            `<option value="${ingredient.id}" ${String(ingredient.id) === String(selectedId) ? "selected" : ""}>${ingredient.name}</option>`
+        ).join("");
+        return `<option value="">— bitte auswählen —</option>${options}`;
+    }
+
+    function escapeHtml(value) {
+        const div = document.createElement("div");
+        div.textContent = value ?? "";
+        return div.innerHTML;
+    }
+
+    function renderReceiptReview(items) {
+        if (!receiptReviewContainer) return;
+
+        receiptReviewContainer.innerHTML = items.map((item, index) => {
+            const isMatched = Boolean(item.matched_ingredient_id);
+            const showRawHint = item.raw_name && item.raw_name.toLowerCase() !== item.generic_name.toLowerCase();
+            return `
+            <div class="receipt-review-item">
+                <input type="checkbox" class="receipt-review-checkbox" data-index="${index}" checked>
+                <div class="receipt-review-name-wrap">
+                    <select class="receipt-review-ingredient-select ${isMatched ? "" : "invalid"}" data-index="${index}">
+                        ${ingredientOptionsHtml(item.matched_ingredient_id)}
+                    </select>
+                    <div class="receipt-review-meta-row">
+                        ${showRawHint ? `<span class="receipt-review-raw">Kassenzettel: ${escapeHtml(item.raw_name)}</span>` : ""}
+                        ${isMatched ? "" : `<span class="receipt-review-new-hint">Erkannt: „${escapeHtml(item.generic_name)}“ — bitte Zutat wählen</span>`}
+                        <button type="button" class="receipt-review-add-new-btn open-ingredient-create-btn"
+                            data-url="${receiptReviewContainer.dataset.ingredientCreateUrl}">+ neue Zutat</button>
+                    </div>
+                </div>
+                <input type="number" class="receipt-review-qty" data-index="${index}" value="${item.quantity}" min="0" step="0.01">
+                <select class="receipt-review-unit" data-index="${index}">${unitOptionsHtml(item.unit)}</select>
+            </div>
+        `;
+        }).join("");
+
+        updateConfirmButtonState();
+    }
+
+    function updateConfirmButtonState() {
+        if (!confirmReceiptItemsBtn || !receiptReviewContainer) return;
+
+        const rows = Array.from(receiptReviewContainer.querySelectorAll(".receipt-review-item"));
+        const checkedRows = rows.filter((row) => row.querySelector(".receipt-review-checkbox").checked);
+
+        const allValid = checkedRows.every((row) => {
+            const select = row.querySelector(".receipt-review-ingredient-select");
+            return select && select.value;
+        });
+
+        confirmReceiptItemsBtn.disabled = checkedRows.length === 0 || !allValid;
+    }
+
+    receiptReviewContainer?.addEventListener("change", (event) => {
+        if (event.target.matches(".receipt-review-ingredient-select")) {
+            event.target.classList.toggle("invalid", !event.target.value);
+        }
+        if (event.target.matches(".receipt-review-ingredient-select, .receipt-review-checkbox")) {
+            updateConfirmButtonState();
+        }
+    });
+
+    function closeReceiptReviewModal() {
+        receiptReviewModal.classList.remove("active");
+        receiptReviewContainer.innerHTML = "";
+    }
+
+    if (closeReceiptReviewModalBtn) {
+        closeReceiptReviewModalBtn.addEventListener("click", closeReceiptReviewModal);
+    }
+
+    if (confirmReceiptItemsBtn) {
+        confirmReceiptItemsBtn.addEventListener("click", async () => {
+            const rows = Array.from(receiptReviewContainer.querySelectorAll(".receipt-review-item"));
+            const checkedRows = rows.filter((row) => row.querySelector(".receipt-review-checkbox").checked);
+
+            if (checkedRows.length === 0) {
+                showToast("Bitte mindestens einen Artikel auswählen.", "error");
+                return;
+            }
+
+            const missingIngredient = checkedRows.some((row) => !row.querySelector(".receipt-review-ingredient-select").value);
+            if (missingIngredient) {
+                showToast("Bitte für alle markierten Artikel eine Zutat auswählen.", "error");
+                updateConfirmButtonState();
+                return;
+            }
+
+            const items = checkedRows.map((row) => ({
+                ingredient_id: row.querySelector(".receipt-review-ingredient-select").value,
+                quantity: row.querySelector(".receipt-review-qty").value,
+                unit: row.querySelector(".receipt-review-unit").value,
+            }));
+
+            try {
+                const response = await fetch("/inventory/receipt-confirm/", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                        "X-CSRFToken": getCsrfTokenFromCookie(),
+                    },
+                    body: JSON.stringify({ items }),
+                });
+                const data = await response.json();
+
+                if (!response.ok || !data.success) {
+                    throw new Error(data.error || "Artikel konnten nicht übernommen werden.");
+                }
+
+                showToast(`${data.added} Artikel zum Inventar hinzugefügt`, "success");
+                setTimeout(() => window.location.reload(), 700);
+            } catch (error) {
+                console.error(error);
+                showToast(error.message || "Beim Übernehmen ist ein Fehler aufgetreten.", "error");
+            }
         });
     }
 
@@ -289,7 +506,9 @@ document.addEventListener("DOMContentLoaded", () => {
     document.addEventListener("click", async (event) => {
         const ingredientCreateTrigger = event.target.closest(".open-ingredient-create-btn");
         if (ingredientCreateTrigger) {
-            activeInventoryFormContainer = ingredientCreateTrigger.closest(".modal");
+            activeInventoryFormContainer =
+                ingredientCreateTrigger.closest(".receipt-review-item") ||
+                ingredientCreateTrigger.closest(".modal");
 
             try {
                 const response = await fetch(ingredientCreateTrigger.dataset.url, {
@@ -377,7 +596,7 @@ document.addEventListener("DOMContentLoaded", () => {
         const formData = new FormData(form);
 
         try {
-            const response = await fetch(window.location.href, {
+            const response = await fetch(form.action || window.location.href, {
                 method: form.method || "POST",
                 body: formData,
                 headers: {
@@ -388,6 +607,37 @@ document.addEventListener("DOMContentLoaded", () => {
             const data = await response.json();
 
             if (data.success) {
+                // Neue Zutat sofort überall verfügbar machen, egal über welchen Weg sie angelegt wurde
+                // (nicht erst nach einem Seiten-Reload) — sonst fehlt sie im nächsten Kassenzettel-Scan.
+                if (!ALL_INGREDIENTS.some((ingredient) => String(ingredient.id) === String(data.ingredient.id))) {
+                    ALL_INGREDIENTS.push({ id: data.ingredient.id, name: data.ingredient.name });
+                }
+
+                receiptReviewContainer
+                    ?.querySelectorAll(".receipt-review-ingredient-select")
+                    .forEach((select) => {
+                        if (select.querySelector(`option[value="${data.ingredient.id}"]`)) {
+                            return;
+                        }
+                        const option = document.createElement("option");
+                        option.value = data.ingredient.id;
+                        option.textContent = data.ingredient.name;
+                        select.appendChild(option);
+                    });
+
+                if (activeInventoryFormContainer?.classList.contains("receipt-review-item")) {
+                    const activeSelect = activeInventoryFormContainer.querySelector(".receipt-review-ingredient-select");
+                    if (activeSelect) {
+                        activeSelect.value = String(data.ingredient.id);
+                        activeSelect.classList.remove("invalid");
+                        updateConfirmButtonState();
+                    }
+
+                    ingredientCreateModal.classList.remove("active");
+                    ingredientCreateModalBody.innerHTML = "";
+                    return;
+                }
+
                 const hiddenIngredientInput = activeInventoryFormContainer?.querySelector('input[name="ingredient"]');
                 const ingredientSearchInput = activeInventoryFormContainer?.querySelector(".ingredient-search-input");
                 const unitSelect = activeInventoryFormContainer?.querySelector('select[name="unit"]');
@@ -430,7 +680,7 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     });
 
-    [createModal, editModal, ingredientCreateModal].forEach((modal) => {
+    [createModal, editModal, ingredientCreateModal, addChooserModal].forEach((modal) => {
         if (!modal) return;
 
         modal.addEventListener("click", (event) => {
@@ -438,6 +688,12 @@ document.addEventListener("DOMContentLoaded", () => {
                 modal.classList.remove("active");
             }
         });
+    });
+
+    receiptReviewModal?.addEventListener("click", (event) => {
+        if (event.target === receiptReviewModal) {
+            closeReceiptReviewModal();
+        }
     });
 
     document.addEventListener("keydown", (event) => {
@@ -450,6 +706,11 @@ document.addEventListener("DOMContentLoaded", () => {
 
             createModal?.classList.remove("active");
             editModal?.classList.remove("active");
+            addChooserModal?.classList.remove("active");
+
+            if (receiptReviewModal?.classList.contains("active")) {
+                closeReceiptReviewModal();
+            }
         }
     });
 

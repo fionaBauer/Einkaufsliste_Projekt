@@ -121,15 +121,7 @@ def ingredient_create_modal(request):
         {"form": form},
         request=request,
     )
-    return JsonResponse({
-        "success": True,
-        "ingredient": {
-            "id": ingredient.id,
-            "name": ingredient.name,
-            "default_unit": ingredient.default_unit,
-            "category": ingredient.category,
-        }
-    })
+    return JsonResponse({"success": False, "html": html})
 
 from django.http import JsonResponse as _JsonResponse
 from django.contrib.auth.decorators import login_required as _login_required

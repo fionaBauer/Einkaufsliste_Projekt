@@ -16,6 +16,8 @@
                 📷 Scannen
             </button>
             <button class="add-button" id="openCreateModalBtn" type="button">+</button>
+            <input type="file" id="receiptCameraInput" accept="image/*" capture="environment" class="hidden">
+            <input type="file" id="receiptFileInput" accept="image/*,application/pdf" class="hidden">
         </div>
     </div>
 
@@ -129,6 +131,57 @@
         </div>
     {% endif %}
 </div>
+
+<!-- ADD CHOOSER MODAL -->
+<div class="modal-overlay" id="addChooserModal">
+    <div class="modal">
+        <h2>Eintrag hinzufügen</h2>
+        <div class="add-chooser-options">
+            <button type="button" class="add-chooser-option" id="chooseReceiptScanBtn">
+                <span class="add-chooser-icon">🧾</span>
+                <span class="add-chooser-text">
+                    <span class="add-chooser-title">Kassenzettel scannen</span>
+                    <span class="add-chooser-subtitle">Foto mit der Kamera aufnehmen</span>
+                </span>
+            </button>
+            <button type="button" class="add-chooser-option" id="chooseReceiptUploadBtn">
+                <span class="add-chooser-icon">📁</span>
+                <span class="add-chooser-text">
+                    <span class="add-chooser-title">Datei hochladen</span>
+                    <span class="add-chooser-subtitle">Foto oder PDF auswählen</span>
+                </span>
+            </button>
+            <button type="button" class="add-chooser-option" id="chooseManualAddBtn">
+                <span class="add-chooser-icon">✏️</span>
+                <span class="add-chooser-text">
+                    <span class="add-chooser-title">Manuell eingeben</span>
+                    <span class="add-chooser-subtitle">Einzelnen Artikel eintragen</span>
+                </span>
+            </button>
+        </div>
+        <div class="modal-actions">
+            <button type="button" class="btn btn-secondary" id="closeAddChooserModalBtn">Abbrechen</button>
+        </div>
+    </div>
+</div>
+
+<!-- RECEIPT REVIEW MODAL -->
+<div class="modal-overlay" id="receiptReviewModal">
+    <div class="modal modal-wide">
+        <h2>Erkannte Artikel</h2>
+        <p class="consume-preview-subtext">
+            Bitte prüfen und bei Bedarf anpassen, bevor die Artikel ins Inventar übernommen werden.
+        </p>
+        <div id="receiptReviewContainer" class="consume-preview-container"
+            data-ingredient-create-url="{% url 'ingredients:modal_create' %}"></div>
+        <div class="modal-actions">
+            <button type="button" class="btn btn-secondary" id="closeReceiptReviewModalBtn">Abbrechen</button>
+            <button type="button" class="btn btn-primary" id="confirmReceiptItemsBtn" disabled>Zum Inventar hinzufügen</button>
+        </div>
+    </div>
+</div>
+
+{{ all_ingredients_json|json_script:"allIngredientsData" }}
 
 <!-- CREATE MODAL -->
 <div class="modal-overlay {% if create_modal_open %}active{% endif %}" id="createModal">

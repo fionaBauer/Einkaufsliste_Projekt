@@ -4,7 +4,7 @@ from django.contrib.auth.decorators import login_required
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.views.decorators.http import require_POST
-from ingredients.models import IngredientCategory
+from ingredients.models import Ingredient, IngredientCategory
 from .forms import InventoryItemForm
 from .models import InventoryItem
 
@@ -112,6 +112,7 @@ def inventory_list(request):
         "search_query": search_query,
         "sort": sort,
         "recipes_for_consume": Recipe.objects.filter(household=household).order_by("name"),
+        "all_ingredients_json": list(Ingredient.objects.values("id", "name").order_by("name")),
         "sort_options": [
             ("name_asc", "Name A–Z"),
             ("name_desc", "Name Z–A"),
@@ -364,6 +365,133 @@ def barcode_add(request):
         item.save()
 
     return JsonResponse({"success": True, "created": created})
+
+
+RECEIPT_MAX_UPLOAD_SIZE = 15 * 1024 * 1024
+RECEIPT_ALLOWED_CONTENT_TYPES = {
+    "application/pdf",
+    "image/jpeg",
+    "image/png",
+    "image/webp",
+    "image/heic",
+    "image/heif",
+}
+
+
+@login_required
+@require_POST
+def receipt_scan(request):
+    """Kassenzettel/Einkaufszettel hochladen, per GPT-4o auslesen und exakt mit Zutaten abgleichen."""
+    from core.receipt_scan import extract_receipt_items, prepare_receipt_input
+    from decimal import Decimal
+    from ingredients.models import Ingredient, Unit as UnitChoices
+
+    uploaded_file = request.FILES.get("file")
+    if not uploaded_file:
+        return JsonResponse({"success": False, "error": "Keine Datei erhalten."}, status=400)
+
+    if uploaded_file.size > RECEIPT_MAX_UPLOAD_SIZE:
+        return JsonResponse({"success": False, "error": "Datei ist zu groß (max. 15 MB)."}, status=400)
+
+    content_type = uploaded_file.content_type or ""
+    file_bytes = uploaded_file.read()
+
+    if content_type not in RECEIPT_ALLOWED_CONTENT_TYPES and file_bytes[:4] != b"%PDF":
+        return JsonResponse({"success": False, "error": "Nicht unterstütztes Dateiformat."}, status=400)
+
+    try:
+        prepared_input = prepare_receipt_input(file_bytes, content_type)
+        raw_items = extract_receipt_items(prepared_input)
+    except Exception:
+        return JsonResponse({"success": False, "error": "Kassenzettel konnte nicht ausgelesen werden."}, status=500)
+
+    valid_units = {u[0] for u in UnitChoices.choices}
+    # Exaktes Matching (case-insensitive) statt Fuzzy-Matching: vermeidet Fehltreffer
+    # wie "Pesto Paprika" -> "Paprika". Kein exakter Treffer -> Nutzer wählt manuell.
+    ingredients_by_name = {i.name.lower(): i for i in Ingredient.objects.all()}
+
+    items = []
+    for raw_item in raw_items:
+        generic_name = (raw_item.get("name") or "").strip()
+        if not generic_name:
+            continue
+
+        raw_name = (raw_item.get("raw_name") or generic_name).strip()
+        existing = ingredients_by_name.get(generic_name.lower())
+
+        unit = raw_item.get("unit") or "pcs"
+        if unit not in valid_units:
+            unit = "pcs"
+
+        try:
+            quantity = str(Decimal(str(raw_item.get("quantity") or "1")))
+        except Exception:
+            quantity = "1"
+
+        items.append({
+            "raw_name": raw_name,
+            "generic_name": generic_name,
+            "quantity": quantity,
+            "unit": unit,
+            "matched_ingredient_id": existing.id if existing else None,
+        })
+
+    return JsonResponse({"success": True, "items": items})
+
+
+@login_required
+@require_POST
+def receipt_confirm(request):
+    """Bestätigte Kassenzettel-Artikel (mit vom Nutzer gewählter Zutat) als Inventar-Einträge anlegen/aktualisieren."""
+    import json
+    from decimal import Decimal
+
+    from ingredients.models import Ingredient, Unit as UnitChoices
+
+    household = request.user.households.first()
+
+    try:
+        data = json.loads(request.body)
+        items = data.get("items", [])
+    except Exception:
+        return JsonResponse({"success": False, "error": "Ungültige Anfrage."}, status=400)
+
+    valid_units = {u[0] for u in UnitChoices.choices}
+    added_count = 0
+
+    for raw_item in items:
+        ingredient_id = raw_item.get("ingredient_id")
+        if not ingredient_id:
+            continue
+
+        try:
+            ingredient = Ingredient.objects.get(pk=ingredient_id)
+        except (Ingredient.DoesNotExist, ValueError, TypeError):
+            continue
+
+        unit = raw_item.get("unit") or "pcs"
+        if unit not in valid_units:
+            unit = "pcs"
+
+        try:
+            qty = Decimal(str(raw_item.get("quantity") or "1"))
+        except Exception:
+            qty = Decimal("1")
+
+        item, created = InventoryItem.objects.get_or_create(
+            household=household,
+            ingredient=ingredient,
+            defaults={"quantity": qty, "unit": unit},
+        )
+
+        if not created:
+            item.quantity = (item.quantity or Decimal("0")) + qty
+            item.unit = item.unit or unit
+            item.save()
+
+        added_count += 1
+
+    return JsonResponse({"success": True, "added": added_count})
 
 
 @login_required

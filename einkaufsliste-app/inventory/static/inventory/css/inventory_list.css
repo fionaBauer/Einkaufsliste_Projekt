@@ -555,6 +555,137 @@ label {
     color: #8a6d1f;
 }
 
+/* ── Add-Chooser-Modal ── */
+.add-chooser-options {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.add-chooser-option {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    width: 100%;
+    background: #f7f7f7;
+    border: 1.5px solid #ebebeb;
+    border-radius: 14px;
+    padding: 14px 16px;
+    cursor: pointer;
+    text-align: left;
+    font-family: inherit;
+    transition: background 0.15s, border-color 0.15s, transform 0.12s;
+}
+
+.add-chooser-option:hover {
+    background: #eeeeee;
+    border-color: #d8d8d8;
+    transform: translateY(-1px);
+}
+
+.add-chooser-icon {
+    font-size: 24px;
+    line-height: 1;
+    flex-shrink: 0;
+}
+
+.add-chooser-text {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.add-chooser-title {
+    font-size: 15px;
+    font-weight: 700;
+    color: #1a1a1a;
+}
+
+.add-chooser-subtitle {
+    font-size: 13px;
+    color: #888;
+}
+
+/* ── Kassenzettel-Review ── */
+.receipt-review-item {
+    display: grid;
+    grid-template-columns: 24px 1fr 70px 80px;
+    gap: 10px;
+    align-items: start;
+    padding: 10px 0;
+    border-bottom: 1px solid #eaeaea;
+}
+
+.receipt-review-item:last-child {
+    border-bottom: none;
+}
+
+.receipt-review-item .receipt-review-checkbox {
+    margin-top: 8px;
+}
+
+.receipt-review-name-wrap {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    min-width: 0;
+}
+
+.receipt-review-ingredient-select,
+.receipt-review-qty,
+.receipt-review-unit {
+    padding: 7px 8px;
+    border: 1.5px solid #e5e5e5;
+    border-radius: 8px;
+    font-size: 14px;
+    font-family: inherit;
+    box-sizing: border-box;
+}
+
+.receipt-review-ingredient-select {
+    width: 100%;
+}
+
+.receipt-review-ingredient-select.invalid {
+    border-color: #d33;
+    background: #fff3f3;
+}
+
+.receipt-review-meta-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.receipt-review-raw {
+    font-size: 12px;
+    color: #999;
+}
+
+.receipt-review-new-hint {
+    font-size: 12px;
+    color: #b3261e;
+    font-weight: 600;
+}
+
+.receipt-review-add-new-btn {
+    border: none;
+    background: none;
+    color: #555;
+    font-size: 12px;
+    font-weight: 600;
+    text-decoration: underline;
+    cursor: pointer;
+    padding: 0;
+    font-family: inherit;
+}
+
+.btn:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+}
+
 /* ── Utility ── */
 .hidden {
     display: none !important;
