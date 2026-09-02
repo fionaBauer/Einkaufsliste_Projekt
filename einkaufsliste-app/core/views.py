@@ -2,6 +2,7 @@ from datetime import date, timedelta
 from collections import defaultdict
 
 from accounts.forms import RegisterForm
+from django.conf import settings
 from django.contrib.auth import login
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import redirect, render
@@ -85,6 +86,8 @@ def home(request):
 
 
 def register(request):
+    if not settings.REGISTRATION_ENABLED:
+        return redirect("login")
     if request.user.is_authenticated:
         return redirect("home")
     if request.method == "POST":

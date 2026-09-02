@@ -155,9 +155,11 @@
         <p class="auth-footer">
             <a href="{% url 'password_reset' %}">Passwort vergessen?</a>
         </p>
+        {% if registration_enabled %}
         <p class="auth-footer">
             Noch kein Konto? <a href="{% url 'register' %}">Registrieren</a>
         </p>
+        {% endif %}
     </div>
 </body>
 </html>

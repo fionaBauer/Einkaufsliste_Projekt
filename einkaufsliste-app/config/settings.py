@@ -33,6 +33,10 @@ DEBUG = os.environ.get("DEBUG", "False") == "True"
 
 ALLOWED_HOSTS = os.environ.get("ALLOWED_HOSTS", "127.0.0.1,localhost").split(",")
 
+# Registrierung ist waehrend der Beta-Phase deaktiviert, aber nicht entfernt.
+# Auf True setzen (oder Env-Variable), sobald die App oeffentlich starten soll.
+REGISTRATION_ENABLED = os.environ.get("REGISTRATION_ENABLED", "False") == "True"
+
 
 # Application definition
 
@@ -81,6 +85,7 @@ TEMPLATES = [
                 "django.template.context_processors.request",
                 "django.contrib.auth.context_processors.auth",
                 "django.contrib.messages.context_processors.messages",
+                "core.context_processors.feature_flags",
             ],
         },
     },
