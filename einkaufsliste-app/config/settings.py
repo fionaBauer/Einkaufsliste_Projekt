@@ -196,4 +196,4 @@ DEFAULT_FROM_EMAIL = "Prepio <noreply@prepio.de>"
 
 # Media files (user uploads)
 MEDIA_URL = "/media/"
-MEDIA_ROOT = Path("/home/deploy/media/einkaufsliste/")
+MEDIA_ROOT = Path(os.environ.get("MEDIA_ROOT", "/home/deploy/media/einkaufsliste/"))

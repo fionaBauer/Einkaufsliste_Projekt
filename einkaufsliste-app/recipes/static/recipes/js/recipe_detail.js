@@ -389,6 +389,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const list = document.getElementById("inline-ingredients-list");
     const addBtn = document.getElementById("add-inline-ingredient");
     const form = document.getElementById("recipe-main-form");
+    const modalBody = document.getElementById("modal-body");
     if (!list || !addBtn || !form) return;
 
     const UNITS = [
@@ -533,20 +534,30 @@ document.addEventListener("DOMContentLoaded", () => {
             });
             const resText = await res.text();
             const ct = res.headers.get("content-type") || "";
+
             if (ct.includes("application/json")) {
-                try {
-                    const data = JSON.parse(resText);
-                    if (!data.success) return;
-                    recipeId = data.recipe_id || existingRecipeId;
-                } catch(_) {}
+                const data = JSON.parse(resText);
+                if (!data.success) return;
+                recipeId = data.recipe_id || existingRecipeId;
+            } else if (res.status === 400) {
+                // Validierungsfehler – Formular mit Fehlermeldungen neu anzeigen statt stillschweigend weiterzumachen
+                if (modalBody) {
+                    modalBody.innerHTML = resText;
+                    setTimeout(initInlineIngredients, 0);
+                }
+                return;
+            } else {
+                throw new Error(`Unerwartete Serverantwort (Status ${res.status}).`);
             }
+
             if (!recipeId) {
                 // No AJAX recipe ID – navigate to list (no inline ingredients to save)
                 window.location.href = "/recipes/";
                 return;
             }
         } catch(err) {
-            window.location.href = "/recipes/";
+            console.error(err);
+            alert("Beim Speichern des Rezepts ist ein Fehler aufgetreten. Bitte versuche es erneut.");
             return;
         }
 
