@@ -1,0 +1,80 @@
+<div id="ingredient-list-section">
+    {% if grouped_ingredients %}
+        <!-- Category Cards -->
+        <div class="category-grid" id="category-grid">
+            {% for group in grouped_ingredients %}
+            <div class="category-card" data-category="{{ group.value }}">
+                <div class="category-card-icon">
+                    {% if "Obst" in group.label %}🥦
+                    {% elif "Gewürz" in group.label %}🧂
+                    {% elif "Kühl" in group.label %}🧀
+                    {% elif "Getränk" in group.label %}🥤
+                    {% elif "Vorrat" in group.label %}🫙
+                    {% elif "Tiefkühl" in group.label %}🧊
+                    {% elif "Back" in group.label %}🫘
+                    {% elif "Snack" in group.label %}🍫
+                    {% else %}📦{% endif %}
+                </div>
+                <div class="category-card-info">
+                    <span class="category-card-name">{{ group.label }}</span>
+                    <span class="category-card-count">{{ group.items|length }} Zutaten</span>
+                </div>
+                <svg class="category-card-arrow" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"/></svg>
+            </div>
+            {% endfor %}
+        </div>
+
+        <!-- Detail Panels -->
+        {% for group in grouped_ingredients %}
+        <div class="category-detail hidden" id="ing-detail-{{ group.value }}" data-category="{{ group.value }}">
+            <div class="detail-header">
+                <button class="detail-back-btn">← Zurück</button>
+                <h2 class="detail-title">
+                    {% if "Obst" in group.label %}🥦
+                    {% elif "Gewürz" in group.label %}🧂
+                    {% elif "Kühl" in group.label %}🧀
+                    {% elif "Getränk" in group.label %}🥤
+                    {% elif "Vorrat" in group.label %}🫙
+                    {% elif "Tiefkühl" in group.label %}🧊
+                    {% elif "Back" in group.label %}🫘
+                    {% elif "Snack" in group.label %}🍫
+                    {% else %}📦{% endif %}
+                    {{ group.label }}
+                </h2>
+            </div>
+            <ul class="ingredient-list">
+                {% for ingredient in group.items %}
+                <li class="ingredient-item">
+                    <div class="ingredient-main">
+                        <span class="ingredient-name">{{ ingredient.name }}</span>
+                    </div>
+                    <div class="ingredient-actions">
+                        <button type="button" class="action-btn edit-btn open-edit-modal-btn"
+                            data-id="{{ ingredient.id }}"
+                            data-name="{{ ingredient.name }}"
+                            data-category="{{ ingredient.category }}">
+                            Bearbeiten
+                        </button>
+                        <form method="post" class="delete-form"
+                            onsubmit="return confirm('Zutat löschen?');">
+                            {% csrf_token %}
+                            <input type="hidden" name="action" value="delete">
+                            <input type="hidden" name="ingredient_id" value="{{ ingredient.id }}">
+                            <button type="submit" class="action-btn delete-btn">Löschen</button>
+                        </form>
+                    </div>
+                </li>
+                {% endfor %}
+            </ul>
+        </div>
+        {% endfor %}
+    {% else %}
+        <div class="empty-state">
+            {% if search_query %}
+                Keine Zutaten für „{{ search_query }}“ gefunden.
+            {% else %}
+                Noch keine Zutaten gespeichert.
+            {% endif %}
+        </div>
+    {% endif %}
+</div>

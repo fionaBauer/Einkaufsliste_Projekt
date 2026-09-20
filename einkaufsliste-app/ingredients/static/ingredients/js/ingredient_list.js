@@ -1,3 +1,64 @@
+function initCategoryToggle() {
+    const grid = document.getElementById("category-grid");
+    const details = document.querySelectorAll(".category-detail");
+
+    function showGrid() {
+        grid && grid.classList.remove("hidden");
+        details.forEach(d => d.classList.add("hidden"));
+    }
+
+    function showDetail(categoryValue) {
+        grid && grid.classList.add("hidden");
+        details.forEach(d => d.classList.add("hidden"));
+        const detail = document.querySelector(`.category-detail[data-category="${categoryValue}"]`);
+        if (detail) detail.classList.remove("hidden");
+    }
+
+    document.querySelectorAll(".category-card").forEach(card => {
+        card.addEventListener("click", () => showDetail(card.dataset.category));
+    });
+
+    document.querySelectorAll(".detail-back-btn").forEach(btn => {
+        btn.addEventListener("click", showGrid);
+    });
+}
+
+function getOpenCategory() {
+    const openDetail = document.querySelector(".category-detail:not(.hidden)");
+    return openDetail ? openDetail.dataset.category : null;
+}
+
+function showCategoryByValue(categoryValue) {
+    const grid = document.getElementById("category-grid");
+    const details = document.querySelectorAll(".category-detail");
+
+    if (!categoryValue) {
+        grid && grid.classList.remove("hidden");
+        details.forEach(d => d.classList.add("hidden"));
+        return;
+    }
+
+    const detail = document.querySelector(`.category-detail[data-category="${categoryValue}"]`);
+    if (!detail) {
+        // Kategorie hat jetzt keine Einträge mehr (z.B. letzte Zutat verschoben/gelöscht) -> zurück zur Übersicht
+        grid && grid.classList.remove("hidden");
+        details.forEach(d => d.classList.add("hidden"));
+        return;
+    }
+
+    grid && grid.classList.add("hidden");
+    details.forEach(d => d.classList.add("hidden"));
+    detail.classList.remove("hidden");
+}
+
+function replaceIngredientListSection(html, previousCategory) {
+    const sectionEl = document.getElementById("ingredient-list-section");
+    if (!sectionEl) return;
+    sectionEl.outerHTML = html;
+    initCategoryToggle();
+    showCategoryByValue(previousCategory);
+}
+
 document.addEventListener("DOMContentLoaded", () => {
     const createModal = document.getElementById("createModal");
     const editModal = document.getElementById("editModal");
@@ -9,6 +70,8 @@ document.addEventListener("DOMContentLoaded", () => {
     const editIngredientId = document.getElementById("editIngredientId");
     const editName = document.getElementById("edit_name");
     const editCategory = document.getElementById("edit_category");
+
+    initCategoryToggle();
 
     if (openCreateModalBtn) {
         openCreateModalBtn.addEventListener("click", () => createModal.classList.add("active"));
@@ -38,26 +101,33 @@ document.addEventListener("DOMContentLoaded", () => {
         if (form.closest("#editModal")) {
             e.preventDefault();
             const formData = new FormData(form);
+            const previousCategory = getOpenCategory();
             try {
                 const res = await fetch(window.location.href, {
                     method: "POST", body: formData,
                     headers: { "X-Requested-With": "XMLHttpRequest" },
                 });
+                const ct = res.headers.get("content-type") || "";
+                if (!ct.includes("application/json")) {
+                    throw new Error(`Unerwartete Serverantwort (Status ${res.status}).`);
+                }
                 const data = await res.json();
                 if (data.success) {
                     editModal.classList.remove("active");
-                    // Update name in the detail list
-                    const ingId = form.querySelector('[name="ingredient_id"]')?.value;
-                    const newName = form.querySelector('[name="name"]')?.value;
-                    if (ingId && newName) {
-                        document.querySelectorAll(`.open-edit-modal-btn[data-id="${ingId}"]`).forEach(b => {
-                            b.dataset.name = newName;
-                            const nameEl = b.closest(".ingredient-item")?.querySelector(".ingredient-name");
-                            if (nameEl) nameEl.textContent = newName;
-                        });
+                    if (data.section_html) {
+                        replaceIngredientListSection(data.section_html, previousCategory);
                     }
+                } else {
+                    const messages = Object.values(data.errors || {})
+                        .flat()
+                        .map(err => err.message || err)
+                        .join(" ");
+                    alert(messages || "Speichern fehlgeschlagen. Bitte Eingaben prüfen.");
                 }
-            } catch(err) { console.error(err); }
+            } catch(err) {
+                console.error(err);
+                alert("Beim Speichern ist ein Fehler aufgetreten. Bitte versuche es erneut.");
+            }
             return;
         }
 
@@ -66,16 +136,24 @@ document.addEventListener("DOMContentLoaded", () => {
             e.preventDefault();
             if (!confirm("Zutat löschen?")) return;
             const formData = new FormData(form);
+            const previousCategory = getOpenCategory();
             try {
                 const res = await fetch(window.location.href, {
                     method: "POST", body: formData,
                     headers: { "X-Requested-With": "XMLHttpRequest" },
                 });
-                const data = await res.json();
-                if (data.success) {
-                    form.closest(".ingredient-item")?.remove();
+                const ct = res.headers.get("content-type") || "";
+                if (!ct.includes("application/json")) {
+                    throw new Error(`Unerwartete Serverantwort (Status ${res.status}).`);
                 }
-            } catch(err) { console.error(err); }
+                const data = await res.json();
+                if (data.success && data.section_html) {
+                    replaceIngredientListSection(data.section_html, previousCategory);
+                }
+            } catch(err) {
+                console.error(err);
+                alert("Beim Löschen ist ein Fehler aufgetreten. Bitte versuche es erneut.");
+            }
             return;
         }
     });

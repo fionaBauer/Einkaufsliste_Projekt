@@ -8,14 +8,8 @@ from django.views.decorators.http import require_http_methods
 from .forms import IngredientForm
 from .models import Ingredient, IngredientCategory
 
-from collections import OrderedDict
 
-
-@login_required
-def ingredient_list(request):
-    search_query = request.GET.get("q", "").strip()
-    sort = request.GET.get("sort", "name_asc")
-
+def _build_grouped_ingredients(search_query, sort):
     ingredients = Ingredient.objects.all()
 
     if search_query:
@@ -26,12 +20,33 @@ def ingredient_list(request):
     else:
         ingredients = ingredients.order_by("name")
 
-    grouped_ingredients = OrderedDict()
+    grouped = []
 
     for category_value, category_label in IngredientCategory.choices:
         category_items = [ingredient for ingredient in ingredients if ingredient.category == category_value]
         if category_items:
-            grouped_ingredients[category_label] = category_items
+            grouped.append({"value": category_value, "label": category_label, "items": category_items})
+
+    return grouped
+
+
+def _render_ingredient_list_section(request, search_query, sort):
+    return render_to_string(
+        "ingredients/partials/ingredient_list_section.html",
+        {
+            "grouped_ingredients": _build_grouped_ingredients(search_query, sort),
+            "search_query": search_query,
+        },
+        request=request,
+    )
+
+
+@login_required
+def ingredient_list(request):
+    search_query = request.GET.get("q", "").strip()
+    sort = request.GET.get("sort", "name_asc")
+
+    grouped_ingredients = _build_grouped_ingredients(search_query, sort)
 
     create_form = IngredientForm()
     edit_form = None
@@ -58,8 +73,12 @@ def ingredient_list(request):
             if edit_form.is_valid():
                 edit_form.save()
                 if request.headers.get("X-Requested-With") == "XMLHttpRequest":
-                    return JsonResponse({"success": True})
+                    section_html = _render_ingredient_list_section(request, search_query, sort)
+                    return JsonResponse({"success": True, "section_html": section_html})
                 return redirect("ingredients:list")
+
+            if request.headers.get("X-Requested-With") == "XMLHttpRequest":
+                return JsonResponse({"success": False, "errors": edit_form.errors}, status=400)
             edit_modal_open = True
 
         elif action == "delete":
@@ -67,14 +86,14 @@ def ingredient_list(request):
             ingredient = get_object_or_404(Ingredient, pk=ingredient_id)
             ingredient.delete()
             if request.headers.get("X-Requested-With") == "XMLHttpRequest":
-                return JsonResponse({"success": True})
+                section_html = _render_ingredient_list_section(request, search_query, sort)
+                return JsonResponse({"success": True, "section_html": section_html})
             return redirect("ingredients:list")
 
     if edit_form is None:
         edit_form = IngredientForm()
 
     context = {
-        "ingredients": ingredients,
         "grouped_ingredients": grouped_ingredients,
         "create_form": create_form,
         "edit_form": edit_form,
