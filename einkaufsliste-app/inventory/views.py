@@ -1,9 +1,8 @@
-from collections import OrderedDict
-
 from django.contrib.auth.decorators import login_required
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.views.decorators.http import require_POST
+from ingredients.categories import CATEGORY_ICONS
 from ingredients.models import Ingredient, IngredientCategory
 from .forms import InventoryItemForm
 from .models import InventoryItem
@@ -52,12 +51,17 @@ def inventory_list(request):
     else:
         inventory_items.sort(key=lambda item: item.ingredient.name.lower())
 
-    grouped_inventory_items = OrderedDict()
+    grouped_inventory_items = []
 
     for category_value, category_label in IngredientCategory.choices:
         category_items = [item for item in inventory_items if item.ingredient.category == category_value]
         if category_items:
-            grouped_inventory_items[category_label] = category_items
+            grouped_inventory_items.append({
+                "value": category_value,
+                "label": category_label,
+                "icon": CATEGORY_ICONS.get(category_value, "📦"),
+                "items": category_items,
+            })
 
     create_form = InventoryItemForm(household=household, exclude_used_ingredients=True)
     edit_form = None

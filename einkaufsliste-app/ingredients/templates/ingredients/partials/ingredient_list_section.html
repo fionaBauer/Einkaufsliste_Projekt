@@ -5,15 +5,7 @@
             {% for group in grouped_ingredients %}
             <div class="category-card" data-category="{{ group.value }}" data-key="card-{{ group.value }}">
                 <div class="category-card-icon">
-                    {% if "Obst" in group.label %}🥦
-                    {% elif "Gewürz" in group.label %}🧂
-                    {% elif "Kühl" in group.label %}🧀
-                    {% elif "Getränk" in group.label %}🥤
-                    {% elif "Vorrat" in group.label %}🫙
-                    {% elif "Tiefkühl" in group.label %}🧊
-                    {% elif "Back" in group.label %}🫘
-                    {% elif "Snack" in group.label %}🍫
-                    {% else %}📦{% endif %}
+                    {{ group.icon }}
                 </div>
                 <div class="category-card-info">
                     <span class="category-card-name">{{ group.label }}</span>
@@ -33,15 +25,7 @@
                     Zurück
                 </button>
                 <h2 class="detail-title">
-                    {% if "Obst" in group.label %}🥦
-                    {% elif "Gewürz" in group.label %}🧂
-                    {% elif "Kühl" in group.label %}🧀
-                    {% elif "Getränk" in group.label %}🥤
-                    {% elif "Vorrat" in group.label %}🫙
-                    {% elif "Tiefkühl" in group.label %}🧊
-                    {% elif "Back" in group.label %}🫘
-                    {% elif "Snack" in group.label %}🍫
-                    {% else %}📦{% endif %}
+                    {{ group.icon }}
                     {{ group.label }}
                 </h2>
             </div>

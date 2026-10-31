@@ -13,14 +13,18 @@ class Unit(models.TextChoices):
 
 
 class IngredientCategory(models.TextChoices):
+    # Reihenfolge = Anzeige-Reihenfolge (grob wie die Gänge im Supermarkt)
     FRUIT_VEG = "fruit_veg", "Obst & Gemüse"
-    SPICES = "spices", "Gewürze"
-    FRIDGE = "fridge", "Kühlschrank"
-    DRINKS = "drinks", "Getränke"
-    PANTRY = "pantry", "Vorrat"
+    BREAD = "bread", "Brot & Backwaren"
+    MEAT_FISH = "meat_fish", "Fleisch & Fisch"
+    DAIRY = "dairy", "Milchprodukte & Eier"
+    GRAINS = "grains", "Nudeln, Reis & Getreide"
+    CANNED = "canned", "Konserven & Hülsenfrüchte"
+    SPICES = "spices", "Gewürze, Öle & Saucen"
+    BAKING = "baking", "Backen & Süßen"
+    SNACKS = "snacks", "Süßes & Snacks"
     FREEZER = "freezer", "Tiefkühl"
-    BAKING = "baking", "Backzutaten"
-    SNACKS = "snacks", "Snacks"
+    DRINKS = "drinks", "Getränke"
     OTHER = "other", "Sonstiges"
 
 

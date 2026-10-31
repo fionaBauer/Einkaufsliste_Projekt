@@ -6,6 +6,7 @@ from django.template.loader import render_to_string
 from django.views.decorators.http import require_http_methods
 
 from .forms import IngredientForm
+from .categories import CATEGORY_ICONS
 from .models import Ingredient, IngredientCategory
 
 
@@ -25,7 +26,12 @@ def _build_grouped_ingredients(search_query, sort):
     for category_value, category_label in IngredientCategory.choices:
         category_items = [ingredient for ingredient in ingredients if ingredient.category == category_value]
         if category_items:
-            grouped.append({"value": category_value, "label": category_label, "items": category_items})
+            grouped.append({
+                "value": category_value,
+                "label": category_label,
+                "icon": CATEGORY_ICONS.get(category_value, "📦"),
+                "items": category_items,
+            })
 
     return grouped
 
@@ -150,3 +156,10 @@ def ingredient_api_list(request):
     """Returns all ingredients as JSON for autocomplete."""
     ingredients = Ingredient.objects.values("id", "name", "default_unit").order_by("name")
     return _JsonResponse(list(ingredients), safe=False)
+
+@_login_required
+def ingredient_guess_category(request):
+    """Kategorie-Vorschlag beim Anlegen einer Zutat (während des Tippens)."""
+    from .categories import guess_category
+
+    return _JsonResponse({"category": guess_category(request.GET.get("name", ""))})

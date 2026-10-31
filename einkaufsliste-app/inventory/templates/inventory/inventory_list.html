@@ -48,22 +48,14 @@
     {% if grouped_inventory_items %}
         <!-- Category Cards Grid -->
         <div class="category-grid" id="category-grid" data-morph-keep-class>
-            {% for category_label, category_items in grouped_inventory_items.items %}
-            {% with category_items|length as count %}
-            <div class="category-card" data-category="{{ category_label }}" data-key="card-{{ category_label|slugify }}">
+            {% for group in grouped_inventory_items %}
+            {% with group.items|length as count %}
+            <div class="category-card" data-category="{{ group.value }}" data-key="card-{{ group.value }}">
                 <div class="category-card-icon">
-                    {% if "Obst" in category_label %}🥦
-                    {% elif "Gewürz" in category_label %}🧂
-                    {% elif "Kühl" in category_label %}🧀
-                    {% elif "Getränk" in category_label %}🥤
-                    {% elif "Vorrat" in category_label %}🫙
-                    {% elif "Tiefkühl" in category_label %}🧊
-                    {% elif "Back" in category_label %}🫘
-                    {% elif "Snack" in category_label %}🍫
-                    {% else %}📦{% endif %}
+                    {{ group.icon }}
                 </div>
                 <div class="category-card-info">
-                    <span class="category-card-name">{{ category_label }}</span>
+                    <span class="category-card-name">{{ group.label }}</span>
                     <span class="category-card-count">{{ count }} {% if count == 1 %}Eintrag{% else %}Einträge{% endif %}</span>
                 </div>
                 <svg class="category-card-arrow" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"/></svg>
@@ -73,29 +65,21 @@
         </div>
 
         <!-- Detail Panels (hidden by default, shown when card clicked) -->
-        {% for category_label, category_items in grouped_inventory_items.items %}
-        <div class="category-detail hidden" data-category="{{ category_label }}" data-key="detail-{{ category_label|slugify }}" data-morph-keep-class>
+        {% for group in grouped_inventory_items %}
+        <div class="category-detail hidden" data-category="{{ group.value }}" data-key="detail-{{ group.value }}" data-morph-keep-class>
             <div class="detail-header">
                 <button type="button" class="detail-back-btn">
                     <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg>
                     Zurück
                 </button>
                 <h2 class="detail-title">
-                    {% if "Obst" in category_label %}🥦
-                    {% elif "Gewürz" in category_label %}🧂
-                    {% elif "Kühl" in category_label %}🧀
-                    {% elif "Getränk" in category_label %}🥤
-                    {% elif "Vorrat" in category_label %}🫙
-                    {% elif "Tiefkühl" in category_label %}🧊
-                    {% elif "Back" in category_label %}🫘
-                    {% elif "Snack" in category_label %}🍫
-                    {% else %}📦{% endif %}
-                    {{ category_label }}
+                    {{ group.icon }}
+                    {{ group.label }}
                 </h2>
             </div>
 
             <ul class="inventory-list">
-                {% for item in category_items %}
+                {% for item in group.items %}
                 <li class="inventory-item" data-item-id="{{ item.id }}" data-key="inv-{{ item.id }}">
                     <div class="inventory-main">
                         <span class="inventory-name">{{ item.ingredient.name }}</span>

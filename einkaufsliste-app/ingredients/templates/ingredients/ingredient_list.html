@@ -34,7 +34,7 @@
     <div class="modal">
         <h2>Neue Zutat hinzufügen</h2>
 
-        <form method="post">
+        <form method="post" data-guess-category="{% url 'ingredients:api_guess_category' %}">
             {% csrf_token %}
             <input type="hidden" name="action" value="create">
 

@@ -13,6 +13,7 @@ from django.http import JsonResponse
 
 from decimal import Decimal, InvalidOperation
 from ingredients.models import Ingredient, Unit
+from ingredients.categories import guess_category
 from deals.services import get_suggested_recipes_by_deals
 
 from .models import Recipe, RecipeIngredient
@@ -670,6 +671,7 @@ def _get_or_create_matching_ingredient(ingredient_name: str, default_unit: str):
         return Ingredient.objects.create(
             name=ingredient_name.strip(),
             default_unit=default_unit or Unit.GRAM,
+            category=guess_category(ingredient_name),
         )
     except Exception:
         # Falls parallel / wegen Unique doch schon vorhanden

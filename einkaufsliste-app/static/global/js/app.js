@@ -434,6 +434,35 @@
         searchTimer = setTimeout(() => input.form?.requestSubmit(), 320);
     });
 
+    /* ───────────────────────── Kategorie-Vorschlag beim Anlegen einer Zutat ───────────────────────── */
+
+    let guessTimer = null;
+    document.addEventListener("input", (event) => {
+        const input = event.target;
+        const form = input.form;
+        if (input.name !== "name" || !form?.dataset.guessCategory) return;
+        const select = form.querySelector('select[name="category"]');
+        if (!select || select.dataset.userChosen) return;
+        clearTimeout(guessTimer);
+        guessTimer = setTimeout(async () => {
+            try {
+                const url = `${form.dataset.guessCategory}?name=${encodeURIComponent(input.value)}`;
+                const data = await (await fetch(url, { credentials: "same-origin" })).json();
+                if (!select.dataset.userChosen && data.category) select.value = data.category;
+            } catch (_) { /* nur ein Vorschlag */ }
+        }, 250);
+    });
+
+    // Hat jemand die Kategorie selbst gewählt, nicht mehr überschreiben
+    document.addEventListener("change", (event) => {
+        if (event.target.matches?.('form[data-guess-category] select[name="category"]')) {
+            event.target.dataset.userChosen = "1";
+        }
+    });
+    document.addEventListener("app:submitted", (event) => {
+        event.detail?.form?.querySelectorAll("select[data-user-chosen]").forEach((s) => delete s.dataset.userChosen);
+    });
+
     /* ───────────────────────── Live-Sync ───────────────────────── */
 
     App.onLive = function (fn) { liveHandlers.push(fn); };

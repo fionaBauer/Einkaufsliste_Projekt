@@ -1,6 +1,6 @@
 <h2>Neue Zutat hinzufügen</h2>
 
-<form method="post" action="{% url 'ingredients:modal_create' %}" id="ingredient-create-form">
+<form method="post" action="{% url 'ingredients:modal_create' %}" id="ingredient-create-form" data-guess-category="{% url 'ingredients:api_guess_category' %}">
     {% csrf_token %}
 
     {% for field in form %}
