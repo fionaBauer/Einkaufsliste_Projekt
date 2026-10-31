@@ -290,14 +290,12 @@ body.is-scrolled .recipe-topbar { box-shadow: 0 1px 0 var(--border-light); }
     width: 38px;
     height: 38px;
     border-radius: 13px;
-    background: var(--accent);
+    /* Lila-Verlauf wie global/favicon.svg */
+    background: linear-gradient(145deg, #E0D6F5, #BBA9E6);
     color: white;
     display: grid;
     place-items: center;
-    font-family: var(--font-display);
-    font-weight: 800;
-    font-size: 19px;
-    box-shadow: 0 6px 14px rgba(35, 132, 91, 0.28);
+    box-shadow: 0 6px 14px rgba(140, 115, 205, 0.32);
     flex-shrink: 0;
 }
 
@@ -1171,14 +1169,27 @@ input[type="checkbox"]:disabled { opacity: 0.4; cursor: not-allowed; }
         height: calc(100% - 12px);
         width: 0;
         border-radius: var(--radius-pill);
-        background: rgba(29, 27, 24, 0.075);
+        background: rgba(29, 27, 24, 0.09);
+        box-shadow: inset 0 0 0 0.5px rgba(29, 27, 24, 0.05);
         opacity: 0;
-        transition: transform 0.42s var(--ease-spring), width 0.42s var(--ease-spring), opacity 0.2s;
+        transition: transform 0.45s var(--ease-spring), width 0.45s var(--ease-spring),
+                    opacity 0.2s, background 0.2s, box-shadow 0.2s;
         pointer-events: none;
     }
 
     .tab-indicator.ready { opacity: 1; }
     .tab-indicator.no-anim { transition: none; }
+
+    /* Beim Ziehen: Pille folgt dem Finger direkt und wird leicht zur "Linse" */
+    .tab-indicator.dragging {
+        transition: width 0.3s var(--ease-spring), opacity 0.2s, background 0.2s, box-shadow 0.2s;
+        background: rgba(255, 255, 255, 0.95);
+        box-shadow: 0 6px 20px rgba(29, 27, 24, 0.16), inset 0 0 0 0.5px rgba(29, 27, 24, 0.06);
+    }
+
+    .bottom-tab-bar { touch-action: none; transition: transform 0.3s var(--ease-spring); }
+    .bottom-tab-bar.dragging { transform: translateX(-50%) scale(1.03); }
+    .tab-item.drag-hover, .tab-more-btn.drag-hover { color: var(--text-main); }
 
     .tab-item,
     .tab-more-btn {
@@ -1216,10 +1227,7 @@ input[type="checkbox"]:disabled { opacity: 0.4; cursor: not-allowed; }
     .tab-more-btn.active svg { stroke-width: 2.4; }
 
     /* Gefülltes Icon für den aktiven Tab (wie bei Instagram) */
-    .tab-item.active .tab-fill { fill: currentColor; fill-opacity: 1; }
-    .tab-fill { fill: currentColor; fill-opacity: 0; transition: fill-opacity 0.2s; }
-    .tab-more-btn.active .tab-fill { fill-opacity: 1; }
-    .tab-item.active .tab-cut { stroke: var(--surface); }
+    .tab-fill { fill: none; }
 
     .tab-label {
         position: absolute;

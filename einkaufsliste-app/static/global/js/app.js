@@ -577,7 +577,8 @@
     const indicator = tabBar?.querySelector(".tab-indicator");
 
     function moveIndicator(target, animate = true) {
-        if (!indicator || !target || !tabBar.offsetParent) return;
+        // (offsetParent taugt hier nicht als Sichtbarkeits-Check: bei position:fixed ist er immer null)
+        if (!indicator || !target || getComputedStyle(tabBar).display === "none") return;
         const barRect = tabBar.getBoundingClientRect();
         const rect = target.getBoundingClientRect();
         indicator.classList.toggle("no-anim", !animate);
@@ -604,6 +605,76 @@
             moveIndicator(activeTab(), false);
             setMoreOpen(false);
         });
+
+        /* Pille mit dem Finger von Tab zu Tab ziehen (wie bei Instagram/WhatsApp) */
+        let drag = null;
+        let suppressClick = false;
+
+        function tabAt(x) {
+            let nearest = null;
+            let best = Infinity;
+            tabs.forEach((t) => {
+                const r = t.getBoundingClientRect();
+                const d = x < r.left ? r.left - x : x > r.right ? x - r.right : 0;
+                if (d < best) { best = d; nearest = t; }
+            });
+            return nearest;
+        }
+
+        tabBar.addEventListener("pointerdown", (e) => {
+            if (e.button !== 0) return;
+            drag = { pointerId: e.pointerId, startX: e.clientX, moved: false };
+        });
+
+        tabBar.addEventListener("pointermove", (e) => {
+            if (!drag || e.pointerId !== drag.pointerId) return;
+            if (!drag.moved) {
+                if (Math.abs(e.clientX - drag.startX) < 8) return;
+                drag.moved = true;
+                tabBar.setPointerCapture(e.pointerId);
+                tabBar.classList.add("dragging");
+                indicator.classList.remove("no-anim");
+                indicator.classList.add("dragging", "ready");
+            }
+            const barRect = tabBar.getBoundingClientRect();
+            const width = indicator.getBoundingClientRect().width || barRect.width / tabs.length;
+            const x = Math.min(Math.max(e.clientX - barRect.left - width / 2, 6), barRect.width - width - 6);
+            indicator.style.transform = `translateX(${x}px)`;
+            const hovered = tabAt(e.clientX);
+            tabs.forEach((t) => t.classList.toggle("drag-hover", t === hovered));
+        });
+
+        function endDrag(e, cancelled) {
+            if (!drag || e.pointerId !== drag.pointerId) return;
+            const wasDrag = drag.moved;
+            drag = null;
+            if (!wasDrag) return;
+
+            tabBar.classList.remove("dragging");
+            indicator.classList.remove("dragging");
+            tabs.forEach((t) => t.classList.remove("drag-hover"));
+            // Der Browser feuert nach dem Loslassen noch einen click – der soll nichts auslösen
+            suppressClick = true;
+            setTimeout(() => { suppressClick = false; }, 50);
+
+            const target = cancelled ? null : tabAt(e.clientX);
+            if (!target || target.classList.contains("active")) {
+                moveIndicator(activeTab());
+            } else if (target.classList.contains("tab-more-btn")) {
+                moveIndicator(activeTab());
+                setMoreOpen(true);
+            } else {
+                tabs.forEach((t) => t.classList.toggle("active", t === target));
+                moveIndicator(target);
+                location.assign(target.href);
+            }
+        }
+
+        tabBar.addEventListener("pointerup", (e) => endDrag(e, false));
+        tabBar.addEventListener("pointercancel", (e) => endDrag(e, true));
+        tabBar.addEventListener("click", (e) => {
+            if (suppressClick) { e.preventDefault(); e.stopPropagation(); }
+        }, true);
 
         tabBar.addEventListener("click", (event) => {
             const tab = event.target.closest(".tab-item");
