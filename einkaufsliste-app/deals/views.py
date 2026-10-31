@@ -5,10 +5,12 @@ from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.db import close_old_connections
 from django.shortcuts import redirect, render
+from django.utils import timezone
 
-from .models import Store
+from .models import DealSource, Store
 from .services import get_active_deals
-from .sync import sync_marktguru
+from .sync import sync_marktguru, SyncAlreadyRunning, STALE_SYNC_LOCK_AFTER
+from .providers.marktguru import MarktguruProvider
 
 logger = logging.getLogger(__name__)
 
@@ -18,6 +20,8 @@ def _sync_marktguru_in_background(zip_code):
     komplett unbemerkt verschwinden, da die Response laengst zurueckgegangen ist."""
     try:
         sync_marktguru(zip_code)
+    except SyncAlreadyRunning:
+        pass  # erwarteter Fall (Doppelklick o.ae.), kein echter Fehler
     except Exception:
         logger.exception("MarktGuru-Sync fehlgeschlagen (PLZ %s)", zip_code)
     finally:
@@ -59,6 +63,19 @@ def sync_deals_view(request):
         return redirect("user_settings:settings")
 
     zip_code = settings_obj.postal_code
+
+    # Nur ein optimistischer Hinweis fuer sofortiges Feedback - die eigentliche,
+    # race-sichere Pruefung passiert atomar in sync_marktguru() selbst.
+    stale_cutoff = timezone.now() - STALE_SYNC_LOCK_AFTER
+    already_running = DealSource.objects.filter(
+        name=MarktguruProvider.source_name,
+        is_syncing=True,
+        sync_started_at__gte=stale_cutoff,
+    ).exists()
+
+    if already_running:
+        messages.info(request, "Es läuft bereits eine Aktualisierung der Rabatte im Hintergrund.")
+        return redirect("deals:list")
 
     try:
         thread = threading.Thread(

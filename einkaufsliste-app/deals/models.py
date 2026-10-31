@@ -7,6 +7,13 @@ class DealSource(models.Model):
     base_url = models.URLField(blank=True)
     is_active = models.BooleanField(default=True)
 
+    # Verhindert zwei gleichzeitig laufende Syncs derselben Quelle (z.B. durch Doppelklick
+    # oder zwei Requests, die auf unterschiedlichen Gunicorn-Workern landen).
+    is_syncing = models.BooleanField(default=False)
+    sync_started_at = models.DateTimeField(null=True, blank=True)
+    last_synced_at = models.DateTimeField(null=True, blank=True)
+    last_sync_error = models.TextField(blank=True)
+
     def __str__(self):
         return self.name
 

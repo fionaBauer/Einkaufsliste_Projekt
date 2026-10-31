@@ -159,6 +159,10 @@ def _add_recipes_to_existing_shopping_list(household, shopping_list_obj, recipe_
         for item in InventoryItem.objects.filter(household=household).select_related("ingredient")
     }
 
+    existing_items_map = defaultdict(list)
+    for existing_item in shopping_list_obj.items.all():
+        existing_items_map[existing_item.ingredient_id].append(existing_item)
+
     for ingredient_id, source_entries in aggregated_items.items():
         # Merge all quantities using merge_units
         merged_qty, merged_unit = source_entries[0]["quantity"], source_entries[0]["unit"]
@@ -185,6 +189,7 @@ def _add_recipes_to_existing_shopping_list(household, shopping_list_obj, recipe_
                 unit=required_unit,
                 status=ShoppingListItem.STATUS_TO_BUY,
                 source_details=normalized_source_details,
+                existing_items_map=existing_items_map,
             )
             continue
 
@@ -196,6 +201,7 @@ def _add_recipes_to_existing_shopping_list(household, shopping_list_obj, recipe_
                 unit=required_unit,
                 status=ShoppingListItem.STATUS_CHECK,
                 source_details=normalized_source_details,
+                existing_items_map=existing_items_map,
             )
             continue
 
@@ -211,6 +217,7 @@ def _add_recipes_to_existing_shopping_list(household, shopping_list_obj, recipe_
                 unit=required_unit,
                 status=ShoppingListItem.STATUS_CHECK,
                 source_details=normalized_source_details,
+                existing_items_map=existing_items_map,
             )
             continue
 
@@ -227,6 +234,7 @@ def _add_recipes_to_existing_shopping_list(household, shopping_list_obj, recipe_
             unit=unit,
             status=ShoppingListItem.STATUS_TO_BUY,
             source_details=normalized_source_details,
+            existing_items_map=existing_items_map,
         )
 
 def _merge_or_create_shopping_item(
@@ -236,14 +244,28 @@ def _merge_or_create_shopping_item(
     unit,
     status,
     source_details=None,
+    existing_items_map=None,
 ):
+    """
+    existing_items_map: optionales {ingredient_id: [ShoppingListItem, ...]} alle Artikel
+    der Liste, einmal vorab geladen (vom Aufrufer). Vermeidet eine eigene Datenbankabfrage
+    pro Zutat, wenn diese Funktion in einer Schleife ueber viele Zutaten aufgerufen wird
+    (siehe _add_recipes_to_existing_shopping_list). Ohne Angabe wird wie bisher direkt
+    nachgefragt - fuer Einzelaufrufe wie _add_manual_item_to_shopping_list unveraendert.
+    """
     source_details = source_details or []
     base_quantity, base_unit = to_base_unit(quantity, unit)
 
-    existing_items = shopping_list_obj.items.filter(
-        ingredient_id=ingredient_id,
-        status=status,
-    )
+    if existing_items_map is not None:
+        existing_items = [
+            item for item in existing_items_map.get(ingredient_id, [])
+            if item.status == status
+        ]
+    else:
+        existing_items = shopping_list_obj.items.filter(
+            ingredient_id=ingredient_id,
+            status=status,
+        )
 
     for existing_item in existing_items:
         existing_base_quantity, existing_base_unit = to_base_unit(
@@ -272,7 +294,7 @@ def _merge_or_create_shopping_item(
             existing_item.save(update_fields=["source_details"])
             return
 
-    ShoppingListItem.objects.create(
+    new_item = ShoppingListItem.objects.create(
         shopping_list=shopping_list_obj,
         ingredient_id=ingredient_id,
         quantity=quantity,
@@ -280,6 +302,9 @@ def _merge_or_create_shopping_item(
         status=status,
         source_details=source_details,
     )
+
+    if existing_items_map is not None:
+        existing_items_map.setdefault(ingredient_id, []).append(new_item)
 
 
 def _add_manual_item_to_shopping_list(shopping_list_obj, form):

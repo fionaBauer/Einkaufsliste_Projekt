@@ -24,6 +24,7 @@ def extract_metadata(url: str) -> dict:
         "quiet": True,
         "skip_download": True,
         "writeinfojson": False,
+        "socket_timeout": 30,
     }
 
     ffmpeg_location = _get_ffmpeg_location()
@@ -52,6 +53,7 @@ def extract_subtitles(url: str) -> str | None:
             "subtitleslangs": ["en", "de", "en.*"],
             "subtitlesformat": "json3/srv3/vtt/best",
             "outtmpl": str(Path(tmpdir) / "%(id)s"),
+            "socket_timeout": 30,
         }
 
         ffmpeg_location = _get_ffmpeg_location()
@@ -81,6 +83,7 @@ def download_audio(url: str, output_dir: str) -> Path:
                 "preferredcodec": "mp3",
             }
         ],
+        "socket_timeout": 30,
     }
 
     ffmpeg_location = _get_ffmpeg_location()
