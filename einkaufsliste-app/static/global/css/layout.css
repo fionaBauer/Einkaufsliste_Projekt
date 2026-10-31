@@ -79,8 +79,10 @@
 
     /* Navigation */
     --tabbar-height: 64px;
-    --tabbar-gap: 14px;
-    --tabbar-space: calc(var(--tabbar-height) + var(--tabbar-gap) + env(safe-area-inset-bottom));
+    /* Abstand der Pille zum unteren Rand: knapp über dem iPhone-Home-Balken
+       (Sicherheitsbereich ist ~34px, der Balken selbst sitzt im unteren Teil davon) */
+    --tabbar-bottom: max(10px, calc(env(safe-area-inset-bottom) - 12px));
+    --tabbar-space: calc(var(--tabbar-height) + var(--tabbar-bottom));
 }
 
 /* ── Basis ── */
@@ -1146,7 +1148,7 @@ input[type="checkbox"]:disabled { opacity: 0.4; cursor: not-allowed; }
         position: fixed;
         z-index: 900;
         left: 50%;
-        bottom: calc(var(--tabbar-gap) + env(safe-area-inset-bottom));
+        bottom: var(--tabbar-bottom);
         transform: translateX(-50%);
         width: min(400px, calc(100% - 32px));
         height: var(--tabbar-height);
