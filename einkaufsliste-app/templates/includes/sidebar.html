@@ -5,7 +5,17 @@
     <div class="sidebar-panel">
         <div class="sidebar-inner">
             <div class="sidebar-brand">
-                <span class="sidebar-logo">P</span>
+                <span class="sidebar-logo" aria-hidden="true">
+                    {# Prepio-Logo (Gabel + Teller als "P"), gleiche Form wie global/favicon.svg #}
+                    <svg viewBox="194 150 730 730" fill="currentColor">
+                        <rect x="262" y="180" width="38" height="170" rx="19"/>
+                        <rect x="322" y="180" width="38" height="170" rx="19"/>
+                        <rect x="382" y="180" width="38" height="170" rx="19"/>
+                        <path d="M262 300 h158 v40 q0 80 -40 100 h-78 q-40 -20 -40 -100 z"/>
+                        <rect x="296" y="400" width="90" height="450" rx="45"/>
+                        <circle cx="630" cy="420" r="185" fill="none" stroke="currentColor" stroke-width="84"/>
+                    </svg>
+                </span>
                 <div>
                     <h2 class="sidebar-title">Prepio</h2>
                     <p class="sidebar-subtitle">Planen, kochen, organisieren</p>
