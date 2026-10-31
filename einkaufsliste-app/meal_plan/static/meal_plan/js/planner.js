@@ -21,6 +21,8 @@ const MEALS = ["breakfast", "lunch", "dinner"];
 const MEAL_LABELS = { breakfast: "Früh", lunch: "Mittag", dinner: "Abend" };
 const MEAL_ICONS = { breakfast: "☀️", lunch: "🌤️", dinner: "🌙" };
 const DAY_NAMES = ["Mo", "Di", "Mi", "Do", "Fr", "Sa", "So"];
+const DAY_NAMES_LONG = ["Montag", "Dienstag", "Mittwoch", "Donnerstag", "Freitag", "Samstag", "Sonntag"];
+const mobileQuery = window.matchMedia("(max-width: 768px)");
 const MONTH_NAMES = ["Januar","Februar","März","April","Mai","Juni","Juli","August","September","Oktober","November","Dezember"];
 
 let currentView = "week";
@@ -50,8 +52,10 @@ const api = {
 };
 
 /* ── Date helpers ── */
+// Lokales Datum (toISOString() rechnet in UTC um und verschiebt in DE Tage um 1)
 function isoDate(d) {
-    return d.toISOString().split("T")[0];
+    const pad = (n) => String(n).padStart(2, "0");
+    return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
 }
 
 function startOfWeek(d) {
@@ -109,6 +113,10 @@ function renderPeriodLabel() {
     const el = document.getElementById("period-label");
     if (currentView === "week") {
         const { start, end } = weekRange();
+        if (mobileQuery.matches) {
+            el.textContent = `${start.getDate()}.${start.getMonth() + 1}. – ${end.getDate()}.${end.getMonth() + 1}.`;
+            return;
+        }
         const s = `${start.getDate()}. ${MONTH_NAMES[start.getMonth()].slice(0,3)}`;
         const e = `${end.getDate()}. ${MONTH_NAMES[end.getMonth()].slice(0,3)} ${end.getFullYear()}`;
         el.textContent = `${s} – ${e}`;
@@ -126,6 +134,12 @@ function slotsFor(dateStr, meal) {
 function renderWeek(mon) {
     const grid = document.getElementById("week-view");
     grid.innerHTML = "";
+    grid.classList.toggle("agenda", mobileQuery.matches);
+
+    if (mobileQuery.matches) {
+        renderWeekAgenda(grid, mon);
+        return;
+    }
 
     const corner = mkEl("div", "corner-cell");
     grid.appendChild(corner);
@@ -169,6 +183,41 @@ function renderWeek(mon) {
             grid.appendChild(cell);
         }
     });
+}
+
+/* ── Woche als Tagesliste (Handy) ── */
+function renderWeekAgenda(grid, mon) {
+    for (let i = 0; i < 7; i++) {
+        const day = addDays(mon, i);
+        const dateStr = isoDate(day);
+        const card = mkEl("div", `agenda-day${isToday(day) ? " today" : ""}`);
+
+        const head = mkEl("div", "agenda-day-head");
+        head.innerHTML = `<span class="agenda-day-num">${day.getDate()}</span><span class="agenda-day-name">${DAY_NAMES_LONG[i]}</span>${isToday(day) ? '<span class="agenda-today">Heute</span>' : ""}`;
+        card.appendChild(head);
+
+        MEALS.forEach(meal => {
+            const row = mkEl("div", "agenda-meal");
+            const label = mkEl("span", "agenda-meal-label");
+            label.textContent = MEAL_LABELS[meal];
+            row.appendChild(label);
+
+            const chips = mkEl("div", "agenda-meal-chips");
+            slotsFor(dateStr, meal).forEach(slot => chips.appendChild(makeChip(slot)));
+
+            const addBtn = mkEl("button", "slot-add-btn");
+            addBtn.type = "button";
+            addBtn.textContent = "+";
+            addBtn.setAttribute("aria-label", `${MEAL_LABELS[meal]} am ${DAY_NAMES_LONG[i]} hinzufügen`);
+            addBtn.addEventListener("click", () => openAddModal(dateStr, meal));
+            chips.appendChild(addBtn);
+
+            row.appendChild(chips);
+            card.appendChild(row);
+        });
+
+        grid.appendChild(card);
+    }
 }
 
 /* ── Month View ── */
@@ -221,6 +270,11 @@ function renderMonth() {
         addBtn.textContent = "+ Hinzufügen";
         addBtn.addEventListener("click", () => openAddModal(dateStr, "lunch"));
         cell.appendChild(addBtn);
+
+        // Am Handy ist der Button ausgeblendet → Tag antippen fügt hinzu
+        cell.addEventListener("click", (e) => {
+            if (mobileQuery.matches && !e.target.closest(".month-chip")) openAddModal(dateStr, "lunch");
+        });
 
         grid.appendChild(cell);
     }
@@ -284,6 +338,10 @@ function makeChip(slot) {
     name.addEventListener("click", () => {
         window.location.href = urls.recipeDetail.replace("{id}", slot.recipe_id);
     });
+    // Am Handy gibt es kein Drag & Drop → Antippen öffnet die Einstellungen
+    if (mobileQuery.matches) {
+        chip.draggable = false;
+    }
     name.style.cursor = "pointer";
 
     return chip;
@@ -466,6 +524,7 @@ document.getElementById("slot-delete").addEventListener("click", async () => {
 document.getElementById("create-shopping-btn").addEventListener("click", async () => {
     const { start, end } = currentView === "week" ? weekRange() : monthRange();
     const btn = document.getElementById("create-shopping-btn");
+    const originalHtml = btn.innerHTML;
     btn.textContent = "Wird erstellt…";
     btn.disabled = true;
     try {
@@ -477,7 +536,7 @@ document.getElementById("create-shopping-btn").addEventListener("click", async (
             window.location.href = `/shopping/${result.shopping_list_id}/`;
         }
     } finally {
-        btn.innerHTML = `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 01-8 0"/></svg> Einkaufsliste`;
+        btn.innerHTML = originalHtml;
         btn.disabled = false;
     }
 });
@@ -522,5 +581,13 @@ function mkEl(tag, cls) {
 
 /* ── Init ── */
 render();
+
+// Breakpoint gewechselt (z.B. Handy gedreht) → passendes Layout
+mobileQuery.addEventListener?.("change", () => render());
+
+// Live-Sync: Änderungen anderer Haushaltsmitglieder ohne Reload übernehmen
+if (window.App?.onLive) {
+    App.onLive(() => render());
+}
 
 });

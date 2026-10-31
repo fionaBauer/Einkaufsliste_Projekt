@@ -7,27 +7,30 @@
 <link rel="stylesheet" href="{% static 'recipes/css/recipe_list.css' %}">
 {% endblock %}
 
+{% block live %}data-live="morph"{% endblock %}
+
 {% block content %}
 <div class="page">
     <div class="page-header">
         <h1 class="page-title">Rezepte</h1>
         <div class="recipe-header-actions">
-            <button type="button" class="icon-button" id="openLinkModalBtn"
-                aria-label="Rezept über Link hinzufügen" title="Rezept über Link hinzufügen">
-                🔗
+            <button type="button" class="scan-pill-btn" id="openLinkModalBtn"
+                aria-label="Rezept importieren" title="Rezept über Link oder Text importieren">
+                <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" viewBox="0 0 24 24"><path d="M10 13a5 5 0 007.54.54l3-3a5 5 0 00-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 00-7.54-.54l-3 3a5 5 0 007.07 7.07l1.71-1.71"/></svg>
+                <span class="scan-label">Importieren</span>
             </button>
             <button id="open-create-modal" class="add-button" type="button"
-                data-url="{% url 'recipes:recipe_create' %}">+</button>
+                data-url="{% url 'recipes:recipe_create' %}" aria-label="Neues Rezept">+</button>
         </div>
     </div>
 
     <form method="get" class="filter-bar">
         <div class="filter-group search-group">
             <input type="text" name="search" value="{{ search }}"
-                placeholder="Rezept suchen..." class="search-input">
+                placeholder="Rezept suchen..." class="search-input" enterkeyhint="search" autocomplete="off">
         </div>
         <div class="filter-group">
-            <select name="sort" class="sort-select">
+            <select name="sort" class="sort-select" onchange="this.form.requestSubmit()">
                 <option value="name" {% if sort == "name" %}selected{% endif %}>Name A–Z</option>
                 <option value="-name" {% if sort == "-name" %}selected{% endif %}>Name Z–A</option>
                 <option value="created_at" {% if sort == "created_at" %}selected{% endif %}>Älteste zuerst</option>
@@ -44,12 +47,12 @@
         {% if recipes %}
         <div class="recipe-grid">
             {% for recipe in recipes %}
-            <div class="recipe-card" id="card-{{ recipe.id }}">
+            <div class="recipe-card" id="card-{{ recipe.id }}" data-morph-keep-class>
                 <!-- Clickable image/name area -->
                 <a href="{% url 'recipes:recipe_detail' recipe.pk %}" class="recipe-card-link">
                     <div class="recipe-card-img-wrap">
                         {% if recipe.image %}
-                            <img src="{{ recipe.image.url }}" alt="{{ recipe.name }}" class="recipe-card-img">
+                            <img src="{{ recipe.image.url }}" alt="{{ recipe.name }}" class="recipe-card-img" loading="lazy" decoding="async">
                         {% else %}
                             <div class="recipe-card-img recipe-card-placeholder">🍽️</div>
                         {% endif %}
@@ -67,42 +70,43 @@
                             data-recipe-name="{{ recipe.name }}"
                             data-recipe-servings="{{ recipe.servings }}"
                             class="recipe-card-checkbox">
-                        <span class="recipe-card-check-icon">✓</span>
+                        <span class="recipe-card-check-icon"></span>
                     </label>
                     <a href="{% url 'recipes:recipe_detail' recipe.pk %}" class="recipe-card-name">
                         {{ recipe.name }}
                     </a>
                 </div>
 
-                <!-- Selected overlay -->
-                <div class="recipe-card-selected-overlay">
-                    <span class="recipe-card-selected-check">✓</span>
-                </div>
             </div>
             {% endfor %}
         </div>
 
-        <div class="shopping-actions">
-            <button type="button" class="btn btn-primary" id="openShoppingModalBtn">
+        <div class="selection-bar" id="selectionBar" data-morph-keep-class>
+            <button type="button" class="selection-bar-btn" id="openShoppingModalBtn">
+                <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M5 7h14l-1.2 12.1a2 2 0 01-2 1.9H8.2a2 2 0 01-2-1.9z"/><path d="M9 10V6a3 3 0 016 0v4"/></svg>
                 Einkaufsliste erstellen
+                <span class="selection-count" id="selectionCount" data-morph-skip>0</span>
             </button>
         </div>
         {% else %}
-            <p class="empty-state">Es sind noch keine Rezepte vorhanden.</p>
+            <div class="empty-card">
+                <p class="empty-icon">📖</p>
+                <p class="empty-text">{% if search %}Keine Rezepte für „{{ search }}“ gefunden.{% else %}Noch keine Rezepte. Lege eins an oder importiere es per Link.{% endif %}</p>
+            </div>
         {% endif %}
     </form>
 
     <!-- Suggested Recipes -->
     {% if suggested_recipes %}
-    <section class="shopping-section">
-        <h2 class="section-title">💡 Passend zu aktuellen Rabatten</h2>
+    <section class="suggested-section">
+        <h2 class="section-title">Passend zu aktuellen Rabatten</h2>
         <div class="recipe-grid">
             {% for suggestion in suggested_recipes %}
-            <div class="recipe-card">
+            <div class="recipe-card" data-key="sugg-{{ suggestion.recipe.pk }}">
                 <a href="{% url 'recipes:recipe_detail' suggestion.recipe.pk %}" class="recipe-card-link">
                     <div class="recipe-card-img-wrap">
                         {% if suggestion.recipe.image %}
-                            <img src="{{ suggestion.recipe.image.url }}" alt="{{ suggestion.recipe.name }}" class="recipe-card-img">
+                            <img src="{{ suggestion.recipe.image.url }}" alt="{{ suggestion.recipe.name }}" class="recipe-card-img" loading="lazy" decoding="async">
                         {% else %}
                             <div class="recipe-card-img recipe-card-placeholder">🍽️</div>
                         {% endif %}
@@ -137,7 +141,7 @@
                     <button type="button" class="btn btn-secondary" id="applyServingsToAllBtn">Auf alle anwenden</button>
                 </div>
             </div>
-            <div id="selected-recipes-container" class="selected-recipes-container">
+            <div id="selected-recipes-container" class="selected-recipes-container" data-morph-skip>
                 <p class="empty-state">Keine Rezepte ausgewählt.</p>
             </div>
             <div class="modal-actions">
@@ -168,7 +172,7 @@
                 </div>
                 <div class="form-group">
                     <label>Zutaten</label>
-                    <div id="review-ingredients-container" class="review-ingredients-container"></div>
+                    <div id="review-ingredients-container" class="review-ingredients-container" data-morph-skip></div>
                 </div>
                 <div class="modal-actions sticky-modal-actions">
                     <button type="button" class="btn btn-secondary" id="closeRecipeReviewModalBtn">Abbrechen</button>
@@ -185,14 +189,14 @@
         <h2>Rezept hinzufügen</h2>
 
         <div class="import-tabs">
-            <button class="import-tab active" data-tab="link">🔗 Link</button>
-            <button class="import-tab" data-tab="text">📋 Text einfügen</button>
+            <button type="button" class="import-tab active" data-tab="link" data-morph-keep-class>Link</button>
+            <button type="button" class="import-tab" data-tab="text" data-morph-keep-class>Text einfügen</button>
         </div>
 
-        <div class="import-tab-panel" id="import-panel-link">
+        <div class="import-tab-panel" id="import-panel-link" data-morph-keep-class>
             <div class="form-group">
                 <label for="recipe-link-input">Rezept-Link</label>
-                <input type="url" id="recipe-link-input" class="search-input" placeholder="https://...">
+                <input type="url" id="recipe-link-input" class="search-input" enterkeyhint="search" autocomplete="off" placeholder="https://...">
             </div>
             <div class="modal-actions">
                 <button type="button" class="btn btn-secondary" id="closeLinkModalBtn">Abbrechen</button>
@@ -200,7 +204,7 @@
             </div>
         </div>
 
-        <div class="import-tab-panel hidden" id="import-panel-text">
+        <div class="import-tab-panel hidden" id="import-panel-text" data-morph-keep-class>
             <div class="form-group">
                 <label for="recipe-text-input">Rezepttext</label>
                 <textarea id="recipe-text-input" class="search-input recipe-text-input"
@@ -218,7 +222,7 @@
 <!-- Create/Edit Modal -->
 <div id="modal-overlay" class="modal-overlay">
     <div class="modal">
-        <div id="modal-body"></div>
+        <div id="modal-body" data-morph-skip></div>
     </div>
 </div>
 {% endblock %}

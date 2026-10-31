@@ -1,9 +1,9 @@
 <div id="ingredient-list-section">
     {% if grouped_ingredients %}
         <!-- Category Cards -->
-        <div class="category-grid" id="category-grid">
+        <div class="category-grid" id="category-grid" data-morph-keep-class>
             {% for group in grouped_ingredients %}
-            <div class="category-card" data-category="{{ group.value }}">
+            <div class="category-card" data-category="{{ group.value }}" data-key="card-{{ group.value }}">
                 <div class="category-card-icon">
                     {% if "Obst" in group.label %}🥦
                     {% elif "Gewürz" in group.label %}🧂
@@ -17,7 +17,7 @@
                 </div>
                 <div class="category-card-info">
                     <span class="category-card-name">{{ group.label }}</span>
-                    <span class="category-card-count">{{ group.items|length }} Zutaten</span>
+                    <span class="category-card-count">{{ group.items|length }} Zutat{{ group.items|length|pluralize:"en" }}</span>
                 </div>
                 <svg class="category-card-arrow" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"/></svg>
             </div>
@@ -26,9 +26,12 @@
 
         <!-- Detail Panels -->
         {% for group in grouped_ingredients %}
-        <div class="category-detail hidden" id="ing-detail-{{ group.value }}" data-category="{{ group.value }}">
+        <div class="category-detail hidden" id="ing-detail-{{ group.value }}" data-category="{{ group.value }}" data-morph-keep-class>
             <div class="detail-header">
-                <button class="detail-back-btn">← Zurück</button>
+                <button type="button" class="detail-back-btn">
+                    <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg>
+                    Zurück
+                </button>
                 <h2 class="detail-title">
                     {% if "Obst" in group.label %}🥦
                     {% elif "Gewürz" in group.label %}🧂
@@ -44,23 +47,26 @@
             </div>
             <ul class="ingredient-list">
                 {% for ingredient in group.items %}
-                <li class="ingredient-item">
+                <li class="ingredient-item" data-key="ing-{{ ingredient.id }}">
                     <div class="ingredient-main">
                         <span class="ingredient-name">{{ ingredient.name }}</span>
                     </div>
                     <div class="ingredient-actions">
-                        <button type="button" class="action-btn edit-btn open-edit-modal-btn"
+                        <button type="button" class="action-btn icon-only edit-btn open-edit-modal-btn"
                             data-id="{{ ingredient.id }}"
                             data-name="{{ ingredient.name }}"
-                            data-category="{{ ingredient.category }}">
-                            Bearbeiten
+                            data-category="{{ ingredient.category }}"
+                            aria-label="{{ ingredient.name }} bearbeiten" title="Bearbeiten">
+                            <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 013 3L7 19l-4 1 1-4z"/></svg>
                         </button>
                         <form method="post" class="delete-form"
                             onsubmit="return confirm('Zutat löschen?');">
                             {% csrf_token %}
                             <input type="hidden" name="action" value="delete">
                             <input type="hidden" name="ingredient_id" value="{{ ingredient.id }}">
-                            <button type="submit" class="action-btn delete-btn">Löschen</button>
+                            <button type="submit" class="action-btn icon-only delete-btn" aria-label="{{ ingredient.name }} löschen" title="Löschen">
+                                <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M3 6h18M8 6V4h8v2M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/></svg>
+                            </button>
                         </form>
                     </div>
                 </li>
@@ -69,12 +75,15 @@
         </div>
         {% endfor %}
     {% else %}
-        <div class="empty-state">
-            {% if search_query %}
-                Keine Zutaten für „{{ search_query }}“ gefunden.
-            {% else %}
-                Noch keine Zutaten gespeichert.
-            {% endif %}
+        <div class="empty-card">
+            <p class="empty-icon">🥕</p>
+            <p class="empty-text">
+                {% if search_query %}
+                    Keine Zutaten für „{{ search_query }}“ gefunden.
+                {% else %}
+                    Noch keine Zutaten gespeichert.
+                {% endif %}
+            </p>
         </div>
     {% endif %}
 </div>

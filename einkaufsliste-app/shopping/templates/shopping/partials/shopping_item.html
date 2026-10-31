@@ -1,0 +1,51 @@
+<li class="shopping-item" data-key="item-{{ item.id }}">
+    <label class="shopping-row">
+        <input
+            type="checkbox"
+            name="checked_items"
+            value="{{ item.id }}"
+            class="shopping-check"
+            {% if item.is_checked %}checked{% endif %}
+        >
+        <span class="shopping-content">
+            <span class="shopping-name-with-info">
+                <span class="shopping-name">{{ item.ingredient.name }}</span>
+
+                {% if item.source_details %}
+                    <span class="shopping-info-wrapper">
+                        <button type="button" class="info-button" aria-label="Verwendung anzeigen" title="Verwendung anzeigen">i</button>
+                        <span class="shopping-tooltip">
+                            {% for source in item.source_details %}
+                                <span class="shopping-tooltip-line">{{ source.recipe_name }} – {{ source.quantity }} {{ source.unit }}</span>
+                            {% endfor %}
+                        </span>
+                    </span>
+                {% endif %}
+                {% if item.discount_deals %}
+                    <span class="shopping-info-wrapper">
+                        <button type="button" class="info-button info-button--deal" aria-label="Rabatte anzeigen" title="Rabatte anzeigen">%</button>
+                        <span class="shopping-tooltip">
+                            {% for deal in item.discount_deals %}
+                                <span class="shopping-tooltip-line">{{ deal.store.name }} – {{ deal.deal_price }} €</span>
+                            {% endfor %}
+                        </span>
+                    </span>
+                {% endif %}
+            </span>
+            <span class="shopping-quantity">
+                {% if item.quantity %}
+                    {{ item.quantity|floatformat:"-2" }} {{ item.get_unit_display }}
+                {% elif check %}
+                    Menge prüfen
+                {% endif %}
+            </span>
+        </span>
+    </label>
+    <button type="submit"
+        form="delete-form-{{ item.id }}"
+        class="shopping-item-delete-btn"
+        aria-label="{{ item.ingredient.name }} entfernen"
+        title="Entfernen">
+        <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg>
+    </button>
+</li>

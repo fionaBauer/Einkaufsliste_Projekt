@@ -1,180 +1,108 @@
 {% extends "base.html" %}
 {% load static %}
+
+{% block title %}Rabatte{% endblock %}
+
 {% block extra_css %}
 <link rel="stylesheet" href="{% static 'deals/css/deal_list.css' %}">
 {% endblock %}
 
-{% block title %}Rabatte{% endblock %}
+{% block live %}data-live="morph"{% endblock %}
 
 {% block content %}
 <div class="page">
     <div class="page-header">
         <h1 class="page-title">Rabatte</h1>
 
-        <form method="post" action="{% url 'deals:sync' %}">
+        <form method="post" action="{% url 'deals:sync' %}" data-ajax>
             {% csrf_token %}
-            <button type="submit" class="filter-btn">
-                Rabatte laden
+            <button type="submit" class="scan-pill-btn" title="Aktuelle Rabatte für deine PLZ laden">
+                <svg width="17" height="17" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M21 12a9 9 0 11-2.64-6.36M21 4v5h-5"/></svg>
+                <span class="scan-label">Aktualisieren</span>
             </button>
         </form>
     </div>
 
     <form method="get" class="filter-bar">
         <div class="filter-group search-group">
-            <input
-                type="text"
-                name="search"
-                value="{{ search }}"
-                placeholder="Produkt suchen..."
-                class="search-input">
+            <input type="text" name="search" value="{{ search }}" placeholder="Produkt suchen…" class="search-input" enterkeyhint="search" autocomplete="off">
         </div>
-
-        <div class="filter-group">
-            <select name="store" class="sort-select">
+        <div class="filter-group store-group">
+            <select name="store" class="sort-select" onchange="this.form.requestSubmit()">
                 <option value="">Alle Supermärkte</option>
                 {% for store in stores %}
-                    <option value="{{ store.id }}" {% if selected_store == store.id|stringformat:"s" %}selected{% endif %}>
-                        {{ store.name }}
-                    </option>
+                    <option value="{{ store.id }}" {% if selected_store == store.id|stringformat:"s" %}selected{% endif %}>{{ store.name }}</option>
                 {% endfor %}
             </select>
         </div>
-
         <button type="submit" class="filter-btn">Suchen</button>
-        <a href="{% url 'deals:list' %}" class="reset-link">Zurücksetzen</a>
+        {% if search or selected_store %}
+            <a href="{% url 'deals:list' %}" class="reset-link">Zurücksetzen</a>
+        {% endif %}
     </form>
 
-    <div class="deal-list">
+    {% if deals %}
+    <ul class="deal-list">
         {% for deal in deals %}
-            <div class="deal-item" style="display:flex; align-items:center; gap:14px;">
+            <li class="deal-item" data-key="deal-{{ deal.pk }}">
                 {% if deal.image_url %}
-                    <button type="button" class="deal-image-button">
-                        <img
-                            src="{{ deal.image_url }}"
-                            alt="{{ deal.title }}"
-                            class="deal-image"
-                            loading="lazy"
-                            style="width:52px; height:52px; max-width:52px; max-height:52px; object-fit:contain; flex-shrink:0;"
-                            onerror="this.parentElement.style.display='none';">
+                    <button type="button" class="deal-image-button" aria-label="Bild vergrößern">
+                        <img src="{{ deal.image_url }}" alt="{{ deal.title }}" class="deal-image" loading="lazy" decoding="async"
+                            onerror="this.parentElement.classList.add('broken')">
                     </button>
+                {% else %}
+                    <span class="deal-image-button broken"></span>
                 {% endif %}
 
-                <div class="deal-main" style="flex:1; text-align:left; min-width:0;">
+                <div class="deal-main">
                     <span class="deal-name">{{ deal.title }}</span>
-                    <span class="deal-meta">{{ deal.store.name }}</span>
-
-                    {% if deal.original_price %}
-                        <span class="deal-meta">statt {{ deal.original_price|floatformat:2 }} €</span>
-                    {% elif deal.description %}
-                        <span class="deal-meta">{{ deal.description }}</span>
-                    {% endif %}
+                    <span class="deal-meta">
+                        <span class="deal-store">{{ deal.store.name }}</span>
+                        {% if not deal.original_price and deal.description %}· {{ deal.description|truncatechars:60 }}{% endif %}
+                    </span>
                 </div>
 
-                <div class="deal-price" style="margin-left:auto; text-align:right; white-space:nowrap;">
+                <div class="deal-price">
                     {% if deal.deal_price %}
-                        <div style="font-weight:700; font-size:17px;">
-                            {{ deal.deal_price|floatformat:2 }} €
-                        </div>
-
+                        <span class="deal-price-now">{{ deal.deal_price|floatformat:2 }} €</span>
                         {% if deal.original_price %}
-                            <div style="
-                                font-size:12px;
-                                color:#888;
-                                text-decoration:line-through;
-                                margin-top:2px;
-                            ">
-                                {{ deal.original_price|floatformat:2 }} €
-                            </div>
-                        {% else %}
-                            <div style="
-                                font-size:12px;
-                                color:#888;
-                                margin-top:2px;
-                            ">
-                                Angebot
-                            </div>
+                            <span class="deal-price-old">{{ deal.original_price|floatformat:2 }} €</span>
                         {% endif %}
                     {% else %}
-                        Angebot
+                        <span class="deal-price-tag">Angebot</span>
                     {% endif %}
                 </div>
-            </div>
-        {% empty %}
-            <p class="empty-state">Keine passenden Rabatte gefunden.</p>
+            </li>
         {% endfor %}
+    </ul>
+    {% else %}
+        <div class="empty-card">
+            <p class="empty-icon">🏷️</p>
+            <p class="empty-text">Keine passenden Rabatte gefunden. Tippe auf „Aktualisieren“, um Angebote für deine PLZ zu laden.</p>
+        </div>
+    {% endif %}
+</div>
+
+<div class="modal-overlay" id="image-modal" data-generic-close>
+    <div class="modal image-modal">
+        <img id="image-modal-content" src="" alt="" data-morph-skip>
+        <div class="modal-actions">
+            <button type="button" class="btn btn-secondary" data-close-modal>Schließen</button>
+        </div>
     </div>
 </div>
-<div
-    id="image-modal"
-    style="
-        display:none;
-        position:fixed;
-        inset:0;
-        background:rgba(0,0,0,0.75);
-        z-index:99999;
-        justify-content:center;
-        align-items:center;
-        padding:24px;
-    "
->
-    <button
-        type="button"
-        class="image-modal-close"
-        style="
-            position:absolute;
-            top:20px;
-            right:28px;
-            font-size:42px;
-            color:white;
-            background:transparent;
-            border:none;
-            cursor:pointer;
-        "
-    >
-        &times;
-    </button>
+{% endblock %}
 
-    <img
-        id="image-modal-content"
-        src=""
-        alt=""
-        style="
-            max-width:90vw;
-            max-height:85vh;
-            border-radius:16px;
-            background:white;
-            padding:12px;
-            object-fit:contain;
-        "
-    >
-</div>
-
+{% block extra_js %}
 <script>
-document.addEventListener("DOMContentLoaded", function () {
-    const modal = document.getElementById("image-modal");
+document.addEventListener("click", function (event) {
+    const button = event.target.closest(".deal-image-button:not(.broken)");
+    if (!button) return;
+    const image = button.querySelector("img");
     const modalImage = document.getElementById("image-modal-content");
-    const closeButton = document.querySelector(".image-modal-close");
-
-    document.querySelectorAll(".deal-image-button").forEach(function (button) {
-        button.addEventListener("click", function () {
-            const image = button.querySelector("img");
-
-            modalImage.src = image.src;
-            modalImage.alt = image.alt;
-
-            modal.style.display = "flex";
-        });
-    });
-
-    closeButton.addEventListener("click", function () {
-        modal.style.display = "none";
-    });
-
-    modal.addEventListener("click", function (event) {
-        if (event.target === modal) {
-            modal.style.display = "none";
-        }
-    });
+    modalImage.src = image.src;
+    modalImage.alt = image.alt;
+    document.getElementById("image-modal").classList.add("active");
 });
 </script>
 {% endblock %}

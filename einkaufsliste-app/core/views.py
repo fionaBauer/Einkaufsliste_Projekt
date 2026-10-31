@@ -14,10 +14,16 @@ from recipes.models import Recipe
 from shopping.models import ShoppingList
 
 
+WEEKDAYS_DE = ["Montag", "Dienstag", "Mittwoch", "Donnerstag", "Freitag", "Samstag", "Sonntag"]
+MONTHS_DE = ["Januar", "Februar", "März", "April", "Mai", "Juni", "Juli",
+             "August", "September", "Oktober", "November", "Dezember"]
+
+
 @login_required
 def home(request):
     household = request.user.households.first()
     today = date.today()
+    today_label = f"{WEEKDAYS_DE[today.weekday()]}, {today.day}. {MONTHS_DE[today.month - 1]}"
 
     # Today's + upcoming meals
     todays_meals = MealSlot.objects.filter(
@@ -80,9 +86,29 @@ def home(request):
         "shopping_list": shopping_list,
         "shopping_count": shopping_count,
         "today": today,
+        "today_label": today_label,
         "household": household,
         "has_inventory": has_inventory,
     })
+
+
+def service_worker(request):
+    """Liefert den Service Worker unter /sw.js aus.
+
+    Ein Service Worker kontrolliert nur Seiten unterhalb seines eigenen Pfads – unter
+    /static/global/js/ hätte er keine einzige App-Seite erreicht. Deshalb vom Root aus.
+    """
+    from django.contrib.staticfiles import finders
+    from django.http import Http404, HttpResponse
+
+    path = finders.find("global/js/service-worker.js")
+    if not path:
+        raise Http404
+    with open(path, "rb") as f:
+        response = HttpResponse(f.read(), content_type="application/javascript")
+    response["Cache-Control"] = "no-cache"
+    response["Service-Worker-Allowed"] = "/"
+    return response
 
 
 def register(request):

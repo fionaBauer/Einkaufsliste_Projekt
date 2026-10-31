@@ -1,689 +1,479 @@
-/* ── Page Layout ── */
+/* ============================================================
+   Planung
+   ============================================================ */
 .planner-page {
     max-width: 1100px;
     margin: 0 auto;
     display: flex;
     flex-direction: column;
-    gap: 20px;
+    gap: 18px;
 }
 
-/* ── Header ── */
+/* ── Kopf ── */
 .planner-header {
     display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 16px;
-    flex-wrap: wrap;
+    flex-direction: column;
+    gap: 14px;
 }
 
 .planner-header-left {
     display: flex;
     align-items: center;
-    gap: 16px;
-}
-
-.planner-header-right {
-    display: flex;
-    align-items: center;
-    gap: 10px;
+    justify-content: space-between;
+    gap: 12px;
 }
 
 .planner-title {
     margin: 0;
-    font-size: 28px;
-    font-weight: 700;
-    color: var(--text-main);
+    font-size: 32px;
+    font-weight: 800;
+    letter-spacing: -0.025em;
 }
 
-/* ── View Toggle ── */
+.planner-toolbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
 .view-toggle {
     display: flex;
-    background: #f0f0f0;
-    border-radius: 10px;
-    padding: 3px;
     gap: 2px;
+    padding: 4px;
+    border-radius: var(--radius-pill);
+    background: var(--surface);
+    box-shadow: var(--shadow-card);
 }
 
 .view-btn {
-    background: none;
+    min-height: 38px;
+    padding: 6px 18px;
     border: none;
-    padding: 5px 14px;
-    border-radius: 8px;
-    font-size: 13px;
-    font-weight: 500;
-    color: #666;
-    cursor: pointer;
-    transition: background 0.15s, color 0.15s;
-}
-
-.view-btn.active {
-    background: white;
-    color: #111;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-}
-
-/* ── Nav Buttons ── */
-.nav-btn {
+    border-radius: var(--radius-pill);
     background: none;
-    border: 1.5px solid var(--border-light);
-    border-radius: 8px;
-    width: 32px;
-    height: 32px;
-    font-size: 20px;
-    line-height: 1;
+    color: var(--text-muted);
+    font-size: 14px;
+    font-weight: 650;
     cursor: pointer;
-    color: #555;
+    transition: background 0.2s, color 0.2s;
+}
+
+.view-btn.active { background: var(--text-main); color: white; }
+
+.period-nav {
     display: flex;
     align-items: center;
-    justify-content: center;
-    transition: background 0.15s, color 0.15s;
+    gap: 4px;
+    padding: 4px;
+    border-radius: var(--radius-pill);
+    background: var(--surface);
+    box-shadow: var(--shadow-card);
 }
 
-.nav-btn:hover {
-    background: #f5f5f5;
-    color: #111;
+.nav-btn {
+    width: 38px;
+    height: 38px;
+    border: none;
+    border-radius: 50%;
+    display: grid;
+    place-items: center;
+    background: none;
+    color: var(--text-soft);
+    cursor: pointer;
+    transition: background 0.2s, transform 0.15s var(--ease-out);
 }
+
+.nav-btn:hover { background: var(--surface-2); color: var(--text-main); }
+.nav-btn:active { transform: scale(0.88); }
 
 .period-label {
-    font-size: 15px;
-    font-weight: 600;
-    color: var(--text-main);
-    min-width: 180px;
+    min-width: 170px;
     text-align: center;
+    font-size: 14.5px;
+    font-weight: 700;
 }
 
-/* ── Shopping Button ── */
 .shopping-btn {
-    display: flex;
+    display: inline-flex;
     align-items: center;
-    gap: 6px;
-    background: #111;
-    color: white;
+    gap: 8px;
+    min-height: 44px;
+    padding: 8px 18px;
     border: none;
-    border-radius: 10px;
-    padding: 7px 14px;
-    font-size: 13px;
-    font-weight: 600;
+    border-radius: var(--radius-pill);
+    background: var(--text-main);
+    color: white;
+    font-size: 14px;
+    font-weight: 650;
     cursor: pointer;
-    transition: background 0.15s;
+    transition: transform 0.15s var(--ease-out), background 0.2s;
 }
 
-.shopping-btn:hover {
-    background: #333;
-}
+.shopping-btn:hover { background: #34312c; }
+.shopping-btn:active { transform: scale(0.95); }
+.shopping-btn:disabled { opacity: 0.6; }
 
-/* ── Calendar Grid (Week) ── */
+/* ── Wochenraster (Desktop) ── */
 .week-grid {
     display: grid;
-    grid-template-columns: 80px repeat(7, 1fr);
-    gap: 0;
-    border: 1.5px solid var(--border-light);
-    border-radius: 16px;
+    grid-template-columns: 70px repeat(7, minmax(0, 1fr));
+    border-radius: var(--radius-lg);
+    background: var(--surface);
+    box-shadow: var(--shadow-card);
     overflow: hidden;
-    background: white;
 }
 
-/* Day header */
+.corner-cell,
+.day-header,
+.meal-label-cell { background: var(--surface); }
+
+.corner-cell,
+.day-header { border-bottom: 1px solid var(--border-light); }
+
 .day-header {
-    background: #f9f9f9;
-    border-bottom: 1.5px solid var(--border-light);
-    padding: 10px 6px;
+    padding: 12px 6px 10px;
     text-align: center;
-    font-size: 12px;
-    font-weight: 600;
-    color: #888;
-}
-
-.day-header.today {
-    color: #111;
+    color: var(--text-muted);
 }
 
 .day-header-name {
+    font-size: 11.5px;
+    font-weight: 700;
+    letter-spacing: 0.06em;
     text-transform: uppercase;
-    letter-spacing: 0.5px;
-    font-size: 11px;
 }
 
 .day-header-date {
-    font-size: 20px;
-    font-weight: 700;
-    color: var(--text-main);
-    line-height: 1.2;
-    margin-top: 2px;
-}
-
-.day-header.today .day-header-date {
-    background: #111;
-    color: white;
-    width: 32px;
-    height: 32px;
+    width: 34px;
+    height: 34px;
+    margin: 4px auto 0;
     border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    margin: 2px auto 0;
-    font-size: 15px;
+    display: grid;
+    place-items: center;
+    font-size: 17px;
+    font-weight: 750;
+    color: var(--text-main);
 }
 
-/* Meal label column */
+.day-header.today { color: var(--accent); }
+.day-header.today .day-header-date { background: var(--accent); color: white; }
+
 .meal-label-cell {
-    background: #f9f9f9;
-    border-right: 1.5px solid var(--border-light);
-    border-bottom: 1.5px solid var(--border-light);
-    padding: 8px 6px;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 11px;
-    font-weight: 600;
-    color: #999;
+    padding: 8px 4px;
+    border-right: 1px solid var(--border-light);
+    border-bottom: 1px solid var(--border-light);
+    font-size: 11.5px;
+    font-weight: 700;
+    color: var(--text-muted);
     text-transform: uppercase;
-    letter-spacing: 0.4px;
+    letter-spacing: 0.06em;
     writing-mode: vertical-lr;
-    text-orientation: mixed;
+    transform: rotate(180deg);
 }
 
-.corner-cell {
-    background: #f9f9f9;
-    border-bottom: 1.5px solid var(--border-light);
-    border-right: 1.5px solid var(--border-light);
-}
+.meal-label-cell.last-row { border-bottom: none; }
 
-/* Meal slot cell */
 .slot-cell {
-    border-bottom: 1.5px solid var(--border-light);
-    border-right: 1.5px solid var(--border-light);
-    min-height: 90px;
+    position: relative;
+    min-height: 100px;
     padding: 6px;
     display: flex;
     flex-direction: column;
-    gap: 4px;
-    position: relative;
+    gap: 5px;
+    border-right: 1px solid var(--border-light);
+    border-bottom: 1px solid var(--border-light);
     transition: background 0.15s;
 }
 
-.slot-cell:last-child,
-.slot-cell.last-col {
-    border-right: none;
-}
-
-.slot-cell.last-row {
-    border-bottom: none;
-}
+.slot-cell.last-col { border-right: none; }
+.slot-cell.last-row { border-bottom: none; }
+.slot-cell:hover { background: #fcfbf9; }
 
 .slot-cell.drag-over {
-    background: #f0f7ff;
-    outline: 2px dashed #93c5fd;
-    outline-offset: -2px;
+    background: var(--accent-soft);
+    outline: 2px dashed var(--accent);
+    outline-offset: -4px;
+    border-radius: 12px;
 }
 
-/* Add button inside cell */
 .slot-add-btn {
-    width: 24px;
-    height: 24px;
-    border-radius: 6px;
-    border: 1.5px dashed #ccc;
-    background: none;
-    color: #bbb;
-    font-size: 16px;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    transition: border-color 0.15s, color 0.15s, background 0.15s;
+    width: 28px;
+    height: 28px;
     flex-shrink: 0;
     align-self: flex-start;
+    display: grid;
+    place-items: center;
+    border: 1.5px dashed var(--border-strong);
+    border-radius: 50%;
+    background: none;
+    color: var(--text-faint);
+    font-size: 17px;
+    line-height: 1;
+    cursor: pointer;
+    opacity: 0.6;
+    transition: opacity 0.15s, border-color 0.15s, color 0.15s, background 0.15s, transform 0.15s var(--ease-spring);
 }
 
-.slot-cell:hover .slot-add-btn {
-    border-color: #999;
-    color: #555;
-}
+.slot-cell:hover .slot-add-btn { opacity: 1; }
+.slot-add-btn:hover { border-style: solid; border-color: var(--accent); background: var(--accent-soft); color: var(--accent-ink); }
+.slot-add-btn:active { transform: scale(0.85); }
 
-.slot-add-btn:hover {
-    background: #f5f5f5 !important;
-    border-color: #555 !important;
-    color: #111 !important;
-}
-
-/* Recipe chip */
+/* Rezept-Chip */
 .recipe-chip {
+    position: relative;
     display: flex;
     align-items: center;
-    gap: 5px;
-    background: #f5f5f5;
-    border: 1px solid #e5e5e5;
-    border-radius: 8px;
-    padding: 4px 6px;
-    font-size: 12px;
-    font-weight: 500;
-    color: #222;
+    gap: 6px;
+    padding: 5px 5px 5px 8px;
+    border-radius: 12px;
+    background: var(--accent-soft);
+    color: var(--accent-ink);
+    font-size: 12.5px;
+    font-weight: 650;
     cursor: grab;
-    transition: box-shadow 0.15s, background 0.15s;
-    position: relative;
+    -webkit-user-select: none;
     user-select: none;
+    transition: box-shadow 0.15s, transform 0.15s;
 }
 
-.recipe-chip:active {
-    cursor: grabbing;
-}
+.recipe-chip:hover { box-shadow: 0 2px 8px rgba(35, 132, 91, 0.18); }
+.recipe-chip:active { cursor: grabbing; }
+.recipe-chip.dragging { opacity: 0.4; }
 
-.recipe-chip.dragging {
-    opacity: 0.4;
-}
-
-.recipe-chip-name {
-    flex: 1;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-    min-width: 0;
-}
-
-.recipe-chip-thumb {
-    width: 20px;
-    height: 20px;
-    border-radius: 4px;
-    object-fit: cover;
-    flex-shrink: 0;
-}
-
-.recipe-chip-icon {
-    font-size: 14px;
-    flex-shrink: 0;
-}
+.recipe-chip-name { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.recipe-chip-thumb { width: 22px; height: 22px; border-radius: 7px; object-fit: cover; flex-shrink: 0; }
+.recipe-chip-icon { font-size: 13px; flex-shrink: 0; }
 
 .recipe-chip-settings {
-    background: none;
-    border: none;
-    padding: 2px;
-    cursor: pointer;
-    color: #999;
-    display: flex;
-    align-items: center;
-    border-radius: 4px;
     flex-shrink: 0;
-    transition: color 0.15s, background 0.15s;
+    display: grid;
+    place-items: center;
+    width: 22px;
+    height: 22px;
+    padding: 0;
+    border: none;
+    border-radius: 50%;
+    background: none;
+    color: var(--accent-ink);
+    opacity: 0.6;
+    cursor: pointer;
 }
 
-.recipe-chip-settings:hover {
-    color: #333;
-    background: #e8e8e8;
-}
+.recipe-chip-settings:hover { opacity: 1; background: rgba(255, 255, 255, 0.6); }
 
 .recurrence-badge {
-    font-size: 9px;
-    background: #e0e7ff;
-    color: #4338ca;
-    border-radius: 4px;
-    padding: 1px 4px;
-    font-weight: 600;
     flex-shrink: 0;
+    padding: 1px 5px;
+    border-radius: 6px;
+    background: rgba(255, 255, 255, 0.7);
+    font-size: 9.5px;
+    font-weight: 800;
 }
 
-/* ── Month Grid ── */
+/* ── Woche als Tagesliste (Handy) ── */
+.week-grid.agenda {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    background: none;
+    box-shadow: none;
+    border-radius: 0;
+    overflow: visible;
+}
+
+.agenda-day {
+    padding: 14px 14px 8px;
+    border-radius: var(--radius-lg);
+    background: var(--surface);
+    box-shadow: var(--shadow-card);
+}
+
+.agenda-day.today { box-shadow: inset 0 0 0 2px var(--accent), var(--shadow-card); }
+
+.agenda-day-head {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 6px;
+}
+
+.agenda-day-num {
+    width: 38px;
+    height: 38px;
+    border-radius: 13px;
+    display: grid;
+    place-items: center;
+    background: var(--surface-2);
+    font-size: 16px;
+    font-weight: 800;
+}
+
+.agenda-day.today .agenda-day-num { background: var(--accent); color: white; }
+.agenda-day-name { font-size: 16px; font-weight: 750; }
+
+.agenda-today {
+    margin-left: auto;
+    padding: 3px 10px;
+    border-radius: var(--radius-pill);
+    background: var(--accent-soft);
+    color: var(--accent-ink);
+    font-size: 12px;
+    font-weight: 750;
+}
+
+.agenda-meal {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    padding: 8px 0;
+    border-top: 1px solid var(--border-light);
+}
+
+.agenda-meal-label {
+    width: 56px;
+    flex-shrink: 0;
+    padding-top: 6px;
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.agenda-meal-chips {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 6px;
+}
+
+.agenda-meal-chips .recipe-chip { max-width: 100%; font-size: 13.5px; padding: 6px 6px 6px 10px; }
+.agenda-meal-chips .slot-add-btn { opacity: 1; width: 32px; height: 32px; }
+
+/* ── Monatsraster ── */
 .month-grid {
     display: grid;
-    grid-template-columns: repeat(7, 1fr);
-    gap: 0;
-    border: 1.5px solid var(--border-light);
-    border-radius: 16px;
+    grid-template-columns: repeat(7, minmax(0, 1fr));
+    border-radius: var(--radius-lg);
+    background: var(--surface);
+    box-shadow: var(--shadow-card);
     overflow: hidden;
-    background: white;
 }
 
 .month-day-header {
-    background: #f9f9f9;
-    border-bottom: 1.5px solid var(--border-light);
-    border-right: 1.5px solid var(--border-light);
-    padding: 8px;
+    padding: 10px 6px;
+    border-bottom: 1px solid var(--border-light);
     text-align: center;
-    font-size: 11px;
-    font-weight: 600;
-    color: #888;
+    font-size: 11.5px;
+    font-weight: 700;
+    color: var(--text-muted);
     text-transform: uppercase;
-    letter-spacing: 0.5px;
-}
-
-.month-day-header:last-child {
-    border-right: none;
+    letter-spacing: 0.06em;
 }
 
 .month-day-cell {
-    border-bottom: 1.5px solid var(--border-light);
-    border-right: 1.5px solid var(--border-light);
+    position: relative;
     min-height: 110px;
     padding: 6px;
     display: flex;
     flex-direction: column;
     gap: 3px;
-    position: relative;
+    border-right: 1px solid var(--border-light);
+    border-bottom: 1px solid var(--border-light);
 }
 
-.month-day-cell:nth-child(7n) {
-    border-right: none;
-}
-
-.month-day-cell.other-month {
-    background: #fafafa;
-}
-
-.month-day-cell.today .month-day-num {
-    background: #111;
-    color: white;
-    border-radius: 50%;
-    width: 24px;
-    height: 24px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
+.month-day-cell:nth-child(7n) { border-right: none; }
+.month-day-cell.other-month { background: #fbfaf8; }
+.month-day-cell.other-month .month-day-num { color: var(--text-faint); }
 
 .month-day-num {
-    font-size: 13px;
-    font-weight: 600;
-    color: #555;
+    width: 26px;
+    height: 26px;
     margin-bottom: 2px;
-    width: 24px;
-    height: 24px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
+    border-radius: 50%;
+    display: grid;
+    place-items: center;
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--text-soft);
 }
 
+.month-day-cell.today .month-day-num { background: var(--accent); color: white; }
+
 .month-chip {
-    font-size: 11px;
-    background: #f0f0f0;
-    border-radius: 5px;
-    padding: 2px 5px;
+    padding: 3px 7px;
+    border-radius: 8px;
+    background: var(--accent-soft);
+    color: var(--accent-ink);
+    font-size: 11.5px;
+    font-weight: 600;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
     cursor: pointer;
-    color: #333;
-    border: 1px solid #e5e5e5;
-}
-
-.month-chip:hover {
-    background: #e5e5e5;
 }
 
 .month-add-btn {
-    font-size: 11px;
-    color: #bbb;
-    background: none;
+    padding: 2px 0;
     border: none;
-    cursor: pointer;
-    padding: 0;
+    background: none;
+    color: var(--text-faint);
+    font-size: 11.5px;
+    font-weight: 600;
     text-align: left;
-    transition: color 0.15s;
+    cursor: pointer;
+    opacity: 0;
+    transition: opacity 0.15s, color 0.15s;
 }
 
-.month-add-btn:hover {
-    color: #555;
-}
+.month-day-cell:hover .month-add-btn { opacity: 1; }
+.month-add-btn:hover { color: var(--accent); }
 
 /* ── Modals ── */
-.modal-overlay {
-    position: fixed;
-    inset: 0;
-    background: rgba(0,0,0,0.4);
-    display: none;
-    align-items: center;
-    justify-content: center;
-    z-index: 1000;
-    backdrop-filter: blur(2px);
-}
-
-.modal-overlay.active {
-    display: flex;
-}
-
-.modal {
-    background: white;
-    border-radius: 18px;
-    padding: 28px;
-    width: 100%;
-    max-width: 420px;
-    box-shadow: 0 20px 60px rgba(0,0,0,0.15);
-}
-
-.modal-title {
-    margin: 0 0 4px;
-    font-size: 20px;
-    font-weight: 700;
-}
-
-.modal-meta {
-    font-size: 13px;
-    color: #888;
-    margin-bottom: 20px;
-}
-
+.modal-meta,
 .slot-modal-date {
-    font-size: 13px;
-    color: #888;
-    margin: 0 0 20px;
+    margin: -10px 0 20px;
+    color: var(--text-muted);
+    font-size: 14px;
+    font-weight: 550;
 }
 
-.modal-actions {
-    display: flex;
-    justify-content: flex-end;
-    gap: 8px;
-    margin-top: 24px;
-}
-
-.slot-modal-actions {
-    justify-content: space-between;
-}
-
-/* ── Recipe search dropdown ── */
-.recipe-search-wrap {
-    position: relative;
-}
-
-.recipe-dropdown {
-    position: absolute;
-    top: calc(100% + 4px);
-    left: 0;
-    right: 0;
-    background: white;
-    border: 1.5px solid var(--border-light);
-    border-radius: 10px;
-    box-shadow: 0 8px 24px rgba(0,0,0,0.1);
-    max-height: 220px;
-    overflow-y: auto;
-    z-index: 10;
-}
-
-.recipe-dropdown.hidden {
-    display: none;
-}
+.slot-modal-actions #slot-delete { margin-right: auto; }
 
 .recipe-option {
     display: flex;
     align-items: center;
-    gap: 8px;
-    padding: 8px 12px;
+    gap: 10px;
+    padding: 8px 10px;
+    border-radius: var(--radius-xs);
+    font-size: 15px;
     cursor: pointer;
-    font-size: 14px;
-    transition: background 0.1s;
 }
 
-.recipe-option:hover {
-    background: #f5f5f5;
-}
+.recipe-option:hover { background: var(--surface-2); }
+.recipe-option img { width: 32px; height: 32px; border-radius: 10px; object-fit: cover; }
+.recipe-option-icon { width: 32px; text-align: center; font-size: 18px; }
 
-.recipe-option img {
-    width: 28px;
-    height: 28px;
-    border-radius: 6px;
-    object-fit: cover;
-}
-
-.recipe-option-icon {
-    font-size: 18px;
-    width: 28px;
-    text-align: center;
-}
-
-/* ── Form groups ── */
-.form-group {
-    display: flex;
-    flex-direction: column;
-    gap: 6px;
-    margin-bottom: 16px;
-    position: relative;
-}
-
-.settings-label {
-    font-size: 13px;
-    font-weight: 600;
-    color: var(--text-main, #111);
-}
-
-.settings-input {
-    width: 100%;
-    padding: 9px 12px;
-    border: 1.5px solid var(--border-light, #e5e5e5);
-    border-radius: 10px;
-    font-size: 14px;
-    color: var(--text-main, #111);
-    background: white;
-    box-sizing: border-box;
-    transition: border-color 0.15s;
-}
-
-.settings-input:focus {
-    outline: none;
-    border-color: #111;
-}
-
-/* ── Utility ── */
-.hidden {
-    display: none !important;
-}
-
-@media (max-width: 700px) {
-    .week-grid {
-        grid-template-columns: 44px repeat(7, 1fr);
-        font-size: 11px;
-    }
-
-    .day-header-date {
-        font-size: 15px;
-    }
-
-    .shopping-btn span {
-        display: none;
-    }
-
-    .period-label {
-        min-width: 120px;
-        font-size: 13px;
-    }
-}
-
-/* ── Mobile Planner ── */
+/* ── Mobile ── */
 @media (max-width: 768px) {
-    .planner-header {
-        flex-direction: column;
-        align-items: flex-start;
-        gap: 10px;
-    }
+    .planner-title { font-size: 30px; }
 
-    .planner-header-left,
-    .planner-header-right {
-        width: 100%;
-        justify-content: space-between;
-    }
+    .planner-toolbar { flex-wrap: nowrap; gap: 8px; }
+    .view-btn { padding: 6px 14px; }
+    .period-nav { flex: 1; justify-content: space-between; min-width: 0; }
+    .period-label { min-width: 0; font-size: 13.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
-    .planner-title { font-size: 22px; }
-
-    .period-label {
-        min-width: 0;
-        font-size: 13px;
-        flex: 1;
-        text-align: center;
-    }
-
-    /* Week view: collapse to 3 days visible, scroll horizontally */
-    .week-grid {
-        grid-template-columns: 44px repeat(7, minmax(80px, 1fr));
-        overflow-x: auto;
-        border-radius: 12px;
-        -webkit-overflow-scrolling: touch;
-    }
-
-    .day-header-name { font-size: 10px; }
-    .day-header-date { font-size: 15px; }
-
-    .meal-label-cell {
-        font-size: 9px;
-        padding: 4px 2px;
-    }
-
-    .slot-cell {
-        min-height: 70px;
-        padding: 4px;
-    }
-
-    .recipe-chip {
-        font-size: 11px;
-        padding: 3px 5px;
-    }
-
-    .recipe-chip-name { font-size: 11px; }
-
-    /* Month view: smaller cells */
-    .month-grid {
-        border-radius: 12px;
-    }
-
-    .month-day-cell {
-        min-height: 70px;
-        padding: 4px;
-    }
-
-    .month-day-num {
-        font-size: 12px;
-        width: 20px;
-        height: 20px;
-    }
-
-    .month-chip {
-        font-size: 10px;
-        padding: 2px 4px;
-        white-space: nowrap;
-        overflow: hidden;
-        text-overflow: ellipsis;
-    }
-
+    .month-day-cell { min-height: 64px; padding: 4px; }
+    .month-day-num { width: 22px; height: 22px; font-size: 12px; }
+    .month-chip { font-size: 10px; padding: 2px 4px; }
     .month-add-btn { display: none; }
 
-    /* Tap day to add on mobile */
-    .month-day-cell {
-        cursor: pointer;
-    }
-
-    .shopping-btn {
-        padding: 7px 10px;
-        font-size: 12px;
-    }
-
-    /* Modal: full screen on mobile */
-    .modal {
-        max-width: 100%;
-        width: 100%;
-        border-radius: 20px 20px 0 0;
-        position: fixed;
-        bottom: 0;
-        left: 0;
-        right: 0;
-        margin: 0;
-    }
-
-    .modal-overlay {
-        align-items: flex-end;
-    }
+    .slot-modal-actions #slot-delete { flex: 0 0 100%; order: 3; margin: 0; }
 }

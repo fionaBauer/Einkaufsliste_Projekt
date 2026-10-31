@@ -2,14 +2,23 @@ document.addEventListener("DOMContentLoaded", () => {
     const modalOverlay = document.getElementById("modal-overlay");
     const modalBody = document.getElementById("modal-body");
 
-    // ── Card selected effect ──
+    // ── Auswahl: Karte markieren + schwebende "Einkaufsliste erstellen"-Pille ──
+    function updateSelectionBar() {
+        const count = document.querySelectorAll('#recipe-selection-form input[name="recipes"]:checked').length;
+        document.getElementById("selectionBar")?.classList.toggle("visible", count > 0);
+        const counter = document.getElementById("selectionCount");
+        if (counter) counter.textContent = String(count);
+    }
+
     document.addEventListener("change", (event) => {
         const checkbox = event.target;
         if (checkbox.name !== "recipes") return;
-        const card = checkbox.closest(".recipe-card");
-        if (!card) return;
-        card.classList.toggle("selected", checkbox.checked);
+        checkbox.closest(".recipe-card")?.classList.toggle("selected", checkbox.checked);
+        updateSelectionBar();
     });
+
+    document.addEventListener("app:morphed", updateSelectionBar);
+    updateSelectionBar();
 
     const shoppingModal = document.getElementById("shoppingCreateModal");
     const openShoppingModalBtn = document.getElementById("openShoppingModalBtn");
@@ -89,7 +98,7 @@ let extractedRecipeData = null;
 
                     if (data.success) {
                         closeModal();
-                        window.location.reload();
+                        App.refresh();
                     } else {
                         modalBody.innerHTML = `<p>${data.error || "Speichern fehlgeschlagen. Bitte Eingaben prüfen."}</p>`;
                         openModal();
@@ -523,6 +532,13 @@ let extractedRecipeData = null;
             instructions: reviewInstructionsInput.value.trim(),
             ingredients: ingredients,
         };
+    }
+
+    // Von Home aus "Rezept aus Link" → Import-Dialog direkt öffnen
+    if (new URLSearchParams(window.location.search).has("import")) {
+        openLinkModal();
+        history.replaceState(null, "", window.location.pathname);
+        setTimeout(() => recipeLinkInput?.focus(), 150);
     }
 
     // ── Tab switching ──

@@ -6,6 +6,7 @@ EXEMPT_PREFIXES = (
     "/accounts/",
     "/households/",
     "/admin/",
+    "/sw.js",
 )
 
 

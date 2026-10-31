@@ -27,7 +27,6 @@ document.addEventListener("DOMContentLoaded", () => {
     const closeCreateModalBtn = document.getElementById("closeCreateModalBtn");
     const closeEditModalBtn = document.getElementById("closeEditModalBtn");
 
-    const editButtons = document.querySelectorAll(".open-edit-modal-btn");
     const editItemIdInput = document.getElementById("editItemId");
 
     const consumeRecipeModal = document.getElementById("consumeRecipeModal");
@@ -114,11 +113,14 @@ document.addEventListener("DOMContentLoaded", () => {
             };
         });
 
-        document.addEventListener("click", (event) => {
-            if (!modalElement.contains(event.target)) {
-                dropdown.classList.add("hidden");
-            }
-        });
+        if (!modalElement.dataset.outsideClickBound) {
+            modalElement.dataset.outsideClickBound = "1";
+            document.addEventListener("click", (event) => {
+                if (!modalElement.contains(event.target)) {
+                    modalElement.querySelector(".custom-search-dropdown")?.classList.add("hidden");
+                }
+            });
+        }
 
         syncIngredientId();
         dropdown.classList.add("hidden");
@@ -317,8 +319,9 @@ document.addEventListener("DOMContentLoaded", () => {
                     throw new Error(data.error || "Artikel konnten nicht übernommen werden.");
                 }
 
+                closeReceiptReviewModal();
                 showToast(`${data.added} Artikel zum Inventar hinzugefügt`, "success");
-                setTimeout(() => window.location.reload(), 700);
+                App.refresh();
             } catch (error) {
                 console.error(error);
                 showToast(error.message || "Beim Übernehmen ist ein Fehler aufgetreten.", "error");
@@ -420,11 +423,9 @@ document.addEventListener("DOMContentLoaded", () => {
                     throw new Error(data.error || "Verbrauch konnte nicht angewendet werden.");
                 }
 
+                closeConsumeRecipeModal();
                 showToast(data.message || "Verbrauch wurde angewendet.", "success");
-                setTimeout(() => {
-                    window.location.reload();
-                }, 700);
-                window.location.reload();
+                App.refresh();
             } catch (error) {
                 console.error(error);
                 showToast(error.message || "Beim Anwenden ist ein Fehler aufgetreten.", "error");
@@ -441,28 +442,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     function showToast(message, type = "success") {
-        const container = document.querySelector(".toast-container");
-        if (!container) {
-            alert(message);
-            return;
-        }
-
-        const toast = document.createElement("div");
-        toast.className = `toast ${type}`;
-        toast.innerHTML = `
-            <span class="toast-icon">✔</span>
-            <span class="toast-text">${message}</span>
-        `;
-
-        container.appendChild(toast);
-
-        setTimeout(() => {
-            toast.classList.add("hide");
-
-            setTimeout(() => {
-                toast.remove();
-            }, 250);
-        }, 2000);
+        App.toast(message, type);
     }
 
     consumeRecipeModal?.addEventListener("click", (event) => {
@@ -471,8 +451,11 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     });
 
-    editButtons.forEach((button) => {
-        button.addEventListener("click", () => {
+    // Delegiert, damit auch nach stillen Updates neu eingefügte Einträge funktionieren
+    document.addEventListener("click", (event) => {
+        const button = event.target.closest(".open-edit-modal-btn");
+        if (!button) return;
+        {
             const editIngredientHidden = editModal.querySelector('input[name="ingredient"]');
             const editIngredientSearch = editModal.querySelector(".ingredient-search-input");
             const editQuantity = editModal.querySelector('[name="quantity"]');
@@ -500,7 +483,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
             editModal.classList.add("active");
             initializeIngredientSearch(editModal, "inventoryIngredientDropdownEdit");
-        });
+        }
     });
 
     document.addEventListener("click", async (event) => {
@@ -550,25 +533,20 @@ document.addEventListener("DOMContentLoaded", () => {
                 const data = await res.json();
                 if (data.success) {
                     editModal.classList.remove("active");
-                    // Update the item name in the list without full reload
-                    const itemId = form.querySelector('[name="item_id"]')?.value;
-                    const newName = form.querySelector(".ingredient-search-input")?.value;
-                    const newQty = form.querySelector('[name="quantity"]')?.value;
-                    const newUnit = form.querySelector('[name="unit"]')?.value;
-                    if (itemId && newName) {
-                        const nameEl = document.querySelector(`.inventory-item[data-item-id="${itemId}"] .inventory-name`);
-                        const qtyEl = document.querySelector(`.inventory-item[data-item-id="${itemId}"] .inventory-quantity`);
-                        if (nameEl) nameEl.textContent = newName;
-                        if (qtyEl) qtyEl.textContent = newQty ? `${newQty} ${newUnit}` : "Vorhanden";
-                    }
+                    form.reset();
+                    await App.refresh();
                 }
-            } catch(e) { console.error(e); }
+            } catch(e) {
+                console.error(e);
+                showToast("Speichern fehlgeschlagen.", "error");
+            }
             return;
         }
 
         // Handle delete form via AJAX
         if (form.closest(".delete-form") && form.querySelector('[name="action"][value="delete"]')) {
             event.preventDefault();
+            if (!confirm("Eintrag löschen?")) return;
             const formData = new FormData(form);
             try {
                 const res = await fetch(window.location.href, {
@@ -578,12 +556,14 @@ document.addEventListener("DOMContentLoaded", () => {
                 });
                 const data = await res.json();
                 if (data.success) {
-                    // Remove item from list without reload
-                    const itemId = form.querySelector('[name="item_id"]')?.value;
-                    const itemEl = document.querySelector(`.inventory-item[data-item-id="${itemId}"]`);
-                    if (itemEl) itemEl.remove();
+                    // Eintrag sofort ausblenden, dann Zähler & Kategorien still aktualisieren
+                    form.closest(".inventory-item")?.remove();
+                    App.refresh();
                 }
-            } catch(e) { console.error(e); }
+            } catch(e) {
+                console.error(e);
+                showToast("Löschen fehlgeschlagen.", "error");
+            }
             return;
         }
 

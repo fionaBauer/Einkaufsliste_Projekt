@@ -7,112 +7,109 @@
 <link rel="stylesheet" href="{% static 'recipes/css/recipe_detail.css' %}">
 {% endblock %}
 
+{% block live %}data-live="morph"{% endblock %}
+
 {% block content %}
-    <a href="{% url 'recipes:recipe_list' %}" class="back-link">← Zurück zur Übersicht</a>
-
-    <div class="page">
-        {% if recipe.image %}
-        <div class="recipe-hero-banner">
-            <img src="{{ recipe.image.url }}" alt="{{ recipe.name }}" class="recipe-hero-img">
-            <div class="recipe-hero-overlay"></div>
+<div class="page recipe-page">
+    <div class="recipe-topbar">
+        <a href="{% url 'recipes:recipe_list' %}" class="round-btn" aria-label="Zurück zur Übersicht">
+            <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg>
+        </a>
+        <div class="recipe-header-actions">
+            <button type="button" class="round-btn open-modal-btn" aria-label="Bearbeiten" title="Bearbeiten"
+                data-url="{% url 'recipes:recipe_edit' recipe.pk %}">
+                <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 013 3L7 19l-4 1 1-4z"/></svg>
+            </button>
+            <button type="button" class="round-btn round-btn--danger open-modal-btn" aria-label="Löschen" title="Löschen"
+                data-url="{% url 'recipes:recipe_delete' recipe.pk %}">
+                <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M3 6h18M8 6V4h8v2M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/></svg>
+            </button>
         </div>
+    </div>
+
+    {% if recipe.image %}
+    <div class="recipe-hero-banner">
+        <img src="{{ recipe.image.url }}" alt="{{ recipe.name }}" class="recipe-hero-img" decoding="async">
+    </div>
+    {% endif %}
+
+    <div class="recipe-header">
+        <h1 class="recipe-title">{{ recipe.name }}</h1>
+        <p class="recipe-subtitle">
+            Basisrezept für <span id="base-servings">{{ recipe.servings }}</span> Portion(en)
+        </p>
+    </div>
+
+    <!-- Portionen -->
+    <div class="servings-box">
+        <span class="servings-label">Portionen</span>
+        <div class="servings-controls">
+            <button type="button" class="servings-btn" id="decrease-servings" aria-label="Weniger Portionen">−</button>
+            <input type="number" id="target-servings" class="servings-input"
+                min="1" value="{{ recipe.servings }}" aria-label="Portionen">
+            <button type="button" class="servings-btn" id="increase-servings" aria-label="Mehr Portionen">+</button>
+        </div>
+        <button type="button" class="reset-servings-btn" id="reset-servings">Zurücksetzen</button>
+    </div>
+
+    <!-- Zutaten -->
+    <section class="section">
+        <div class="section-header">
+            <h2 class="section-title">Zutaten</h2>
+            <button type="button" class="btn-icon-add open-modal-btn"
+                data-url="{% url 'recipes:recipeingredient_create' recipe.pk %}"
+                title="Zutat hinzufügen" aria-label="Zutat hinzufügen">+</button>
+        </div>
+
+        {% with items=recipe.recipe_ingredients.all %}
+        {% if items %}
+        <ul class="ingredient-list">
+            {% for item in items %}
+            <li class="ingredient-item" data-key="ri-{{ item.pk }}">
+                <span class="ingredient-name">{{ item.ingredient.name }}{% if item.notes %} <span class="ingredient-notes">{{ item.notes }}</span>{% endif %}</span>
+                <span class="ingredient-meta">
+                    <span class="scaled-quantity"
+                        data-base-quantity="{{ item.quantity|stringformat:'s' }}"
+                        data-unit="{{ item.unit }}">{{ item.quantity|floatformat:"-2" }}</span>
+                    {{ item.get_unit_display }}
+                </span>
+            </li>
+            {% endfor %}
+        </ul>
+        {% else %}
+            <div class="empty-card"><p class="empty-text">Noch keine Zutaten hinzugefügt.</p></div>
         {% endif %}
+        {% endwith %}
+    </section>
 
-        <div class="recipe-header">
-            <div>
-                <h1 class="recipe-title">{{ recipe.name }}</h1>
-                <p class="recipe-subtitle">
-                    Basisrezept für <span id="base-servings">{{ recipe.servings }}</span> Portion(en)
-                </p>
-            </div>
-
-            <div class="recipe-header-actions">
-                <button type="button" class="btn btn-secondary open-modal-btn"
-                    data-url="{% url 'recipes:recipe_edit' recipe.pk %}">
-                    Bearbeiten
-                </button>
-                <button type="button" class="btn btn-danger open-modal-btn"
-                    data-url="{% url 'recipes:recipe_delete' recipe.pk %}">
-                    Löschen
-                </button>
-            </div>
+    <!-- Anleitung -->
+    <section class="section">
+        <div class="section-header">
+            <h2 class="section-title">Anleitung</h2>
         </div>
+        {% if recipe.instructions %}
+            <div class="instructions-box">{{ recipe.instructions|linebreaks }}</div>
+        {% else %}
+            <div class="empty-card"><p class="empty-text">Keine Anleitung hinterlegt.</p></div>
+        {% endif %}
+    </section>
+</div>
 
-        <!-- Servings -->
-        <div class="servings-box">
-            <span class="servings-label">Portionen anpassen</span>
-            <div class="servings-controls">
-                <button type="button" class="servings-btn" id="decrease-servings">−</button>
-                <input type="number" id="target-servings" class="servings-input"
-                    min="1" value="{{ recipe.servings }}">
-                <button type="button" class="servings-btn" id="increase-servings">+</button>
-            </div>
-            <button type="button" class="reset-servings-btn" id="reset-servings">Zurücksetzen</button>
-        </div>
-
-        <!-- Ingredients -->
-        <section class="section">
-            <div class="section-header">
-                <h2 class="section-title">Zutaten</h2>
-                <button type="button" class="btn-icon-add open-modal-btn"
-                    data-url="{% url 'recipes:recipeingredient_create' recipe.pk %}"
-                    title="Zutat hinzufügen">+</button>
-            </div>
-
-            <div class="ingredient-list">
-                {% for item in recipe.recipe_ingredients.all %}
-                <div class="ingredient-item">
-                    <div class="ingredient-main">
-                        <span class="ingredient-name">{{ item.ingredient.name }}</span>
-                        <span class="ingredient-meta">
-                            <span class="scaled-quantity"
-                                data-base-quantity="{{ item.quantity|floatformat:2 }}"
-                                data-unit="{{ item.unit }}">
-                                {{ item.quantity }}
-                            </span>
-                            {{ item.unit }}
-                            {% if item.notes %}• {{ item.notes }}{% endif %}
-                        </span>
-                    </div>
-                </div>
-                {% empty %}
-                    <p class="empty-state">Noch keine Zutaten hinzugefügt.</p>
-                {% endfor %}
-            </div>
-        </section>
-
-        <!-- Instructions -->
-        <section class="section">
-            <div class="section-header">
-                <h2 class="section-title">Anleitung</h2>
-            </div>
-            {% if recipe.instructions %}
-                <div class="instructions-box">{{ recipe.instructions|linebreaks }}</div>
-            {% else %}
-                <p class="empty-state">Keine Anleitung hinterlegt.</p>
-            {% endif %}
-        </section>
+<div id="modal-overlay" class="modal-overlay">
+    <div class="modal">
+        <div id="modal-body" data-morph-skip></div>
     </div>
+</div>
 
-    <!-- Modal -->
-    <div id="modal-overlay" class="modal-overlay">
-        <div class="modal">
-            <div id="modal-body"></div>
-        </div>
+<div id="ingredient-modal-overlay" class="modal-overlay">
+    <div class="modal">
+        <div id="ingredient-modal-body" data-morph-skip></div>
     </div>
+</div>
 
-    <div id="ingredient-modal-overlay" class="modal-overlay">
-        <div class="modal">
-            <div id="ingredient-modal-body"></div>
-        </div>
-    </div>
+<script id="recipe-data" type="application/json">{"baseServings": {{ recipe.servings|default:1 }}}</script>
 {% endblock %}
 
 {% block extra_js %}
-<script>
-    window.recipeData = {
-        baseServings: parseInt("{{ recipe.servings }}", 10)
-    };
-</script>
 <script src="{% static 'recipes/js/recipe_detail.js' %}"></script>
 {% endblock %}

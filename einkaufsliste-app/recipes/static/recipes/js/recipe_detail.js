@@ -10,8 +10,14 @@ document.addEventListener("DOMContentLoaded", () => {
     const increaseButton = document.getElementById("increase-servings");
     const resetButton = document.getElementById("reset-servings");
 
-    const baseServings = window.recipeData?.baseServings || 1;
-    const quantityElements = document.querySelectorAll(".scaled-quantity");
+    // Nach stillen Updates (z.B. Rezept bearbeitet) neu lesen
+    function getBaseServings() {
+        try {
+            return JSON.parse(document.getElementById("recipe-data")?.textContent || "{}").baseServings || 1;
+        } catch (_) {
+            return 1;
+        }
+    }
 
     function openModal() {
         modalOverlay.classList.add("active");
@@ -121,11 +127,14 @@ document.addEventListener("DOMContentLoaded", () => {
             };
         });
 
-        document.addEventListener("click", (event) => {
-            if (!modalBody.contains(event.target)) {
-                dropdown.classList.add("hidden");
-            }
-        });
+        if (!modalBody.dataset.outsideClickBound) {
+            modalBody.dataset.outsideClickBound = "1";
+            document.addEventListener("click", (event) => {
+                if (!modalBody.contains(event.target)) {
+                    modalBody.querySelector("#recipeIngredientDropdown")?.classList.add("hidden");
+                }
+            });
+        }
 
         syncIngredientId();
         dropdown.classList.add("hidden");
@@ -174,7 +183,11 @@ document.addEventListener("DOMContentLoaded", () => {
                     const data = JSON.parse(responseText);
                     if (data.success) {
                         closeModal();
-                        window.location.reload();
+                        if (form.dataset.successUrl) {
+                            window.location.assign(form.dataset.successUrl);
+                        } else {
+                            App.refresh();
+                        }
                         return;
                     }
                 } catch (_) {
@@ -268,9 +281,9 @@ document.addEventListener("DOMContentLoaded", () => {
             targetServingsInput.value = 1;
         }
 
-        const factor = targetServings / baseServings;
+        const factor = targetServings / getBaseServings();
 
-        quantityElements.forEach((element) => {
+        document.querySelectorAll(".scaled-quantity").forEach((element) => {
             const baseQuantity = parseFloat(element.dataset.baseQuantity);
             const unit = element.dataset.unit || "";
 
@@ -361,7 +374,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     if (decreaseButton && targetServingsInput) {
         decreaseButton.addEventListener("click", () => {
-            let currentValue = parseInt(targetServingsInput.value, 10) || baseServings;
+            let currentValue = parseInt(targetServingsInput.value, 10) || getBaseServings();
             currentValue = Math.max(1, currentValue - 1);
             targetServingsInput.value = currentValue;
             updateScaledQuantities();
@@ -370,7 +383,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     if (increaseButton && targetServingsInput) {
         increaseButton.addEventListener("click", () => {
-            let currentValue = parseInt(targetServingsInput.value, 10) || baseServings;
+            let currentValue = parseInt(targetServingsInput.value, 10) || getBaseServings();
             currentValue += 1;
             targetServingsInput.value = currentValue;
             updateScaledQuantities();
@@ -379,11 +392,12 @@ document.addEventListener("DOMContentLoaded", () => {
 
     if (resetButton && targetServingsInput) {
         resetButton.addEventListener("click", () => {
-            targetServingsInput.value = baseServings;
+            targetServingsInput.value = getBaseServings();
             updateScaledQuantities();
         });
     }
 
+    document.addEventListener("app:morphed", updateScaledQuantities);
     updateScaledQuantities();
 });function initInlineIngredients() {
     const list = document.getElementById("inline-ingredients-list");
@@ -562,8 +576,9 @@ document.addEventListener("DOMContentLoaded", () => {
         }
 
         const rows = list.querySelectorAll(".inline-ingredient-row");
-        if (rows.length === 0) {
-            window.location.href = `/recipes/${recipeId}/`;
+        if (rows.length === 0 && deletedExistingIds.size === 0) {
+            document.getElementById("modal-overlay")?.classList.remove("active");
+            App.visit(`/recipes/${recipeId}/`);
             return;
         }
 
@@ -611,7 +626,8 @@ document.addEventListener("DOMContentLoaded", () => {
             }
         }
 
-        // Navigate only after ALL saves are complete
-        window.location.href = `/recipes/${recipeId}/`;
+        // Erst wenn ALLES gespeichert ist: still aktualisieren (gleiche Seite) bzw. hinnavigieren
+        document.getElementById("modal-overlay")?.classList.remove("active");
+        App.visit(`/recipes/${recipeId}/`);
     });
 }

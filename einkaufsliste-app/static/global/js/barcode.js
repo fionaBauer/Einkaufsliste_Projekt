@@ -33,7 +33,7 @@ function loadHtml5QrCode() {
     script.src = "/static/global/js/vendor/html5-qrcode.min.js";
     script.onload = () => startScanner();
     script.onerror = () => {
-        document.querySelector(".barcode-hint").textContent = "Scanner nicht verfügbar — bitte manuell eingeben";
+        setBarcodeHint("Scanner nicht verfügbar — bitte manuell eingeben");
     };
     document.head.appendChild(script);
 }
@@ -67,11 +67,16 @@ function startScanner() {
             },
             (errorMessage) => { /* ignore scan errors */ }
         ).catch(err => {
-            document.querySelector(".barcode-hint").textContent = "Kamera nicht verfügbar — bitte manuell eingeben";
+            setBarcodeHint("Kamera nicht verfügbar — bitte manuell eingeben");
         });
     } catch(e) {
-        document.querySelector(".barcode-hint").textContent = "Scanner nicht verfügbar — bitte manuell eingeben";
+        setBarcodeHint("Scanner nicht verfügbar — bitte manuell eingeben");
     }
+}
+
+function setBarcodeHint(text) {
+    const hint = document.querySelector(".barcode-hint");
+    if (hint) hint.textContent = text;
 }
 
 function stopScanner() {
@@ -192,7 +197,7 @@ async function addBarcodeToInventory(data) {
     if (result.success) {
         document.getElementById("barcodeResultModal").classList.remove("active");
         showGlobalToast(`${name} zum Inventar hinzugefügt`, "success");
-        setTimeout(() => window.location.reload(), 800);
+        App.refresh();
     }
 }
 
@@ -209,7 +214,7 @@ async function addBarcodeToShopping(data) {
     if (result.success) {
         document.getElementById("barcodeResultModal").classList.remove("active");
         showGlobalToast(`${name} zur Einkaufsliste hinzugefügt`, "success");
-        setTimeout(() => window.location.reload(), 800);
+        App.refresh();
     }
 }
 
@@ -241,13 +246,7 @@ function getCsrfToken() {
 }
 
 function showGlobalToast(message, type = "success") {
-    const container = document.querySelector(".toast-container");
-    if (!container) return;
-    const toast = document.createElement("div");
-    toast.className = `toast ${type}`;
-    toast.innerHTML = `<span class="toast-icon">✔</span><span class="toast-text">${message}</span>`;
-    container.appendChild(toast);
-    setTimeout(() => { toast.classList.add("hide"); setTimeout(() => toast.remove(), 250); }, 2500);
+    App.toast(message, type);
 }
 
 document.addEventListener("DOMContentLoaded", () => {

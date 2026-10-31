@@ -74,7 +74,7 @@ def inventory_list(request):
                 item = create_form.save(commit=False)
                 item.household = household
                 item.save()
-                return redirect("inventory:list")
+                return redirect(request.get_full_path())
             create_modal_open = True
 
         elif action == "edit":
@@ -87,7 +87,7 @@ def inventory_list(request):
                 edit_form.save()
                 if request.headers.get("X-Requested-With") == "XMLHttpRequest":
                     return JsonResponse({"success": True})
-                return redirect("inventory:list")
+                return redirect(request.get_full_path())
             edit_modal_open = True
 
         elif action == "delete":
@@ -96,7 +96,7 @@ def inventory_list(request):
             inventory_item.delete()
             if request.headers.get("X-Requested-With") == "XMLHttpRequest":
                 return JsonResponse({"success": True})
-            return redirect("inventory:list")
+            return redirect(request.get_full_path())
 
     if edit_form is None:
         edit_form = InventoryItemForm(household=household)

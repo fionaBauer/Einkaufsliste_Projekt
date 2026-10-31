@@ -3,8 +3,8 @@
   "short_name": "Einkaufsliste",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#ffffff",
-  "theme_color": "#4f46e5",
+  "background_color": "#f4f2ee",
+  "theme_color": "#f4f2ee",
   "description": "Einkaufsliste und Rezepte als installierbare Web-App",
   "icons": [
     {

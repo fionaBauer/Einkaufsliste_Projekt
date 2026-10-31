@@ -7,16 +7,18 @@
 <link rel="stylesheet" href="{% static 'ingredients/css/ingredient_list.css' %}">
 {% endblock %}
 
+{% block live %}data-live="morph"{% endblock %}
+
 {% block content %}
 <div class="page">
     <div class="page-header">
         <h1 class="page-title">Zutaten</h1>
-        <button class="add-button" id="openCreateModalBtn" type="button">+</button>
+        <button class="add-button" id="openCreateModalBtn" type="button" aria-label="Zutat hinzufügen">+</button>
     </div>
     <form method="get" class="filter-bar">
         <div class="filter-group search-group">
             <input type="text" name="q" placeholder="Zutat suchen..."
-                value="{{ search_query }}" class="search-input">
+                value="{{ search_query }}" class="search-input" enterkeyhint="search" autocomplete="off">
         </div>
         <button type="submit" class="filter-btn">Suchen</button>
         {% if search_query %}

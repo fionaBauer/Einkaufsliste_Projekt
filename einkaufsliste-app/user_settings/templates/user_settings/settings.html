@@ -8,16 +8,10 @@
 {% endblock %}
 
 {% block content %}
-<div class="page">
+<div class="page settings-page">
     <div class="page-header">
         <h1 class="page-title">Einstellungen</h1>
     </div>
-
-    {% if messages %}
-        {% for message in messages %}
-            <div class="alert alert-success">{{ message }}</div>
-        {% endfor %}
-    {% endif %}
 
     {% if error %}
         <div class="alert alert-error">{{ error }}</div>
@@ -26,33 +20,28 @@
     <form method="post" class="settings-form">
         {% csrf_token %}
 
-        <div class="settings-section">
+        <section class="settings-section">
             <h2 class="settings-section-title">Konto</h2>
-
-            <div class="settings-item">
-                <label class="settings-label" for="username">Benutzername</label>
-                <input
-                    type="text"
-                    id="username"
-                    name="username"
-                    value="{{ request.user.username }}"
-                    class="settings-input">
+            <div class="settings-card">
+                <div class="settings-item">
+                    <label class="settings-label" for="username">Benutzername</label>
+                    <input type="text" id="username" name="username" value="{{ request.user.username }}" class="settings-input">
+                </div>
             </div>
-        </div>
+        </section>
 
-        <div class="settings-section">
+        <section class="settings-section">
             <h2 class="settings-section-title">Standort</h2>
-
-            <div class="settings-item">
-                <label class="settings-label" for="{{ form.postal_code.id_for_label }}">
-                    {{ form.postal_code.label }}
-                </label>
-                {{ form.postal_code }}
-                <p class="settings-help">Wird genutzt, um Angebote in deiner Umgebung zu laden.</p>
+            <div class="settings-card">
+                <div class="settings-item">
+                    <label class="settings-label" for="{{ form.postal_code.id_for_label }}">{{ form.postal_code.label }}</label>
+                    {{ form.postal_code }}
+                    <p class="settings-help">Wird genutzt, um Angebote in deiner Umgebung zu laden.</p>
+                </div>
             </div>
-        </div>
+        </section>
 
-        <button type="submit" class="btn btn-primary">Speichern</button>
+        <button type="submit" class="btn btn-primary settings-save">Speichern</button>
     </form>
 </div>
 {% endblock %}

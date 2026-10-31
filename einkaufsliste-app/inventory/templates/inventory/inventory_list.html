@@ -7,29 +7,37 @@
 <link rel="stylesheet" href="{% static 'inventory/css/inventory_list.css' %}">
 {% endblock %}
 
+{% block live %}data-live="morph"{% endblock %}
+
 {% block content %}
 <div class="page">
     <div class="page-header">
         <h1 class="page-title">Inventar</h1>
         <div class="header-actions">
-            <button type="button" class="scan-pill-btn" onclick="openBarcodeScanner('inventory')" title="Barcode scannen">
-                📷 Scannen
+            <button type="button" class="scan-pill-btn" onclick="openBarcodeScanner('inventory')" title="Barcode scannen" aria-label="Barcode scannen">
+                <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" viewBox="0 0 24 24"><path d="M3 7V5a2 2 0 012-2h2M17 3h2a2 2 0 012 2v2M21 17v2a2 2 0 01-2 2h-2M7 21H5a2 2 0 01-2-2v-2M7 8v8M10.5 8v8M14 8v8M17 8v8"/></svg>
+                <span class="scan-label">Scannen</span>
             </button>
-            <button class="add-button" id="openCreateModalBtn" type="button">+</button>
+            <button class="add-button" id="openCreateModalBtn" type="button" aria-label="Eintrag hinzufügen">+</button>
             <input type="file" id="receiptCameraInput" accept="image/*" capture="environment" class="hidden">
             <input type="file" id="receiptFileInput" accept="image/*,application/pdf" class="hidden">
         </div>
     </div>
 
     <button type="button" class="consume-recipe-link" id="openConsumeRecipeModalBtn">
-        🍳 Rezept verbrauchen
+        <span class="consume-recipe-icon">🍳</span>
+        <span class="consume-recipe-text">
+            <span class="consume-recipe-title">Rezept gekocht?</span>
+            <span class="consume-recipe-sub">Zutaten automatisch vom Inventar abziehen</span>
+        </span>
+        <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"/></svg>
     </button>
 
     <!-- Search -->
     <form method="get" class="filter-bar">
         <div class="filter-group search-group">
             <input type="text" name="q" placeholder="Lebensmittel suchen..."
-                value="{{ search_query }}" class="search-input">
+                value="{{ search_query }}" class="search-input" enterkeyhint="search" autocomplete="off">
         </div>
         <button type="submit" class="filter-btn">Suchen</button>
         {% if search_query %}
@@ -39,10 +47,10 @@
 
     {% if grouped_inventory_items %}
         <!-- Category Cards Grid -->
-        <div class="category-grid" id="category-grid">
+        <div class="category-grid" id="category-grid" data-morph-keep-class>
             {% for category_label, category_items in grouped_inventory_items.items %}
             {% with category_items|length as count %}
-            <div class="category-card" data-category="{{ category_label }}">
+            <div class="category-card" data-category="{{ category_label }}" data-key="card-{{ category_label|slugify }}">
                 <div class="category-card-icon">
                     {% if "Obst" in category_label %}🥦
                     {% elif "Gewürz" in category_label %}🧂
@@ -56,7 +64,7 @@
                 </div>
                 <div class="category-card-info">
                     <span class="category-card-name">{{ category_label }}</span>
-                    <span class="category-card-count">{{ count }} Einträge</span>
+                    <span class="category-card-count">{{ count }} {% if count == 1 %}Eintrag{% else %}Einträge{% endif %}</span>
                 </div>
                 <svg class="category-card-arrow" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"/></svg>
             </div>
@@ -66,10 +74,11 @@
 
         <!-- Detail Panels (hidden by default, shown when card clicked) -->
         {% for category_label, category_items in grouped_inventory_items.items %}
-        <div class="category-detail hidden" id="detail-{{ forloop.counter }}">
+        <div class="category-detail hidden" data-category="{{ category_label }}" data-key="detail-{{ category_label|slugify }}" data-morph-keep-class>
             <div class="detail-header">
-                <button class="detail-back-btn" data-category="{{ category_label }}">
-                    ← Zurück
+                <button type="button" class="detail-back-btn">
+                    <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg>
+                    Zurück
                 </button>
                 <h2 class="detail-title">
                     {% if "Obst" in category_label %}🥦
@@ -87,32 +96,34 @@
 
             <ul class="inventory-list">
                 {% for item in category_items %}
-                <li class="inventory-item" data-item-id="{{ item.id }}">
+                <li class="inventory-item" data-item-id="{{ item.id }}" data-key="inv-{{ item.id }}">
                     <div class="inventory-main">
                         <span class="inventory-name">{{ item.ingredient.name }}</span>
                         <span class="inventory-quantity">
                             {% if item.quantity %}
-                                {{ item.quantity }} {{ item.unit }}
+                                {{ item.quantity|floatformat:"-2" }} {{ item.get_unit_display }}
                             {% else %}
                                 Vorhanden
                             {% endif %}
                         </span>
                     </div>
                     <div class="inventory-actions">
-                        <button type="button" class="action-btn edit-btn open-edit-modal-btn"
+                        <button type="button" class="action-btn icon-only edit-btn open-edit-modal-btn"
                             data-id="{{ item.id }}"
                             data-ingredient="{{ item.ingredient.id }}"
                             data-name="{{ item.ingredient.name }}"
                             data-quantity="{{ item.quantity|default:'' }}"
-                            data-unit="{{ item.unit|default:'' }}">
-                            Bearbeiten
+                            data-unit="{{ item.unit|default:'' }}"
+                            aria-label="{{ item.ingredient.name }} bearbeiten" title="Bearbeiten">
+                            <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 013 3L7 19l-4 1 1-4z"/></svg>
                         </button>
-                        <form method="post" class="delete-form"
-                            onsubmit="return confirm('Eintrag löschen?');">
+                        <form method="post" class="delete-form">
                             {% csrf_token %}
                             <input type="hidden" name="action" value="delete">
                             <input type="hidden" name="item_id" value="{{ item.id }}">
-                            <button type="submit" class="action-btn delete-btn">Löschen</button>
+                            <button type="submit" class="action-btn icon-only delete-btn" aria-label="{{ item.ingredient.name }} löschen" title="Löschen">
+                                <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M3 6h18M8 6V4h8v2M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/></svg>
+                            </button>
                         </form>
                     </div>
                 </li>
@@ -122,12 +133,15 @@
         {% endfor %}
 
     {% else %}
-        <div class="empty-state">
-            {% if search_query %}
-                Keine Einträge für „{{ search_query }}" gefunden.
-            {% else %}
-                Noch keine Lebensmittel im Inventar gespeichert.
-            {% endif %}
+        <div class="empty-card">
+            <p class="empty-icon">📦</p>
+            <p class="empty-text">
+                {% if search_query %}
+                    Keine Einträge für „{{ search_query }}" gefunden.
+                {% else %}
+                    Noch keine Lebensmittel im Inventar. Scanne einen Kassenzettel oder füge etwas hinzu.
+                {% endif %}
+            </p>
         </div>
     {% endif %}
 </div>
@@ -172,7 +186,7 @@
         <p class="consume-preview-subtext">
             Bitte prüfen und bei Bedarf anpassen, bevor die Artikel ins Inventar übernommen werden.
         </p>
-        <div id="receiptReviewContainer" class="consume-preview-container"
+        <div id="receiptReviewContainer" class="consume-preview-container" data-morph-skip
             data-ingredient-create-url="{% url 'ingredients:modal_create' %}"></div>
         <div class="modal-actions">
             <button type="button" class="btn btn-secondary" id="closeReceiptReviewModalBtn">Abbrechen</button>
@@ -292,42 +306,16 @@
             <button type="button" class="btn btn-secondary" id="loadConsumeRecipePreviewBtn">Zutaten laden</button>
             <button type="button" class="btn btn-primary hidden" id="applyConsumeRecipeBtn">Verbrauch anwenden</button>
         </div>
-        <div id="consumeRecipePreviewContainer" class="consume-preview-container hidden"></div>
+        <div id="consumeRecipePreviewContainer" class="consume-preview-container hidden" data-morph-keep-class data-morph-skip></div>
     </div>
 </div>
 
 <div class="modal-overlay" id="ingredientCreateModal">
     <div class="modal">
-        <div id="ingredientCreateModalBody"></div>
+        <div id="ingredientCreateModalBody" data-morph-skip></div>
     </div>
 </div>
 
-<script>
-document.addEventListener("DOMContentLoaded", function() {
-    const grid = document.getElementById("category-grid");
-    const details = document.querySelectorAll(".category-detail");
-
-    function showGrid() {
-        grid && grid.classList.remove("hidden");
-        details.forEach(d => d.classList.add("hidden"));
-    }
-
-    function showDetail(idx) {
-        grid && grid.classList.add("hidden");
-        details.forEach(d => d.classList.add("hidden"));
-        const detail = document.getElementById("detail-" + idx);
-        if (detail) detail.classList.remove("hidden");
-    }
-
-    document.querySelectorAll(".category-card").forEach((card, i) => {
-        card.addEventListener("click", () => showDetail(i + 1));
-    });
-
-    document.querySelectorAll(".detail-back-btn").forEach(btn => {
-        btn.addEventListener("click", showGrid);
-    });
-});
-</script>
 {% endblock %}
 
 {% block extra_js %}

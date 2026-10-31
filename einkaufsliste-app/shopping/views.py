@@ -63,6 +63,14 @@ def shopping_list_detail(request, pk):
                 return redirect("shopping:detail", pk=shopping_list_obj.pk)
             create_modal_open = True
 
+        elif action == "toggle_item":
+            # Abhaken sofort speichern: so sehen alle Haushaltsmitglieder den Stand live
+            # und er geht bei einem stillen Seiten-Update nicht verloren.
+            item_id = request.POST.get("item_id")
+            is_checked = request.POST.get("checked") == "1"
+            updated = shopping_list_obj.items.filter(id=item_id).update(is_checked=is_checked)
+            return JsonResponse({"success": bool(updated)})
+
         elif action == "delete_item":
             item_id = request.POST.get("delete_item_id")
             if item_id:
@@ -119,6 +127,7 @@ def shopping_list_detail(request, pk):
         "shopping_list_obj": shopping_list_obj,
         "to_buy": to_buy,
         "check_quantity": check_quantity,
+        "item_count": len(to_buy) + len(check_quantity),
         "create_form": create_form,
         "create_modal_open": create_modal_open,
         "store_savings": store_savings,

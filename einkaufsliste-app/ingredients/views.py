@@ -61,7 +61,7 @@ def ingredient_list(request):
             create_form = IngredientForm(request.POST)
             if create_form.is_valid():
                 create_form.save()
-                return redirect("ingredients:list")
+                return redirect(request.get_full_path())
             create_modal_open = True
 
         elif action == "edit":
@@ -75,7 +75,7 @@ def ingredient_list(request):
                 if request.headers.get("X-Requested-With") == "XMLHttpRequest":
                     section_html = _render_ingredient_list_section(request, search_query, sort)
                     return JsonResponse({"success": True, "section_html": section_html})
-                return redirect("ingredients:list")
+                return redirect(request.get_full_path())
 
             if request.headers.get("X-Requested-With") == "XMLHttpRequest":
                 return JsonResponse({"success": False, "errors": edit_form.errors}, status=400)
@@ -88,7 +88,7 @@ def ingredient_list(request):
             if request.headers.get("X-Requested-With") == "XMLHttpRequest":
                 section_html = _render_ingredient_list_section(request, search_query, sort)
                 return JsonResponse({"success": True, "section_html": section_html})
-            return redirect("ingredients:list")
+            return redirect(request.get_full_path())
 
     if edit_form is None:
         edit_form = IngredientForm()
