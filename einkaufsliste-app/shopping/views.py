@@ -9,7 +9,7 @@ from django.views.decorators.http import require_POST
 
 from inventory.models import InventoryItem, Unit
 from recipes.models import Recipe
-from deals.services import attach_deals_to_shopping_items, calculate_store_savings
+from deals.services import attach_deals_to_shopping_items, calculate_store_savings, get_active_deals
 from .forms import ShoppingListItemForm
 from .models import ShoppingList, ShoppingListItem
 from .utils import to_base_unit, from_base_unit, merge_units, DISCRETE_UNITS, SPOON_TO_G, SPOON_TO_ML
@@ -101,12 +101,16 @@ def shopping_list_detail(request, pk):
 
             return redirect("shopping:detail", pk=shopping_list_obj.pk)
         
+    active_deals = list(get_active_deals())
+
     to_buy = attach_deals_to_shopping_items(
-        list(shopping_list_obj.items.filter(status=ShoppingListItem.STATUS_TO_BUY))
+        list(shopping_list_obj.items.filter(status=ShoppingListItem.STATUS_TO_BUY)),
+        active_deals,
     )
 
     check_quantity = attach_deals_to_shopping_items(
-        list(shopping_list_obj.items.filter(status=ShoppingListItem.STATUS_CHECK))
+        list(shopping_list_obj.items.filter(status=ShoppingListItem.STATUS_CHECK)),
+        active_deals,
     )
 
     store_savings = calculate_store_savings(to_buy)

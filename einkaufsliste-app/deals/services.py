@@ -39,24 +39,28 @@ def get_search_terms(ingredient_name):
     return terms
 
 
-def build_ingredient_query(ingredient_name):
-    query = Q()
+def find_deals_for_ingredient(ingredient, active_deals=None):
+    """
+    active_deals: optional pre-fetched iterable of Deal objects (list or queryset,
+    e.g. from get_active_deals()). Pass this in when matching many ingredients in a
+    loop to avoid firing one DB query per ingredient (N+1) - see
+    attach_deals_to_shopping_items / get_suggested_recipes_by_deals below.
+    """
+    deals = active_deals if active_deals is not None else get_active_deals()
+    terms = get_search_terms(ingredient.name)
 
-    for term in get_search_terms(ingredient_name):
-        query |= Q(title__icontains=term)
-
-    return query
-
-
-def find_deals_for_ingredient(ingredient):
-    return get_active_deals().filter(
-        build_ingredient_query(ingredient.name)
-    ).order_by("deal_price", "store__name")
+    matched = [
+        deal for deal in deals
+        if any(term in deal.title.lower() for term in terms)
+    ]
+    matched.sort(key=lambda deal: (deal.deal_price is None, deal.deal_price, deal.store.name))
+    return matched
 
 
-def attach_deals_to_shopping_items(items):
+def attach_deals_to_shopping_items(items, active_deals=None):
+    deals = active_deals if active_deals is not None else list(get_active_deals())
     for item in items:
-        item.discount_deals = list(find_deals_for_ingredient(item.ingredient)[:3])
+        item.discount_deals = find_deals_for_ingredient(item.ingredient, deals)[:3]
     return items
 
 
@@ -93,11 +97,12 @@ def calculate_store_savings(items):
 
 
 def get_suggested_recipes_by_deals(recipes, limit=5):
+    active_deals = list(get_active_deals())
     suggestions = []
     for recipe in recipes.prefetch_related("recipe_ingredients__ingredient"):
         matched_deals = []
         for recipe_ingredient in recipe.recipe_ingredients.all():
-            deals = list(find_deals_for_ingredient(recipe_ingredient.ingredient)[:2])
+            deals = find_deals_for_ingredient(recipe_ingredient.ingredient, active_deals)[:2]
             matched_deals.extend(deals)
         if matched_deals:
             suggestions.append({
