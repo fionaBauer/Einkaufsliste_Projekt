@@ -43,5 +43,19 @@
 
         <button type="submit" class="btn btn-primary settings-save">Speichern</button>
     </form>
+
+    <section class="settings-section settings-section--spaced">
+        <h2 class="settings-section-title">Daten</h2>
+        <div class="settings-card">
+            <a href="{% url 'ingredients:list' %}" class="settings-link-row">
+                <span class="settings-link-icon">🥕</span>
+                <span class="settings-link-text">
+                    <span class="settings-link-title">Zutaten & Kategorien</span>
+                    <span class="settings-help">Zutaten umbenennen, löschen oder einer anderen Kategorie zuordnen</span>
+                </span>
+                <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"/></svg>
+            </a>
+        </div>
+    </section>
 </div>
 {% endblock %}

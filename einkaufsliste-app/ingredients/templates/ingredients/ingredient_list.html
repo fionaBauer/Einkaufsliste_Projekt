@@ -7,12 +7,15 @@
 <link rel="stylesheet" href="{% static 'ingredients/css/ingredient_list.css' %}">
 {% endblock %}
 
-{% block live %}data-live="morph"{% endblock %}
-
 {% block content %}
 <div class="page">
     <div class="page-header">
-        <h1 class="page-title">Zutaten</h1>
+        <div class="page-header-title">
+            <a href="{% url 'user_settings:settings' %}" class="header-back-btn" aria-label="Zurück zu den Einstellungen">
+                <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg>
+            </a>
+            <h1 class="page-title">Zutaten</h1>
+        </div>
         <button class="add-button" id="openCreateModalBtn" type="button" aria-label="Zutat hinzufügen">+</button>
     </div>
     <form method="get" class="filter-bar">

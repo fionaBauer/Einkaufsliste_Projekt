@@ -233,6 +233,24 @@ body.is-scrolled .recipe-topbar { box-shadow: 0 1px 0 var(--border-light); }
     color: var(--text-main);
 }
 
+.page-header-title { display: flex; align-items: center; gap: 12px; min-width: 0; }
+
+.header-back-btn {
+    width: 40px;
+    height: 40px;
+    flex-shrink: 0;
+    border-radius: 50%;
+    display: grid;
+    place-items: center;
+    background: var(--surface);
+    color: var(--text-main);
+    box-shadow: var(--shadow-card);
+    text-decoration: none;
+    transition: transform 0.15s var(--ease-out);
+}
+
+.header-back-btn:active { transform: scale(0.9); }
+
 .header-actions,
 .recipe-header-actions {
     display: flex;
@@ -1292,7 +1310,7 @@ input[type="checkbox"]:disabled { opacity: 0.4; cursor: not-allowed; }
 
     .tab-more-grid {
         display: grid;
-        grid-template-columns: repeat(3, 1fr);
+        grid-template-columns: repeat(2, 1fr);
         gap: 8px;
         margin-bottom: 8px;
     }

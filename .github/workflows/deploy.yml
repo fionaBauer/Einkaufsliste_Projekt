@@ -26,4 +26,5 @@ jobs:
             python manage.py migrate
             python manage.py collectstatic --noinput
             python manage.py optimize_recipe_images
+            python manage.py seed_ingredients
             sudo systemctl restart einkaufsliste

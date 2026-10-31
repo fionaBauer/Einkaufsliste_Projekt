@@ -101,6 +101,37 @@
 
 .danger-zone { padding-top: 4px; }
 
+.settings-section--spaced { margin-top: 32px; }
+
+.settings-link-row {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 14px 18px;
+    color: var(--text-main);
+    text-decoration: none;
+    border-radius: var(--radius-lg);
+    transition: background 0.18s;
+}
+
+.settings-link-row:hover { background: var(--surface-2); }
+.settings-link-row svg { color: var(--text-faint); flex-shrink: 0; }
+.settings-link-row .settings-help { margin: 0; }
+
+.settings-link-icon {
+    width: 42px;
+    height: 42px;
+    border-radius: 14px;
+    display: grid;
+    place-items: center;
+    background: var(--surface-2);
+    font-size: 20px;
+    flex-shrink: 0;
+}
+
+.settings-link-text { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.settings-link-title { font-size: 15.5px; font-weight: 650; }
+
 @media (max-width: 768px) {
     .settings-save { align-self: stretch; }
 }

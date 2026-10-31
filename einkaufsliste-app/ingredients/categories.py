@@ -22,7 +22,12 @@ CATEGORY_ICONS = {
 # kein Gemüse; "Kokosmilch" eine Konserve, kein Milchprodukt; "Erdnussbutter" ein Aufstrich).
 # Kurze Begriffe (<= 3 Zeichen) müssen ein ganzes Wort sein, längere dürfen Teil eines Wortes sein.
 CATEGORY_KEYWORDS = [
-    # Nicht-Lebensmittel & Ausnahmen zuerst ("Zahnpasta" ist keine Pasta)
+    # Ausnahmen zuerst: Wörter, die einen irreführenden Teilbegriff enthalten
+    # ("Limette" enthält "mett", "Rucola" enthält "cola", "Weintrauben" enthält "wein" …)
+    (IngredientCategory.FRUIT_VEG, ["limette", "weintraube", "honigmelone", "rucola"]),
+    (IngredientCategory.CANNED, ["gewürzgurke"]),
+    (IngredientCategory.SNACKS, ["salzstange", "schokodrops"]),
+    # Nicht-Lebensmittel ("Zahnpasta" ist keine Pasta)
     (IngredientCategory.OTHER, ["proteinpulver", "protein", "zahnpasta", "zahnbürste", "spülmittel",
                                 "waschmittel", "toilettenpapier", "klopapier", "küchenrolle",
                                 "taschentücher", "shampoo", "duschgel", "seife", "müllbeutel",
@@ -72,9 +77,28 @@ def _matches(name, words, keyword):
     return keyword in name
 
 
+_seed_lookup = None
+
+
+def _seed_category(normalized):
+    """Exakter Treffer im eingebauten Wörterbuch (seed_data.py)."""
+    global _seed_lookup
+    if _seed_lookup is None:
+        from .seed_data import iter_seed_ingredients
+
+        _seed_lookup = {name.lower(): category for name, category, _ in iter_seed_ingredients()}
+    return _seed_lookup.get(normalized)
+
+
 def guess_category(name, default=IngredientCategory.OTHER):
-    """Ordnet einen Zutatennamen einer Kategorie zu (oder default, wenn nichts passt)."""
+    """Ordnet einen Zutatennamen einer Kategorie zu (oder default, wenn nichts passt).
+
+    Zuerst das Wörterbuch (exakter Name), dann Stichwörter im Namen.
+    """
     normalized = (name or "").lower().strip()
+    seeded = _seed_category(normalized)
+    if seeded:
+        return seeded
     words = set(re.split(r"[^a-zäöüß]+", normalized))
     # Öle ("Olivenöl", "Rapsöl") enden auf "öl" – als Teilwort zu kurz für die Regel oben
     if any(w.endswith("öl") for w in words if w):
