@@ -31,6 +31,29 @@ class Recipe(models.Model):
     def __str__(self):
         return f"{self.name} ({self.servings} Portion(en))"
 
+    def save(self, *args, **kwargs):
+        super().save(*args, **kwargs)
+        if self.image:
+            from .images import optimize_recipe_image
+
+            new_name = optimize_recipe_image(self.image)
+            if new_name and new_name != self.image.name:
+                # Bild wurde z.B. von PNG nach JPEG umgewandelt → Pfad ohne erneutes save() nachziehen
+                Recipe.objects.filter(pk=self.pk).update(image=new_name)
+                self.image.name = new_name
+
+    @property
+    def thumbnail_url(self):
+        """Kleines Vorschaubild für Karten/Listen; fällt aufs Original zurück, falls noch keins existiert."""
+        if not self.image:
+            return ""
+        from .images import thumbnail_name
+
+        thumb = thumbnail_name(self.image.name)
+        if self.image.storage.exists(thumb):
+            return self.image.storage.url(thumb)
+        return self.image.url
+
     def scale_factor(self, target_servings: int) -> Decimal:
         if self.servings <= 0:
             return Decimal("1")

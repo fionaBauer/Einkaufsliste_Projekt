@@ -43,7 +43,7 @@
                 {% for slot in todays_meals %}
                 <a href="{% url 'recipes:recipe_detail' slot.recipe.pk %}" class="today-meal-card" data-key="slot-{{ slot.pk }}">
                     {% if slot.recipe.image %}
-                        <img src="{{ slot.recipe.image.url }}" alt="" class="today-meal-img" loading="lazy" decoding="async">
+                        <img src="{{ slot.recipe.thumbnail_url }}" alt="" class="today-meal-img" loading="lazy" decoding="async">
                     {% else %}
                         <div class="today-meal-img today-meal-placeholder">🍽️</div>
                     {% endif %}
@@ -74,7 +74,7 @@
             <a href="{% url 'recipes:recipe_detail' s.recipe.pk %}" class="suggestion-card" data-key="sugg-{{ s.recipe.pk }}">
                 <div class="suggestion-img-wrap">
                     {% if s.recipe.image %}
-                        <img src="{{ s.recipe.image.url }}" alt="" class="suggestion-img" loading="lazy" decoding="async">
+                        <img src="{{ s.recipe.thumbnail_url }}" alt="" class="suggestion-img" loading="lazy" decoding="async">
                     {% else %}
                         <div class="suggestion-img suggestion-placeholder">🍽️</div>
                     {% endif %}

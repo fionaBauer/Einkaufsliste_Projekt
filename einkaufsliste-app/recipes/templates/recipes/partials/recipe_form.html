@@ -15,7 +15,7 @@
             {{ field.label_tag }}
             {% if field.name == "image" and form.instance.image %}
                 <div class="current-image-preview">
-                    <img src="{{ form.instance.image.url }}" alt="Aktuelles Bild" class="image-preview-thumb">
+                    <img src="{{ form.instance.thumbnail_url }}" alt="Aktuelles Bild" class="image-preview-thumb">
                     <span class="image-preview-label">Aktuelles Bild – neues Bild auswählen zum Ersetzen</span>
                 </div>
             {% endif %}

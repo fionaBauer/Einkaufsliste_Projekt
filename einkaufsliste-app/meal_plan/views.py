@@ -25,7 +25,7 @@ def planner(request):
         {
             "id": r.id,
             "name": r.name,
-            **({"image": r.image.url} if r.image else {}),
+            **({"image": r.thumbnail_url} if r.image else {}),
         }
         for r in recipes
     ]

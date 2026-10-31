@@ -52,7 +52,7 @@
                 <a href="{% url 'recipes:recipe_detail' recipe.pk %}" class="recipe-card-link">
                     <div class="recipe-card-img-wrap">
                         {% if recipe.image %}
-                            <img src="{{ recipe.image.url }}" alt="{{ recipe.name }}" class="recipe-card-img" loading="lazy" decoding="async">
+                            <img src="{{ recipe.thumbnail_url }}" alt="{{ recipe.name }}" class="recipe-card-img" loading="lazy" decoding="async">
                         {% else %}
                             <div class="recipe-card-img recipe-card-placeholder">🍽️</div>
                         {% endif %}
@@ -106,7 +106,7 @@
                 <a href="{% url 'recipes:recipe_detail' suggestion.recipe.pk %}" class="recipe-card-link">
                     <div class="recipe-card-img-wrap">
                         {% if suggestion.recipe.image %}
-                            <img src="{{ suggestion.recipe.image.url }}" alt="{{ suggestion.recipe.name }}" class="recipe-card-img" loading="lazy" decoding="async">
+                            <img src="{{ suggestion.recipe.thumbnail_url }}" alt="{{ suggestion.recipe.name }}" class="recipe-card-img" loading="lazy" decoding="async">
                         {% else %}
                             <div class="recipe-card-img recipe-card-placeholder">🍽️</div>
                         {% endif %}
