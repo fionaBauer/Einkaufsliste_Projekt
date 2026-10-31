@@ -348,20 +348,15 @@ def barcode_add(request):
     if unit not in valid_units:
         unit = ingredient.default_unit or "g"
 
-    # Add note with exact product name if different
-    notes = product_name if product_name.lower() != matched_name.lower() else ""
-
     item, created = InventoryItem.objects.get_or_create(
         household=household,
         ingredient=ingredient,
-        defaults={"quantity": qty, "unit": unit, "notes": notes},
+        defaults={"quantity": qty, "unit": unit},
     )
 
     if not created and qty:
         from decimal import Decimal
         item.quantity = (item.quantity or Decimal("0")) + qty
-        if notes:
-            item.notes = notes
         item.save()
 
     return JsonResponse({"success": True, "created": created})

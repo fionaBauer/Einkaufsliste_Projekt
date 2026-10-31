@@ -54,6 +54,13 @@ def merge_units(qty_a, unit_a, qty_b, unit_b):
         total, unit = from_base_unit(base_a + base_b, base_unit_a)
         return total, unit
 
+    # Both are spoons but different kind (el + tl) — convert both to grams
+    if unit_a in spoon_units and unit_b in spoon_units:
+        converted_a = qty_a * SPOON_TO_G[unit_a]
+        converted_b = qty_b * SPOON_TO_G[unit_b]
+        total, unit = from_base_unit(converted_a + converted_b, "g")
+        return total, unit
+
     # One is spoon, other is measurable
     if unit_a in spoon_units and base_unit_b in measurable:
         if base_unit_b in {"g"} | weight_units:

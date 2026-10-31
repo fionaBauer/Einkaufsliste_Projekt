@@ -324,22 +324,13 @@ def _add_manual_item_to_shopping_list(shopping_list_obj, form):
 
 
 def _move_checked_items_to_inventory(household, checked_items):
+    inventory_items = {
+        inv_item.ingredient_id: inv_item
+        for inv_item in InventoryItem.objects.filter(household=household).select_related("ingredient")
+    }
+
     for item in checked_items.select_related("ingredient"):
-        inventory_item = InventoryItem.objects.filter(
-            household=household, ingredient=item.ingredient
-        ).first()
-
-        if item.unit in [Unit.TABLESPOON, Unit.TEASPOON]:
-            if not inventory_item:
-                InventoryItem.objects.create(
-                    household=household,
-                    ingredient=item.ingredient,
-                    quantity=None,
-                    unit="",
-                )
-            continue
-
-        item_base_quantity, item_base_unit = to_base_unit(item.quantity, item.unit)
+        inventory_item = inventory_items.get(item.ingredient_id)
 
         if not inventory_item:
             if item.quantity is None:
@@ -349,7 +340,17 @@ def _move_checked_items_to_inventory(household, checked_items):
                     quantity=None,
                     unit="",
                 )
+            elif item.unit in [Unit.TABLESPOON, Unit.TEASPOON]:
+                # el/tl lassen sich nicht in eine "schoenere" Basis-Einheit normalisieren,
+                # einfach so uebernehmen statt die Menge zu verwerfen.
+                InventoryItem.objects.create(
+                    household=household,
+                    ingredient=item.ingredient,
+                    quantity=item.quantity,
+                    unit=item.unit,
+                )
             else:
+                item_base_quantity, item_base_unit = to_base_unit(item.quantity, item.unit)
                 display_quantity, display_unit = from_base_unit(item_base_quantity, item_base_unit)
                 InventoryItem.objects.create(
                     household=household,
@@ -359,25 +360,18 @@ def _move_checked_items_to_inventory(household, checked_items):
                 )
             continue
 
-        if inventory_item.quantity is None:
+        if inventory_item.quantity is None or item.quantity is None:
             continue
 
-        if item.quantity is None:
-            continue
-
-        inventory_base_quantity, inventory_base_unit = to_base_unit(
-            inventory_item.quantity,
-            inventory_item.unit,
+        # merge_units handelt gleiche Einheiten, el/tl-Umrechnung und el/tl+g/ml einheitlich;
+        # bei inkompatiblen Einheiten (z.B. pcs vs. g) bleibt der Inventar-Wert unveraendert.
+        merged_quantity, merged_unit = merge_units(
+            inventory_item.quantity, inventory_item.unit,
+            item.quantity, item.unit,
         )
 
-        if inventory_base_unit != item_base_unit:
-            continue
-
-        total_base_quantity = inventory_base_quantity + item_base_quantity
-        display_quantity, display_unit = from_base_unit(total_base_quantity, inventory_base_unit)
-
-        inventory_item.quantity = display_quantity
-        inventory_item.unit = display_unit
+        inventory_item.quantity = merged_quantity
+        inventory_item.unit = merged_unit
         inventory_item.save(update_fields=["quantity", "unit", "updated_at"])
 
 
@@ -443,16 +437,22 @@ def barcode_add(request):
     if not shopping_list_obj:
         return JsonResponse({"success": False, "error": "Keine Einkaufsliste"}, status=400)
 
-    notes = product_name if product_name.lower() != matched_name.lower() else ""
-
-    # Check if already in list
+    # Check if already in list (nur "zu kaufen" — ein bereits abgehakter/vorhandener
+    # Eintrag soll nicht stillschweigend wieder zu "zu kaufen" vermengt werden)
     existing = ShoppingListItem.objects.filter(
         shopping_list=shopping_list_obj,
         ingredient=ingredient,
+        status=ShoppingListItem.STATUS_TO_BUY,
     ).first()
 
     if existing:
-        existing.quantity = (existing.quantity or Decimal("0")) + qty
+        if existing.quantity is None:
+            existing.quantity = qty
+            existing.unit = unit
+        else:
+            existing.quantity, existing.unit = merge_units(
+                existing.quantity, existing.unit, qty, unit
+            )
         existing.save()
     else:
         ShoppingListItem.objects.create(

@@ -37,17 +37,19 @@ def build_search_terms():
 def sync_marktguru(zip_code, limit=50):
     provider = MarktguruProvider(zip_code=zip_code)
 
+    # Erst abrufen, dann loeschen+neu anlegen: schlaegt fetch_deals fehl (Netzwerk/API-Fehler),
+    # bleiben die bisherigen Deals erhalten statt dass der Nutzer mit leeren Haenden dasteht.
+    imported_deals = provider.fetch_deals(
+        search_terms=build_search_terms(),
+        limit=limit,
+    )
+
     source, _ = DealSource.objects.get_or_create(
         name=provider.source_name,
         defaults={"base_url": "https://www.marktguru.de"},
     )
 
     Deal.objects.filter(source=source).delete()
-
-    imported_deals = provider.fetch_deals(
-        search_terms=build_search_terms(),
-        limit=limit,
-    )
 
     saved_count = 0
 

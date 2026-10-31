@@ -1,5 +1,5 @@
 import json
-from datetime import date, timedelta
+from datetime import date
 from django.contrib.auth.decorators import login_required
 from django.core.serializers.json import DjangoJSONEncoder
 from django.http import JsonResponse
@@ -72,12 +72,11 @@ def slot_create(request):
     household = _get_household(request)
     data = json.loads(request.body)
 
-    from datetime import date as date_type
     recipe = get_object_or_404(Recipe, pk=data["recipe_id"], household=household)
     slot = MealSlot.objects.create(
         household=household,
         recipe=recipe,
-        date=date_type.fromisoformat(data["date"]),
+        date=date.fromisoformat(data["date"]),
         meal=data["meal"],
         recurrence=data.get("recurrence", "none"),
         note=data.get("note", ""),
@@ -102,9 +101,8 @@ def slot_update(request, pk):
     slot = get_object_or_404(MealSlot, pk=pk, household=household)
     data = json.loads(request.body)
 
-    from datetime import date as date_type
     if "date" in data:
-        slot.date = date_type.fromisoformat(data["date"])
+        slot.date = date.fromisoformat(data["date"])
     if "meal" in data:
         slot.meal = data["meal"]
     if "recurrence" in data:

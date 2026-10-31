@@ -83,13 +83,18 @@ let extractedRecipeData = null;
                 const contentType = response.headers.get("content-type") || "";
 
                 if (contentType.includes("application/json")) {
+                    // Body-Stream kann nur einmal gelesen werden - entweder .json() oder .text(),
+                    // niemals beides fuer dieselbe Response (sonst "body stream already read").
                     const data = await response.json();
 
                     if (data.success) {
                         closeModal();
                         window.location.reload();
-                        return;
+                    } else {
+                        modalBody.innerHTML = `<p>${data.error || "Speichern fehlgeschlagen. Bitte Eingaben prüfen."}</p>`;
+                        openModal();
                     }
+                    return;
                 }
 
                 const html = await response.text();

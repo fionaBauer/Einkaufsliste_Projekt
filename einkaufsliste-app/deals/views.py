@@ -1,12 +1,27 @@
+import logging
 import threading
 
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
+from django.db import close_old_connections
 from django.shortcuts import redirect, render
 
 from .models import Store
 from .services import get_active_deals
 from .sync import sync_marktguru
+
+logger = logging.getLogger(__name__)
+
+
+def _sync_marktguru_in_background(zip_code):
+    """Wird in einem eigenen Thread ausgefuehrt - Exceptions hier wuerden sonst
+    komplett unbemerkt verschwinden, da die Response laengst zurueckgegangen ist."""
+    try:
+        sync_marktguru(zip_code)
+    except Exception:
+        logger.exception("MarktGuru-Sync fehlgeschlagen (PLZ %s)", zip_code)
+    finally:
+        close_old_connections()
 
 
 @login_required
@@ -47,7 +62,7 @@ def sync_deals_view(request):
 
     try:
         thread = threading.Thread(
-            target=sync_marktguru,
+            target=_sync_marktguru_in_background,
             args=(zip_code,),
             daemon=True,
         )
