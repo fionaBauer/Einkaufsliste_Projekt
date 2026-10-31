@@ -53,8 +53,9 @@ class RecipeListView(LoginRequiredMixin, ListView):
         context["search"] = self.request.GET.get("search", "")
         context["sort"] = self.request.GET.get("sort", "name")
         context["form"] = RecipeForm()
+        household = self.request.user.households.first()
         context["suggested_recipes"] = get_suggested_recipes_by_deals(
-            Recipe.objects.all()
+            Recipe.objects.filter(household=household)
         )
         return context
 
@@ -145,7 +146,8 @@ class RecipeIngredientCreateView(LoginRequiredMixin, CreateView):
     template_name = "recipes/partials/recipeingredient_form.html"
 
     def dispatch(self, request, *args, **kwargs):
-        self.recipe = get_object_or_404(Recipe, pk=kwargs["recipe_pk"])
+        household = request.user.households.first()
+        self.recipe = get_object_or_404(Recipe, pk=kwargs["recipe_pk"], household=household)
         return super().dispatch(request, *args, **kwargs)
 
     def form_valid(self, form):
@@ -177,6 +179,10 @@ class RecipeIngredientUpdateView(LoginRequiredMixin, UpdateView):
     template_name = "recipes/partials/recipeingredient_form.html"
     context_object_name = "recipe_ingredient"
 
+    def get_queryset(self):
+        household = self.request.user.households.first()
+        return RecipeIngredient.objects.filter(recipe__household=household)
+
     def form_valid(self, form):
         self.object = form.save()
 
@@ -203,6 +209,10 @@ class RecipeIngredientDeleteView(LoginRequiredMixin, DeleteView):
     model = RecipeIngredient
     template_name = "recipes/partials/recipeingredient_confirm_delete.html"
     context_object_name = "recipe_ingredient"
+
+    def get_queryset(self):
+        household = self.request.user.households.first()
+        return RecipeIngredient.objects.filter(recipe__household=household)
 
     def post(self, request, *args, **kwargs):
         self.object = self.get_object()
@@ -739,6 +749,8 @@ def extract_recipe_from_text(request):
 
 @login_required
 def ffmpeg_debug(request):
+    if not request.user.is_staff:
+        return JsonResponse({"error": "Nicht erlaubt."}, status=403)
     return JsonResponse({
         "ffmpeg": shutil.which("ffmpeg"),
         "ffprobe": shutil.which("ffprobe"),
