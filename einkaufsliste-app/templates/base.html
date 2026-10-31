@@ -132,31 +132,6 @@
         </div>
     </div>
 
-    {# TEMP-DEBUG weißer Streifen unten – wird wieder entfernt #}
-    <style>
-        html { background: #ff2bd6 !important; }
-        #layout-debug { position: fixed; top: 50%; left: 12px; right: 12px; z-index: 99999; padding: 12px 14px;
-            border-radius: 14px; background: #111; color: #fff; font: 13px/1.5 ui-monospace, monospace; }
-        #layout-debug-probe { position: fixed; padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left); visibility: hidden; }
-    </style>
-    <div id="layout-debug-probe"></div>
-    <div id="layout-debug"></div>
-    <script>
-    (function () {
-        function render() {
-            const p = getComputedStyle(document.getElementById("layout-debug-probe"));
-            document.getElementById("layout-debug").innerHTML =
-                "standalone: " + (navigator.standalone || matchMedia("(display-mode: standalone)").matches) + "<br>" +
-                "screen.height: " + screen.height + "<br>" +
-                "innerHeight: " + innerHeight + "<br>" +
-                "visualViewport: " + Math.round(visualViewport ? visualViewport.height : 0) + "<br>" +
-                "body height: " + Math.round(document.body.getBoundingClientRect().height) + "<br>" +
-                "safe top/bottom: " + p.paddingTop + " / " + p.paddingBottom;
-        }
-        addEventListener("load", render); addEventListener("resize", render);
-    })();
-    </script>
-
     <script src="{% static 'global/js/app.js' %}"></script>
     {% block extra_js %}{% endblock %}
     <script src="{% static 'global/js/barcode.js' %}"></script>

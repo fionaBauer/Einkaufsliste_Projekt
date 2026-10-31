@@ -1256,12 +1256,20 @@ input[type="checkbox"]:disabled { opacity: 0.4; cursor: not-allowed; }
         background: var(--surface);
         border-radius: 30px;
         box-shadow: var(--shadow-float);
-        transform: translateY(calc(100% + 30px));
-        transition: transform 0.42s var(--ease-out);
+        transform: translateY(calc(100% + 40px + env(safe-area-inset-bottom)));
+        /* Geschlossen zusätzlich unsichtbar: In Home-Bildschirm-Apps misst iOS den
+           Bildschirm anders, nur Wegschieben ließ den oberen Rand herausschauen.
+           visibility schaltet erst um, wenn die Schließ-Animation fertig ist. */
+        visibility: hidden;
+        transition: transform 0.42s var(--ease-out), visibility 0s linear 0.42s;
         touch-action: none;
     }
 
-    .tab-more-menu.open { transform: none; }
+    .tab-more-menu.open {
+        transform: none;
+        visibility: visible;
+        transition: transform 0.42s var(--ease-out), visibility 0s;
+    }
     .tab-more-menu.dragging { transition: none; }
 
     .sheet-grabber {
