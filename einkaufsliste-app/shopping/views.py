@@ -12,7 +12,7 @@ from recipes.models import Recipe
 from deals.services import attach_deals_to_shopping_items, calculate_store_savings, get_active_deals
 from .forms import ShoppingListItemForm
 from .models import ShoppingList, ShoppingListItem
-from .utils import to_base_unit, from_base_unit, merge_units, DISCRETE_UNITS, SPOON_TO_G, SPOON_TO_ML
+from .utils import to_base_unit, from_base_unit, merge_units
 
 
 @login_required

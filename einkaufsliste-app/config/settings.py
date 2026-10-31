@@ -35,8 +35,6 @@ SECRET_KEY = os.environ.get(
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.environ.get("DEBUG", "False") == "True"
 
-ALLOWED_HOSTS = os.environ.get("ALLOWED_HOSTS", "127.0.0.1,localhost").split(",")
-
 # Registrierung ist waehrend der Beta-Phase deaktiviert, aber nicht entfernt.
 # Auf True setzen (oder Env-Variable), sobald die App oeffentlich starten soll.
 REGISTRATION_ENABLED = os.environ.get("REGISTRATION_ENABLED", "False") == "True"
@@ -96,17 +94,6 @@ TEMPLATES = [
 ]
 
 WSGI_APPLICATION = "config.wsgi.application"
-
-
-# Database
-# https://docs.djangoproject.com/en/5.2/ref/settings/#databases
-
-DATABASES = {
-    "default": {
-        "ENGINE": "django.db.backends.sqlite3",
-        "NAME": BASE_DIR / "db.sqlite3",
-    }
-}
 
 
 # Password validation
@@ -173,14 +160,14 @@ STORAGES = {
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 
+# Database
+# https://docs.djangoproject.com/en/5.2/ref/settings/#databases
 DATABASES = {
     "default": dj_database_url.parse(
         os.environ.get("DATABASE_URL", f"sqlite:///{BASE_DIR / 'db.sqlite3'}"),
         conn_max_age=600,
     )
 }
-
-import os
 
 ALLOWED_HOSTS = os.environ.get(
     "ALLOWED_HOSTS", "127.0.0.1,localhost,prepio.de,www.prepio.de"
@@ -212,3 +199,40 @@ DEFAULT_FROM_EMAIL = "Prepio <noreply@prepio.de>"
 # Media files (user uploads)
 MEDIA_URL = "/media/"
 MEDIA_ROOT = Path(os.environ.get("MEDIA_ROOT", "/home/deploy/media/einkaufsliste/"))
+
+# Logging: ohne eigene Konfiguration landen logger.exception()/logger.error() Aufrufe
+# nirgends strukturiert (Djangos impliziter "handler of last resort" zeigt nur WARNING+
+# ohne Zeitstempel/Logger-Namen). Ausgabe geht nach stderr/stdout - auf dem Server faengt
+# systemd/journalctl das automatisch ein (siehe build.sh/deploy via systemctl).
+LOGGING = {
+    "version": 1,
+    "disable_existing_loggers": False,
+    "formatters": {
+        "verbose": {
+            "format": "{asctime} {levelname} {name}: {message}",
+            "style": "{",
+        },
+    },
+    "handlers": {
+        "console": {
+            "class": "logging.StreamHandler",
+            "formatter": "verbose",
+        },
+    },
+    "root": {
+        "handlers": ["console"],
+        "level": "INFO",
+    },
+    "loggers": {
+        "django": {
+            "handlers": ["console"],
+            "level": "INFO",
+            "propagate": False,
+        },
+        "django.request": {
+            "handlers": ["console"],
+            "level": "ERROR",
+            "propagate": False,
+        },
+    },
+}
