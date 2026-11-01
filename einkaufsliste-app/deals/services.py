@@ -1,3 +1,5 @@
+import re
+from functools import lru_cache
 from decimal import Decimal
 from django.db.models import Q
 from django.utils import timezone
@@ -23,20 +25,122 @@ def get_active_deals():
     )
 
 
+_PAREN = re.compile(r"\(.*?\)")
+_TOKEN_SPLIT = re.compile(r"[\s/,&+]+")
+_PLURAL_SUFFIXES = ("", "n", "en", "e", "s", "er", "nen")
+_UMLAUT = {"a": "ä", "o": "ö", "u": "ü"}
+
+# Zusammensetzungen, die zwar auf den Begriff enden, aber etwas anderes sind
+DEAL_EXCLUSIONS = {
+    "apfel": ("granatapfel", "zuckerapfel", "erdapfel"),
+    "äpfel": ("granatäpfel",),
+    "nuss": ("muskatnuss", "kokosnuss"),
+    "kohl": ("blumenkohl", "rosenkohl", "grünkohl"),
+}
+
+
+def _umlaut_variant(term):
+    """Apfel → äpfel, Wurst → würst(e): deutscher Plural mit Umlaut."""
+    for i in range(len(term) - 1, -1, -1):
+        if term[i] in _UMLAUT:
+            return term[:i] + _UMLAUT[term[i]] + term[i + 1:]
+    return None
+
+
+def search_name(ingredient_name):
+    """Normalisierter Name für Suche/Abgleich: klein, ohne Klammerzusätze ("Mais (Dose)" → "mais")."""
+    return " ".join(_PAREN.sub(" ", ingredient_name or "").lower().split())
+
+
 def get_search_terms(ingredient_name):
-    name = ingredient_name.lower().strip()
-    words = [
-        word.strip()
-        for word in name.replace("-", " ").split()
-        if len(word.strip()) >= 3
-    ]
+    """Begriffe, mit denen ein Angebot zu einer Zutat passt.
 
-    terms = set([name, *words])
-
-    for term in list(terms):
+    Bei mehrteiligen Namen zählt nur das letzte Wort ("Rote Zwiebel" → "zwiebel"),
+    sonst passt "Rote" auch zu "Rote Bete".
+    """
+    name = search_name(ingredient_name)
+    if not name:
+        return set()
+    head = name.split()[-1]
+    terms = {head}
+    variant = _umlaut_variant(head)
+    if variant and len(head) >= 4:
+        terms.add(variant)
+    for term in list(terms) + [name]:
         terms.update(SYNONYMS.get(term, []))
+    return {t for t in terms if len(t) >= 3}
 
-    return terms
+
+def _product_heads(deal):
+    """Wörter des Produktnamens (ohne Marke); bei Bindestrich-Wörtern nur der letzte Teil.
+
+    "Butter-Mandel-Stollen" → ["stollen"], "Bio-Vollmilch" → ["vollmilch"],
+    "Meersalz Butter" → ["meersalz", "butter"].
+    """
+    name = (deal.product_name or deal.title or "").lower()
+    heads = []
+    for token in _TOKEN_SPLIT.split(name):
+        token = token.strip(".-")
+        if token:
+            heads.append(token.split("-")[-1])
+    return heads
+
+
+@lru_cache(maxsize=1024)
+def _map_source_category(name):
+    from ingredients.categories import guess_category
+
+    return guess_category(name)
+
+
+def _deal_categories(deal):
+    """Marktguru-Kategorien des Angebots, übersetzt in unsere Kategorien."""
+    from ingredients.models import IngredientCategory
+
+    names = [n for n in (getattr(deal, "source_categories", "") or "").split("|") if n]
+    return {_map_source_category(n) for n in names} - {IngredientCategory.OTHER}
+
+
+def deal_matches(deal, terms, ingredient_category=None):
+    """Passt, wenn ein Wort im Produktnamen auf den Begriff endet (inkl. Plural) …
+
+    Deutsche Komposita tragen die Bedeutung am Ende: "Vollmilch" ist Milch,
+    "Butterschmalz" aber keine Butter.
+
+    … und die Kategorie nicht widerspricht: Für "Banane" (Obst) zählt "Joghurt Banane"
+    (laut Marktguru ein Joghurt) nicht.
+    """
+    from ingredients.models import IngredientCategory
+
+    name_match = False
+    for head in _product_heads(deal):
+        for term in terms:
+            if head in DEAL_EXCLUSIONS.get(term, ()):
+                continue
+            if any(head.endswith(term + suffix) for suffix in _PLURAL_SUFFIXES):
+                name_match = True
+                break
+        if name_match:
+            break
+    if not name_match:
+        return False
+
+    if ingredient_category and ingredient_category != IngredientCategory.OTHER:
+        deal_categories = _deal_categories(deal)
+        if deal_categories and ingredient_category not in deal_categories:
+            return False
+    return True
+
+
+def deal_sort_key(deal):
+    # Günstigster Grundpreis (€/kg, €/l) zuerst, dann Preis
+    return (
+        deal.reference_price is None,
+        deal.reference_price or 0,
+        deal.deal_price is None,
+        deal.deal_price or 0,
+        deal.store.name,
+    )
 
 
 def find_deals_for_ingredient(ingredient, active_deals=None):
@@ -48,12 +152,12 @@ def find_deals_for_ingredient(ingredient, active_deals=None):
     """
     deals = active_deals if active_deals is not None else get_active_deals()
     terms = get_search_terms(ingredient.name)
+    if not terms:
+        return []
 
-    matched = [
-        deal for deal in deals
-        if any(term in deal.title.lower() for term in terms)
-    ]
-    matched.sort(key=lambda deal: (deal.deal_price is None, deal.deal_price, deal.store.name))
+    category = getattr(ingredient, "category", None)
+    matched = [deal for deal in deals if deal_matches(deal, terms, category)]
+    matched.sort(key=deal_sort_key)
     return matched
 
 

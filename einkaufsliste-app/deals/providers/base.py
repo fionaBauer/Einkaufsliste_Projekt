@@ -16,3 +16,9 @@ class ImportedDeal:
     image_url: str = ""
     valid_from: date | None = None
     valid_until: date | None = None
+    product_name: str = ""
+    reference_price: Decimal | None = None
+    reference_unit: str = ""
+    package_size: str = ""
+    requires_loyalty: bool = False
+    source_categories: str = ""

@@ -26,7 +26,7 @@
                         <button type="button" class="info-button info-button--deal" aria-label="Rabatte anzeigen" title="Rabatte anzeigen">%</button>
                         <span class="shopping-tooltip">
                             {% for deal in item.discount_deals %}
-                                <span class="shopping-tooltip-line">{{ deal.store.name }} – {{ deal.deal_price }} €</span>
+                                <span class="shopping-tooltip-line">{{ deal.store.name }} – {{ deal.deal_price|floatformat:2 }} €{% if deal.reference_label %} ({{ deal.reference_label }}){% endif %}</span>
                             {% endfor %}
                         </span>
                     </span>

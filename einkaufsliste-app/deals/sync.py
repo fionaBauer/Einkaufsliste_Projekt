@@ -5,7 +5,7 @@ from django.utils import timezone
 
 from deals.models import DealSource, Store, Deal
 from deals.providers.marktguru import MarktguruProvider
-from deals.services import SYNONYMS
+from deals.services import SYNONYMS, search_name
 from ingredients.models import Ingredient
 
 # Falls ein Prozess waehrend eines Syncs abstuerzt/neu startet, bliebe is_syncing sonst
@@ -61,21 +61,36 @@ COMMON_PRODUCTS = [
 ]
 
 
-def build_search_terms():
-    terms = set()
+def used_ingredient_names(household=None):
+    """Zutaten, die tatsächlich genutzt werden (Einkaufsliste, Rezepte, Inventar).
 
-    for ingredient in Ingredient.objects.values_list("name", flat=True):
-        if ingredient:
-            terms.add(ingredient.lower().strip())
+    Früher wurde nach JEDER Zutat gesucht – mit dem Lebensmittel-Wörterbuch wären das
+    ~300 Anfragen. Gesucht wird nur noch nach dem, wofür sich jemand interessiert.
+    """
+    from django.db.models import Q
 
-    for key, values in SYNONYMS.items():
-        terms.add(key.lower().strip())
+    if household is not None:
+        used = (
+            Q(shopping_items__shopping_list__household=household)
+            | Q(ingredient_recipes__recipe__household=household)
+            | Q(inventory_items__household=household)
+        )
+    else:
+        used = (
+            Q(shopping_items__isnull=False)
+            | Q(ingredient_recipes__isnull=False)
+            | Q(inventory_items__isnull=False)
+        )
+    names = set(Ingredient.objects.filter(used).values_list("name", flat=True).distinct())
+    return names
 
-        for value in values:
-            terms.add(value.lower().strip())
 
-    for product in COMMON_PRODUCTS:
-        terms.add(product.lower().strip())
+def build_search_terms(household=None):
+    terms = {search_name(name) for name in used_ingredient_names(household)}
+
+    if household is None:
+        # Ohne konkreten Haushalt (z.B. Cron/Command): zusätzlich gängige Produkte
+        terms.update(p.lower().strip() for p in COMMON_PRODUCTS)
 
     return sorted(term for term in terms if len(term) >= 3)
 
@@ -84,7 +99,13 @@ class SyncAlreadyRunning(Exception):
     pass
 
 
-def sync_marktguru(zip_code=None, limit=50, search_terms=None, keep_old=False):
+def _report_progress(source):
+    def report(done, total):
+        DealSource.objects.filter(pk=source.pk).update(sync_done=done, sync_total=total)
+    return report
+
+
+def sync_marktguru(zip_code=None, limit=50, search_terms=None, keep_old=False, household=None):
     """
     Selbststaendig: claimt/released das is_syncing-Lock selbst, damit das egal von wo
     aus sicher aufgerufen werden kann (Web-View, Management-Command, Cron, ...) - zwei
@@ -106,9 +127,11 @@ def sync_marktguru(zip_code=None, limit=50, search_terms=None, keep_old=False):
         # Erst abrufen, dann loeschen+neu anlegen: schlaegt fetch_deals fehl
         # (Netzwerk/API-Fehler), bleiben die bisherigen Deals erhalten statt dass
         # der Nutzer mit leeren Haenden dasteht.
+        DealSource.objects.filter(pk=source.pk).update(sync_done=0, sync_total=0)
         imported_deals = provider.fetch_deals(
-            search_terms=search_terms if search_terms is not None else build_search_terms(),
+            search_terms=search_terms if search_terms is not None else build_search_terms(household),
             limit=limit,
+            on_progress=_report_progress(source),
         )
 
         if not keep_old:
@@ -131,7 +154,13 @@ def sync_marktguru(zip_code=None, limit=50, search_terms=None, keep_old=False):
                 defaults={
                     "store": store,
                     "title": imported.title,
+                    "product_name": imported.product_name,
                     "description": imported.description,
+                    "reference_price": imported.reference_price,
+                    "reference_unit": imported.reference_unit,
+                    "package_size": imported.package_size,
+                    "requires_loyalty": imported.requires_loyalty,
+                    "source_categories": imported.source_categories,
                     "original_price": imported.original_price,
                     "deal_price": imported.deal_price,
                     "discount_text": imported.discount_text,
@@ -145,6 +174,7 @@ def sync_marktguru(zip_code=None, limit=50, search_terms=None, keep_old=False):
             saved_count += 1
 
         release_sync(source)
+        DealSource.objects.filter(pk=source.pk).update(last_sync_count=saved_count)
         return saved_count
     except Exception as error:
         release_sync(source, error=error)

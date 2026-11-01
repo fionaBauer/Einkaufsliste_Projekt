@@ -1,9 +1,17 @@
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from decimal import Decimal, InvalidOperation
 from datetime import datetime
+import logging
 import os
 import requests
 
 from .base import ImportedDeal
+
+logger = logging.getLogger(__name__)
+
+# Händler dieser Branchen verkaufen keine Lebensmittel (Fressnapf, Baumarkt …)
+NON_FOOD_INDUSTRIES = ("tier", "zoo", "bau", "möbel", "elektro", "mode", "sport", "garten",
+                       "spielwaren", "auto", "apotheke", "optik", "schuh", "textil")
 
 
 class MarktguruProvider:
@@ -20,76 +28,92 @@ class MarktguruProvider:
             or "89231"
         )
 
-    def fetch_deals(self, search_terms=None, limit=50):
+    def fetch_deals(self, search_terms=None, limit=50, on_progress=None, max_workers=3):
+        """Sucht Angebote für alle Suchbegriffe.
+
+        Mehrere Begriffe laufen parallel (max_workers), on_progress(done, total) wird nach
+        jedem fertigen Begriff aufgerufen – dafür gibt es in der App die Ladeanzeige.
+        """
         if not self.api_key or not self.client_key:
             raise ValueError("MARKTGURU_API_KEY und MARKTGURU_CLIENT_KEY fehlen in .env")
 
-        search_terms = search_terms if search_terms is not None else [""]
-
+        terms = list(search_terms) if search_terms is not None else [""]
+        total = len(terms)
+        done = 0
         imported_deals = []
         seen_external_ids = set()
 
-        for term in search_terms:
-            offset = 0
+        if on_progress:
+            on_progress(0, total)
 
-            while True:
-                try:
-                    response = requests.get(
-                        self.base_url,
-                        params={
-                            "as": "web",
-                            "limit": limit,
-                            "offset": offset,
-                            "q": term,
-                            "zipCode": self.zip_code,
-                        },
-                        headers={
-                            "x-apikey": self.api_key,
-                            "x-clientkey": self.client_key,
-                            "User-Agent": "Mozilla/5.0",
-                        },
-                        timeout=50,
-                    )
-
-                    if response.status_code == 429:
-                        print(f"[{term}] Rate limit (429) – übersprungen")
-                        break
-
-                    if not response.ok:
-                        print(f"[{term}] HTTP {response.status_code} – übersprungen")
-                        break
-
-                    response.raise_for_status()
-                    data = response.json()
-
-                except requests.RequestException as e:
-                    print(f"[{term}] Netzwerkfehler: {e} – übersprungen")
-                    break
-
-                results = data.get("results", [])
-                total_results = data.get("totalResults", 0)
-
-                if not results:
-                    break
-
-                for item in results:
-                    deal = self._parse_item(item)
-
-                    if not deal:
-                        continue
-
+        with ThreadPoolExecutor(max_workers=max_workers) as executor:
+            futures = [executor.submit(self._fetch_term, term, limit) for term in terms]
+            for future in as_completed(futures):
+                for deal in future.result():
                     if deal.external_id in seen_external_ids:
                         continue
-
                     seen_external_ids.add(deal.external_id)
                     imported_deals.append(deal)
-
-                offset += limit
-
-                if offset >= total_results:
-                    break
+                done += 1
+                if on_progress:
+                    on_progress(done, total)
 
         return imported_deals
+
+    def _fetch_term(self, term, limit):
+        deals = []
+        offset = 0
+
+        while True:
+            try:
+                response = requests.get(
+                    self.base_url,
+                    params={
+                        "as": "web",
+                        "limit": limit,
+                        "offset": offset,
+                        "q": term,
+                        "zipCode": self.zip_code,
+                    },
+                    headers={
+                        "x-apikey": self.api_key,
+                        "x-clientkey": self.client_key,
+                        "User-Agent": "Mozilla/5.0",
+                    },
+                    timeout=30,
+                )
+
+                if response.status_code == 429:
+                    logger.warning("Marktguru [%s]: Rate limit (429) – übersprungen", term)
+                    break
+
+                if not response.ok:
+                    logger.warning("Marktguru [%s]: HTTP %s – übersprungen", term, response.status_code)
+                    break
+
+                data = response.json()
+
+            except (requests.RequestException, ValueError) as e:
+                logger.warning("Marktguru [%s]: %s – übersprungen", term, e)
+                break
+
+            results = data.get("results", [])
+            total_results = data.get("totalResults", 0)
+
+            if not results:
+                break
+
+            for item in results:
+                deal = self._parse_item(item)
+                if deal:
+                    deals.append(deal)
+
+            offset += limit
+
+            if offset >= total_results:
+                break
+
+        return deals
 
     def _parse_decimal(self, value):
         if value is None:
@@ -119,6 +143,19 @@ class MarktguruProvider:
 
         brand_name = brand.get("name") if isinstance(brand, dict) else ""
         product_name = product.get("name") if isinstance(product, dict) else ""
+        # Marktguru-Platzhalter für Produkte ohne Marke ("thisisnobrand123")
+        if (brand_name or "").lower().startswith("thisisnobrand"):
+            brand_name = ""
+
+        industries = " ".join(
+            (i.get("name") or "").lower() for i in (item.get("industries") or []) if isinstance(i, dict)
+        )
+        if industries and any(word in industries for word in NON_FOOD_INDUSTRIES):
+            return None
+
+        source_categories = "|".join(
+            c.get("name") for c in (item.get("categories") or []) if isinstance(c, dict) and c.get("name")
+        )[:255]
 
         title = " ".join(
             part for part in [brand_name, product_name]
@@ -178,6 +215,11 @@ class MarktguruProvider:
 
         image_url = f"https://mg2de.b-cdn.net/api/v1/offers/{external_id}/images/default/0/large.webp"
 
+        unit = item.get("unit") or {}
+        unit_short = unit.get("shortName", "") if isinstance(unit, dict) else ""
+        reference_price = self._parse_decimal(item.get("referencePrice"))
+        package_size = self._format_package(item.get("volume"), item.get("quantity"), unit_short)
+
         return ImportedDeal(
             external_id=f"marktguru-{external_id}",
             store_name=store_name,
@@ -190,4 +232,29 @@ class MarktguruProvider:
             image_url=image_url,
             valid_from=valid_from,
             valid_until=valid_until,
+            product_name=product_name or "",
+            reference_price=reference_price,
+            reference_unit=unit_short if reference_price is not None else "",
+            package_size=package_size,
+            requires_loyalty=bool(item.get("requiresLoyalityMembership")),
+            source_categories=source_categories,
         )
+
+    def _format_package(self, volume, quantity, unit):
+        """volume=0.25, unit=kg → "250 g"; quantity>1 → "4 × 250 g"."""
+        volume = self._parse_decimal(volume)
+        if not volume or not unit:
+            return ""
+        if unit == "kg" and volume < 1:
+            amount, unit = volume * 1000, "g"
+        elif unit == "l" and volume < 1:
+            amount, unit = volume * 1000, "ml"
+        else:
+            amount = volume
+        amount_text = f"{amount:.2f}".rstrip("0").rstrip(".").replace(".", ",")
+        quantity = self._parse_decimal(quantity)
+        prefix = f"{int(quantity)} × " if quantity and quantity > 1 and quantity == int(quantity) else ""
+        if not prefix and amount == 1:
+            # "1 kg" / "1 Stk" sagt nichts, was der Grundpreis nicht schon zeigt
+            return ""
+        return f"{prefix}{amount_text} {unit}"

@@ -424,6 +424,16 @@
     // Zurück/Vor innerhalb derselben Seite (z.B. nach einer Suche) → passenden Stand einmorphen
     window.addEventListener("popstate", () => App.refresh({ silent: true }));
 
+    /* ───────────────────────── Filter-Links ohne Neuladen ───────────────────────── */
+
+    // Links mit data-morph-link (z.B. Markt-Filter) bleiben auf der Seite und morphen nur
+    document.addEventListener("click", (event) => {
+        const link = event.target.closest?.("a[data-morph-link]");
+        if (!link || event.metaKey || event.ctrlKey || event.shiftKey || event.button !== 0) return;
+        event.preventDefault();
+        App.visit(link.href, { replace: true });
+    });
+
     /* ───────────────────────── Live-Suche ───────────────────────── */
 
     let searchTimer = null;
