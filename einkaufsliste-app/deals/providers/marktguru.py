@@ -157,6 +157,10 @@ class MarktguruProvider:
             c.get("name") for c in (item.get("categories") or []) if isinstance(c, dict) and c.get("name")
         )[:255]
 
+        from deals.services import is_non_food
+        if is_non_food(f"{brand_name} {product_name}", source_categories):
+            return None
+
         title = " ".join(
             part for part in [brand_name, product_name]
             if part

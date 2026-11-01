@@ -158,6 +158,8 @@ def deal_list(request):
     # Veraltet = länger als einen Tag her ODER keine gültigen Angebote mehr (alle abgelaufen)
     is_stale = (
         not all_deals
+        # Angebote von vor dem Update haben keine Marktguru-Kategorien → neu laden
+        or not any(d.source_categories for d in all_deals)
         or not source
         or not source.last_synced_at
         or source.last_synced_at < timezone.now() - AUTO_REFRESH_AFTER

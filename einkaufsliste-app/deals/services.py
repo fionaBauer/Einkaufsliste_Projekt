@@ -42,6 +42,30 @@ DEAL_EXCLUSIONS = {
 }
 
 
+# Drogerie-/Haushaltsartikel: tauchen bei Marktguru zwischen Lebensmitteln auf
+# ("Bodyspray Mango" passt sonst zu "Mango")
+NON_FOOD_CATEGORY_WORDS = (
+    "deo", "körper", "pflege", "haar", "dusch", "bad ", "kosmetik", "parfum", "duft",
+    "zahn", "mund", "rasur", "rasier", "make-up", "nagel", "sonnenschutz", "hygiene",
+    "windel", "reinigung", "putz", "wasch", "spülmittel", "tier", "hund", "katze",
+    "vogel", "pflanze", "blume", "garten", "haushalt", "papier", "batterie", "kerze",
+    "geschirr", "küchengerät", "küchenzubehör", "reisen", "geschenk",
+)
+NON_FOOD_NAME_WORDS = (
+    "spray", "deo", "duschgel", "shampoo", "spülung", "lotion", "parfum", "eau de",
+    "zahnpasta", "zahncreme", "waschmittel", "weichspüler", "reiniger", "seife",
+    "handcreme", "gesichtscreme", "tagescreme", "nachtcreme", "bodybutter", "lippenpflege",
+    "badezusatz", "schaumbad", "duftkerze", "raumduft", "katzenfutter", "hundefutter",
+)
+
+
+def is_non_food(title="", categories=""):
+    """True für Drogerie-, Haushalts- und Tierartikel."""
+    cats = (categories or "").lower()
+    name = (title or "").lower()
+    return any(w in cats for w in NON_FOOD_CATEGORY_WORDS) or any(w in name for w in NON_FOOD_NAME_WORDS)
+
+
 def _umlaut_variant(term):
     """Apfel → äpfel, Wurst → würst(e): deutscher Plural mit Umlaut."""
     for i in range(len(term) - 1, -1, -1):
@@ -114,6 +138,10 @@ def deal_matches(deal, terms, ingredient_category=None):
     (laut Marktguru ein Joghurt) nicht.
     """
     from ingredients.models import IngredientCategory
+
+    if (ingredient_category != IngredientCategory.OTHER
+            and is_non_food(f"{deal.title} {deal.product_name or ''}", getattr(deal, "source_categories", ""))):
+        return False
 
     name_match = False
     for head in _product_heads(deal):
