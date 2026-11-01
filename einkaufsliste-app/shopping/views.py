@@ -112,12 +112,12 @@ def shopping_list_detail(request, pk):
     active_deals = list(get_active_deals())
 
     to_buy = attach_deals_to_shopping_items(
-        list(shopping_list_obj.items.filter(status=ShoppingListItem.STATUS_TO_BUY)),
+        list(shopping_list_obj.items.filter(status=ShoppingListItem.STATUS_TO_BUY).select_related("ingredient")),
         active_deals,
     )
 
     check_quantity = attach_deals_to_shopping_items(
-        list(shopping_list_obj.items.filter(status=ShoppingListItem.STATUS_CHECK)),
+        list(shopping_list_obj.items.filter(status=ShoppingListItem.STATUS_CHECK).select_related("ingredient")),
         active_deals,
     )
 

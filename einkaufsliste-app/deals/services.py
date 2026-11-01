@@ -128,6 +128,23 @@ def _deal_categories(deal):
     return {_map_source_category(n) for n in names} - {IngredientCategory.OTHER}
 
 
+def _match_info(deal):
+    """Pro Angebot nur einmal berechnen (Wortköpfe, Nicht-Lebensmittel, Kategorien).
+
+    Der Abgleich läuft für jede Zutat gegen jedes Angebot – ohne Zwischenspeicher wurde
+    jedes Angebot dutzendfach neu zerlegt, was die Seiten bei vielen Angeboten bremste.
+    """
+    info = getattr(deal, "_match_info", None)
+    if info is None:
+        info = (
+            tuple(_product_heads(deal)),
+            is_non_food(f"{deal.title} {deal.product_name or ''}", getattr(deal, "source_categories", "")),
+            frozenset(_deal_categories(deal)),
+        )
+        deal._match_info = info
+    return info
+
+
 def deal_matches(deal, terms, ingredient_category=None):
     """Passt, wenn ein Wort im Produktnamen auf den Begriff endet (inkl. Plural) …
 
@@ -139,12 +156,13 @@ def deal_matches(deal, terms, ingredient_category=None):
     """
     from ingredients.models import IngredientCategory
 
-    if (ingredient_category != IngredientCategory.OTHER
-            and is_non_food(f"{deal.title} {deal.product_name or ''}", getattr(deal, "source_categories", ""))):
+    heads, non_food, deal_categories = _match_info(deal)
+
+    if ingredient_category != IngredientCategory.OTHER and non_food:
         return False
 
     name_match = False
-    for head in _product_heads(deal):
+    for head in heads:
         for term in terms:
             if head in DEAL_EXCLUSIONS.get(term, ()):
                 continue
@@ -157,7 +175,6 @@ def deal_matches(deal, terms, ingredient_category=None):
         return False
 
     if ingredient_category and ingredient_category != IngredientCategory.OTHER:
-        deal_categories = _deal_categories(deal)
         if deal_categories and ingredient_category not in deal_categories:
             return False
     return True
@@ -174,6 +191,34 @@ def deal_sort_key(deal):
     )
 
 
+class DealIndex:
+    """Stichwortverzeichnis der Angebote nach Wortenden.
+
+    "Tafeläpfel" landet unter "äpfel", "läpfel", … – eine Zutat schaut so direkt unter
+    ihren Begriffen nach, statt jedes Angebot durchzuprobieren. Einmal pro Seitenaufruf bauen.
+    """
+
+    def __init__(self, deals):
+        self.deals = list(deals)
+        self._by_ending = {}
+        for deal in self.deals:
+            seen = set()
+            for head in _match_info(deal)[0]:
+                for i in range(len(head) - 2):  # Wortenden ab 3 Buchstaben
+                    ending = head[i:]
+                    if ending not in seen:
+                        seen.add(ending)
+                        self._by_ending.setdefault(ending, []).append(deal)
+
+    def candidates(self, terms):
+        found = {}
+        for term in terms:
+            for suffix in _PLURAL_SUFFIXES:
+                for deal in self._by_ending.get(term + suffix, ()):
+                    found[id(deal)] = deal
+        return found.values()
+
+
 def find_deals_for_ingredient(ingredient, active_deals=None):
     """
     active_deals: optional pre-fetched iterable of Deal objects (list or queryset,
@@ -185,6 +230,8 @@ def find_deals_for_ingredient(ingredient, active_deals=None):
     terms = get_search_terms(ingredient.name)
     if not terms:
         return []
+    if isinstance(deals, DealIndex):
+        deals = deals.candidates(terms)
 
     category = getattr(ingredient, "category", None)
     matched = [deal for deal in deals if deal_matches(deal, terms, category)]
@@ -193,7 +240,9 @@ def find_deals_for_ingredient(ingredient, active_deals=None):
 
 
 def attach_deals_to_shopping_items(items, active_deals=None):
-    deals = active_deals if active_deals is not None else list(get_active_deals())
+    deals = active_deals if active_deals is not None else get_active_deals()
+    if not isinstance(deals, DealIndex):
+        deals = DealIndex(deals)
     for item in items:
         item.discount_deals = find_deals_for_ingredient(item.ingredient, deals)[:3]
     return items
@@ -232,7 +281,7 @@ def calculate_store_savings(items):
 
 
 def get_suggested_recipes_by_deals(recipes, limit=5):
-    active_deals = list(get_active_deals())
+    active_deals = DealIndex(get_active_deals())
     suggestions = []
     for recipe in recipes.prefetch_related("recipe_ingredients__ingredient"):
         matched_deals = []

@@ -88,6 +88,7 @@ TEMPLATES = [
                 "django.contrib.auth.context_processors.auth",
                 "django.contrib.messages.context_processors.messages",
                 "core.context_processors.feature_flags",
+                "core.context_processors.current_household",
             ],
         },
     },

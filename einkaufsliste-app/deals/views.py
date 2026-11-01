@@ -18,7 +18,7 @@ from recipes.models import RecipeIngredient
 from shopping.models import ShoppingList
 
 from .models import DealSource
-from .services import deal_sort_key, find_deals_for_ingredient, get_active_deals
+from .services import DealIndex, deal_sort_key, find_deals_for_ingredient, get_active_deals
 from .sync import sync_marktguru, SyncAlreadyRunning, STALE_SYNC_LOCK_AFTER
 from .providers.marktguru import MarktguruProvider
 
@@ -119,6 +119,7 @@ def deal_list(request):
     elif show_all:
         results = sorted(deals, key=lambda d: (d.store.name.lower(), deal_sort_key(d)))
     else:
+        deals = DealIndex(deals)
         recipes_by_ingredient = _household_recipes_by_ingredient(household)
         existing_recipe_ids = {r["id"] for rs in recipes_by_ingredient.values() for r in rs}
 
