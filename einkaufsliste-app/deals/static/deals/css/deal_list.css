@@ -134,8 +134,31 @@
 
 .deal-group { margin-bottom: 14px; }
 
+.deal-group-head {
+    display: flex;
+    align-items: baseline;
+    gap: 10px;
+    margin: 0 4px 8px 6px;
+    min-width: 0;
+}
+
+.deal-group-recipes {
+    flex: 1;
+    min-width: 0;
+    text-align: right;
+    color: var(--text-muted);
+    font-size: 12.5px;
+    font-weight: 550;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.deal-group-recipes a { color: var(--accent); font-weight: 650; text-decoration: none; }
+
 .deal-group-title {
-    margin: 0 0 8px 6px;
+    flex-shrink: 0;
+    margin: 0;
     font-family: var(--font-body);
     font-size: 13px;
     font-weight: 700;

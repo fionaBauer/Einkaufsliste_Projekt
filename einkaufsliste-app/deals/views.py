@@ -1,5 +1,6 @@
 import logging
 import threading
+from collections import defaultdict
 from datetime import timedelta
 from zoneinfo import ZoneInfo
 
@@ -13,6 +14,7 @@ from django.utils import timezone
 
 from households.models import Household
 from ingredients.models import Ingredient
+from recipes.models import RecipeIngredient
 from shopping.models import ShoppingList
 
 from .models import DealSource
@@ -64,13 +66,36 @@ def _synced_label(source):
     return f"{local:%d.%m.}, {local:%H:%M} Uhr"
 
 
-def _group_deals(ingredients, deals, per_group):
+def _group_deals(ingredients, deals, per_group, recipes_for=None):
+    """recipes_for: {ingredient_id: [{"id", "name"}, …]} – für den Hinweis "für Rezept X"."""
     groups = []
     for ingredient in ingredients:
         matched = find_deals_for_ingredient(ingredient, deals)[:per_group]
         if matched:
-            groups.append({"ingredient": ingredient, "deals": matched})
+            recipes = (recipes_for or {}).get(ingredient.id, [])
+            groups.append({
+                "ingredient": ingredient,
+                "deals": matched,
+                "recipes": recipes[:2],
+                "more_recipes": max(0, len(recipes) - 2),
+            })
     return groups
+
+
+def _household_recipes_by_ingredient(household):
+    """{ingredient_id: [{"id", "name"}, …]} für alle Rezepte des Haushalts."""
+    mapping = defaultdict(list)
+    seen = set()
+    rows = (
+        RecipeIngredient.objects.filter(recipe__household=household)
+        .values_list("ingredient_id", "recipe_id", "recipe__name")
+        .order_by("recipe__name")
+    )
+    for ingredient_id, recipe_id, recipe_name in rows:
+        if (ingredient_id, recipe_id) not in seen:
+            seen.add((ingredient_id, recipe_id))
+            mapping[ingredient_id].append({"id": recipe_id, "name": recipe_name})
+    return mapping
 
 
 @login_required
@@ -94,16 +119,26 @@ def deal_list(request):
     elif show_all:
         results = sorted(deals, key=lambda d: (d.store.name.lower(), deal_sort_key(d)))
     else:
-        # 1. Was auf der Einkaufsliste steht
+        recipes_by_ingredient = _household_recipes_by_ingredient(household)
+        existing_recipe_ids = {r["id"] for rs in recipes_by_ingredient.values() for r in rs}
+
+        # 1. Was auf der Einkaufsliste steht – mit den Rezepten, aus denen der Artikel kam
         shopping_list = ShoppingList.objects.filter(household=household).first()
         list_ingredients = []
+        list_recipes = defaultdict(list)
         if shopping_list:
             seen = set()
             for item in shopping_list.items.select_related("ingredient").order_by("ingredient__name"):
                 if item.ingredient_id not in seen:
                     seen.add(item.ingredient_id)
                     list_ingredients.append(item.ingredient)
-        list_groups = _group_deals(list_ingredients, deals, per_group=3)
+                for source in item.source_details or []:
+                    recipe_id = source.get("recipe_id")
+                    known = {r["id"] for r in list_recipes[item.ingredient_id]}
+                    # nur Rezepte, die es noch gibt (gelöschte würden ins Leere verlinken)
+                    if recipe_id in existing_recipe_ids and recipe_id not in known:
+                        list_recipes[item.ingredient_id].append({"id": recipe_id, "name": source.get("recipe_name", "")})
+        list_groups = _group_deals(list_ingredients, deals, per_group=3, recipes_for=list_recipes)
 
         # 2. Zutaten aus den eigenen Rezepten (ohne die, die schon auf der Liste stehen)
         recipe_ingredients = (
@@ -112,7 +147,9 @@ def deal_list(request):
             .distinct()
             .order_by("name")
         )
-        recipe_groups = _group_deals(recipe_ingredients, deals, per_group=2)[:MAX_RECIPE_GROUPS]
+        recipe_groups = _group_deals(
+            recipe_ingredients, deals, per_group=2, recipes_for=recipes_by_ingredient,
+        )[:MAX_RECIPE_GROUPS]
 
     source = _get_source()
     syncing = _is_syncing(source)

@@ -36,6 +36,9 @@ DEAL_EXCLUSIONS = {
     "äpfel": ("granatäpfel",),
     "nuss": ("muskatnuss", "kokosnuss"),
     "kohl": ("blumenkohl", "rosenkohl", "grünkohl"),
+    "milch": ("buttermilch", "kokosmilch", "hafermilch", "sojamilch", "mandelmilch", "kondensmilch", "sonnenmilch"),
+    "sahne": ("sprühsahne",),
+    "zucker": ("puderzucker", "vanillezucker"),
 }
 
 

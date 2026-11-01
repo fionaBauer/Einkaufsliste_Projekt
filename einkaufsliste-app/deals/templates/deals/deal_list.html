@@ -88,7 +88,7 @@
                 </div>
                 {% for group in list_groups %}
                     <div class="deal-group" data-key="list-{{ group.ingredient.pk }}">
-                        <h3 class="deal-group-title">{{ group.ingredient.name }}</h3>
+                        {% include "deals/partials/group_head.html" %}
                         <ul class="deal-list">
                             {% for deal in group.deals %}{% include "deals/partials/deal_row.html" %}{% endfor %}
                         </ul>
@@ -104,7 +104,7 @@
                 </div>
                 {% for group in recipe_groups %}
                     <div class="deal-group" data-key="recipe-{{ group.ingredient.pk }}">
-                        <h3 class="deal-group-title">{{ group.ingredient.name }}</h3>
+                        {% include "deals/partials/group_head.html" %}
                         <ul class="deal-list">
                             {% for deal in group.deals %}{% include "deals/partials/deal_row.html" %}{% endfor %}
                         </ul>
