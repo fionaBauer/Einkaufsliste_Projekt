@@ -1,4 +1,5 @@
 import json
+import tempfile
 from datetime import timedelta
 from unittest.mock import patch
 
@@ -16,7 +17,7 @@ from ingredients.models import Ingredient, IngredientCategory, Unit
 from .filters import ingredient_terms
 from .models import Recipe, RecipeIngredient, Tag
 from .services.reclip.pipeline import process_url
-from .services.reclip.video_extractor import _get_ffmpeg_location
+from .services.reclip.video_extractor import _cookie_options, _get_ffmpeg_location
 from .services.reclip.web_extractor import _parse_iso_duration, _total_minutes
 
 
@@ -265,6 +266,17 @@ class RecipeImportTests(TestCase):
                 self.assertEqual(_get_ffmpeg_location(), "/opt/homebrew/bin")
             with patch("shutil.which", return_value=None):
                 self.assertEqual(_get_ffmpeg_location(), "/usr/bin")
+
+    def test_cookie_file_is_optional(self):
+        with tempfile.NamedTemporaryFile() as cookie_file:
+            with patch.dict("os.environ", {"YTDLP_COOKIES_FILE": cookie_file.name}):
+                self.assertEqual(_cookie_options(), {"cookiefile": cookie_file.name})
+
+        with patch.dict("os.environ", {"YTDLP_COOKIES_FILE": "/gibt/es/nicht.txt"}):
+            self.assertEqual(_cookie_options(), {})
+
+        with patch.dict("os.environ", {"YTDLP_COOKIES_FILE": ""}):
+            self.assertEqual(_cookie_options(), {})
 
     def test_iso_durations(self):
         cases = {

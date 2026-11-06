@@ -20,12 +20,26 @@ def _get_ffmpeg_location() -> str:
     return os.path.dirname(ffmpeg_path) if ffmpeg_path else "/usr/bin"
 
 
+def _cookie_options() -> dict:
+    """
+    Instagram blockt Server-Adressen ohne Login. YTDLP_COOKIES_FILE zeigt auf eine
+    cookies.txt eines Zweitkontos. yt-dlp schreibt die Datei beim Beenden zurück, sie muss
+    also für den App-Nutzer schreibbar sein und außerhalb des Repos liegen (das Deployment
+    räumt dort mit "git clean" auf).
+    """
+    cookie_file = os.getenv("YTDLP_COOKIES_FILE", "").strip()
+    if cookie_file and os.path.isfile(cookie_file):
+        return {"cookiefile": cookie_file}
+    return {}
+
+
 def extract_metadata(url: str) -> dict:
     opts = {
         "quiet": True,
         "skip_download": True,
         "writeinfojson": False,
         "socket_timeout": 30,
+        **_cookie_options(),
     }
 
     ffmpeg_location = _get_ffmpeg_location()
@@ -55,6 +69,7 @@ def extract_subtitles(url: str) -> str | None:
             "subtitlesformat": "json3/srv3/vtt/best",
             "outtmpl": str(Path(tmpdir) / "%(id)s"),
             "socket_timeout": 30,
+            **_cookie_options(),
         }
 
         ffmpeg_location = _get_ffmpeg_location()
@@ -85,6 +100,7 @@ def download_audio(url: str, output_dir: str) -> Path:
             }
         ],
         "socket_timeout": 30,
+        **_cookie_options(),
     }
 
     ffmpeg_location = _get_ffmpeg_location()
