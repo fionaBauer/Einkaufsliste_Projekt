@@ -156,9 +156,17 @@
     padding: 12px 14px 14px;
 }
 
+.recipe-card-text { flex: 1; min-width: 0; }
+
+.recipe-card-time {
+    display: block;
+    margin-top: 2px;
+    color: var(--text-muted);
+    font-size: 12.5px;
+    font-weight: 550;
+}
+
 .recipe-card-name {
-    flex: 1;
-    min-width: 0;
     color: var(--text-main);
     font-size: 15px;
     font-weight: 700;

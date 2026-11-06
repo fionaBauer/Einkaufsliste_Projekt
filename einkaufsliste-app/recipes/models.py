@@ -1,6 +1,7 @@
 import uuid
 
 from decimal import Decimal
+from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
 from ingredients.models import Ingredient, Unit
 
@@ -9,6 +10,9 @@ def recipe_image_path(instance, filename):
     ext = filename.rsplit(".", 1)[-1].lower()
     unique = uuid.uuid4().hex[:8]
     return f"recipe_images/household_{instance.household_id}/{unique}.{ext}"
+
+MAX_COOKING_MINUTES = 10080  # eine Woche (z.B. Sauerteig oder Eingelegtes)
+
 
 class Tag(models.TextChoices):
     BREAKFAST = "breakfast", "Frühstück"
@@ -77,6 +81,11 @@ class Recipe(models.Model):
     )
     name = models.CharField(max_length=150)
     servings = models.PositiveIntegerField(default=1)
+    cooking_minutes = models.PositiveIntegerField(
+        null=True,
+        blank=True,
+        validators=[MinValueValidator(1), MaxValueValidator(MAX_COOKING_MINUTES)],
+    )
     instructions = models.TextField(blank=True)
     image = models.ImageField(upload_to=recipe_image_path, blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
@@ -112,6 +121,15 @@ class Recipe(models.Model):
         if self.image.storage.exists(thumb):
             return self.image.storage.url(thumb)
         return self.image.url
+
+    @property
+    def cooking_time_label(self):
+        if not self.cooking_minutes:
+            return ""
+        hours, minutes = divmod(self.cooking_minutes, 60)
+        if not hours:
+            return f"{minutes} Min."
+        return f"{hours} Std. {minutes} Min." if minutes else f"{hours} Std."
 
     @property
     def tag_labels(self):

@@ -6,10 +6,12 @@ from ingredients.models import Ingredient
 class RecipeForm(forms.ModelForm):
     class Meta:
         model = Recipe
-        fields = ["name", "servings", "instructions", "image"]
+        fields = ["name", "servings", "cooking_minutes", "instructions", "image"]
+        labels = {"cooking_minutes": "Ungefähre Kochzeit (Minuten)"}
         widgets = {
             "name": forms.TextInput(attrs={"class": "form-control"}),
             "servings": forms.NumberInput(attrs={"class": "form-control", "min": 1}),
+            "cooking_minutes": forms.NumberInput(attrs={"class": "form-control", "min": 1, "placeholder": "z. B. 30"}),
             "instructions": forms.Textarea(attrs={"class": "form-control", "rows": 5}),
             "image": forms.FileInput(attrs={"class": "form-control", "accept": "image/*"}),
         }

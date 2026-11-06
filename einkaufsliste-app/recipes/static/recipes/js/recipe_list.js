@@ -129,6 +129,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const recipeReviewForm = document.getElementById("recipe-review-form");
     const reviewTitleInput = document.getElementById("review-title");
     const reviewServingsInput = document.getElementById("review-servings");
+    const reviewCookingMinutesInput = document.getElementById("review-cooking-minutes");
     const reviewInstructionsInput = document.getElementById("review-instructions");
     const reviewIngredientsContainer = document.getElementById("review-ingredients-container");
 
@@ -564,6 +565,7 @@ let extractedRecipeData = null;
 
         reviewTitleInput.value = recipe.title || "";
         reviewServingsInput.value = extractServingsNumber(recipe.servings) || 1;
+        reviewCookingMinutesInput.value = parseInt(recipe.cooking_minutes, 10) || "";
 
         const suggestedTags = Array.isArray(recipe.tags) ? recipe.tags : [];
         recipeReviewForm.querySelectorAll('input[name="review_tags"]').forEach((checkbox) => {
@@ -624,6 +626,7 @@ let extractedRecipeData = null;
         return {
             title: reviewTitleInput.value.trim(),
             servings: reviewServingsInput.value,
+            cooking_minutes: reviewCookingMinutesInput.value,
             instructions: reviewInstructionsInput.value.trim(),
             tags: Array.from(recipeReviewForm.querySelectorAll('input[name="review_tags"]:checked'), (checkbox) => checkbox.value),
             ingredients: ingredients,

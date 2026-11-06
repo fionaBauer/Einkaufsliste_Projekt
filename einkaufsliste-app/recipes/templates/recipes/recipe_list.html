@@ -77,9 +77,14 @@
                             class="recipe-card-checkbox">
                         <span class="recipe-card-check-icon"></span>
                     </label>
-                    <a href="{% url 'recipes:recipe_detail' recipe.pk %}" class="recipe-card-name">
-                        {{ recipe.name }}
-                    </a>
+                    <div class="recipe-card-text">
+                        <a href="{% url 'recipes:recipe_detail' recipe.pk %}" class="recipe-card-name">
+                            {{ recipe.name }}
+                        </a>
+                        {% if recipe.cooking_time_label %}
+                        <span class="recipe-card-time">ca. {{ recipe.cooking_time_label }}</span>
+                        {% endif %}
+                    </div>
                 </div>
 
             </div>
@@ -213,6 +218,10 @@
                 <div class="form-group">
                     <label for="review-servings">Portionen</label>
                     <input type="number" id="review-servings" name="servings" min="1" value="1">
+                </div>
+                <div class="form-group">
+                    <label for="review-cooking-minutes">Ungefähre Kochzeit (Minuten)</label>
+                    <input type="number" id="review-cooking-minutes" name="cooking_minutes" min="1" placeholder="z. B. 30">
                 </div>
                 {% for group in tag_groups %}
                 <div class="form-group">

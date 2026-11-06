@@ -17,7 +17,7 @@ from ingredients.categories import guess_category
 from deals.services import get_suggested_recipes_by_deals
 
 from .filters import RecipeFilters
-from .models import Recipe, RecipeIngredient, Tag, TAG_GROUPS
+from .models import MAX_COOKING_MINUTES, Recipe, RecipeIngredient, Tag, TAG_GROUPS
 from .forms import RecipeForm, RecipeIngredientForm
 from .services.reclip.pipeline import process_url
 
@@ -389,6 +389,7 @@ def create_recipe_from_extracted_data(request):
             household=household,
             name=title,
             servings=max(servings, 1),
+            cooking_minutes=_parse_cooking_minutes(data.get("cooking_minutes")),
             instructions=instructions.strip(),
         )
         recipe.set_tags([tag for tag in Tag.values if tag in (data.get("tags") or [])])
@@ -470,6 +471,14 @@ def create_recipe_from_extracted_data(request):
             {"success": False, "error": f"Speichern fehlgeschlagen: {str(error)}"},
             status=500,
         )
+
+
+def _parse_cooking_minutes(value):
+    try:
+        minutes = int(value)
+    except (TypeError, ValueError):
+        return None
+    return minutes if 0 < minutes <= MAX_COOKING_MINUTES else None
 
 
 def _parse_amount_and_unit(amount, unit):

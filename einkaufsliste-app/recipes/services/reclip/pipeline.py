@@ -1,10 +1,13 @@
+import logging
 from urllib.parse import urlparse
 
-from .llm_extractor import extract_recipe, extract_recipe_from_webpage_text
+from .llm_extractor import classify_recipe, extract_recipe, extract_recipe_from_webpage_text
 from .transcriber import transcribe_video
 from .video_extractor import extract_metadata, extract_subtitles
 from .web_extractor import extract_recipe_from_webpage, extract_webpage_text
 
+
+logger = logging.getLogger(__name__)
 
 VIDEO_DOMAINS = {
     "youtube.com",
@@ -55,6 +58,23 @@ def _process_video_url(url: str) -> dict:
     }
 
 
+def _add_categories(recipe: dict) -> dict:
+    """Strukturierte Rezeptseiten kommen ohne KI aus, Kategorien liefern sie aber nicht.
+
+    Scheitert dieser Schritt, geht das Rezept trotzdem durch: Im Prüf-Dialog lassen sich
+    die Kategorien auch von Hand setzen.
+    """
+    try:
+        classification = classify_recipe(recipe)
+    except Exception:
+        logger.exception("Rezept konnte nicht kategorisiert werden")
+        return recipe
+
+    recipe["tags"] = classification.get("tags") or []
+    recipe["cooking_minutes"] = recipe.get("cooking_minutes") or classification.get("cooking_minutes")
+    return recipe
+
+
 def _process_web_url(url: str) -> dict:
     recipe = extract_recipe_from_webpage(url)
 
@@ -62,7 +82,7 @@ def _process_web_url(url: str) -> dict:
 
     if has_good_structure:
         return {
-            "recipe": recipe,
+            "recipe": _add_categories(recipe),
             "raw_transcript": None,
             "raw_caption": None,
         }

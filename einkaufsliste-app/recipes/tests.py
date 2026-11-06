@@ -1,5 +1,6 @@
 import json
 from datetime import timedelta
+from unittest.mock import patch
 
 from django.contrib.auth import get_user_model
 from django.test import TestCase, override_settings
@@ -12,6 +13,8 @@ from ingredients.models import Ingredient, IngredientCategory, Unit
 
 from .filters import ingredient_terms
 from .models import Recipe, RecipeIngredient, Tag
+from .services.reclip.pipeline import process_url
+from .services.reclip.web_extractor import _parse_iso_duration, _total_minutes
 
 
 @override_settings(
@@ -189,3 +192,107 @@ class RecipeTagEditingTests(RecipeTestCase):
 
         self.assertEqual(response.status_code, 200)
         self.assertEqual(Recipe.objects.get(name="Import").tag_labels, ["Suppe"])
+
+
+class RecipeCookingTimeTests(RecipeTestCase):
+    def post(self, url, **data):
+        return self.client.post(url, data, headers={"X-Requested-With": "XMLHttpRequest"})
+
+    def test_labels(self):
+        cases = {None: "", 45: "45 Min.", 60: "1 Std.", 75: "1 Std. 15 Min."}
+        for minutes, label in cases.items():
+            self.assertEqual(Recipe(cooking_minutes=minutes).cooking_time_label, label)
+
+    def test_manual_create_and_edit(self):
+        self.post(reverse("recipes:recipe_create"), name="Curry", servings=2, cooking_minutes=40)
+        recipe = Recipe.objects.get(name="Curry")
+        self.assertEqual(recipe.cooking_minutes, 40)
+
+        self.post(reverse("recipes:recipe_edit", args=[recipe.pk]), name="Curry", servings=2, cooking_minutes="")
+        recipe.refresh_from_db()
+        self.assertIsNone(recipe.cooking_minutes)
+
+    def test_form_rejects_invalid_minutes(self):
+        response = self.post(reverse("recipes:recipe_create"), name="Curry", servings=2, cooking_minutes=0)
+        self.assertEqual(response.status_code, 400)
+        self.assertFalse(Recipe.objects.exists())
+
+    def test_shown_on_list_and_detail(self):
+        recipe = self.recipe("Curry")
+        Recipe.objects.filter(pk=recipe.pk).update(cooking_minutes=90)
+
+        self.assertContains(self.client.get(reverse("recipes:recipe_list")), "ca. 1 Std. 30 Min.")
+        self.assertContains(
+            self.client.get(reverse("recipes:recipe_detail", args=[recipe.pk])),
+            "ca. 1 Std. 30 Min.",
+        )
+
+    def test_import_saves_minutes_and_ignores_garbage(self):
+        cases = {"35": 35, 20: 20, "": None, "schnell": None, -5: None, 99999: None}
+        for index, (value, expected) in enumerate(cases.items()):
+            self.client.post(
+                reverse("recipes:recipe_create_from_extracted"),
+                json.dumps({"title": f"Import {index}", "cooking_minutes": value, "ingredients": []}),
+                content_type="application/json",
+            )
+            self.assertEqual(Recipe.objects.get(name=f"Import {index}").cooking_minutes, expected)
+
+
+class RecipeImportTests(TestCase):
+    structured_recipe = {
+        "title": "Lasagne",
+        "ingredients": [{"name": "Hackfleisch"}],
+        "steps": [{"instruction": "Schichten und backen"}],
+        "tags": ["Italienisch"],
+        "cooking_minutes": None,
+    }
+
+    def test_iso_durations(self):
+        cases = {
+            "PT30M": 30,
+            "PT1H30M": 90,
+            "P0DT2H0M": 120,
+            "P1DT1H": 1500,
+            "P0Y0M0DT0H45M0.000S": 45,
+            "PT0S": None,
+            "30 Minuten": None,
+            "": None,
+            None: None,
+        }
+        for value, minutes in cases.items():
+            self.assertEqual(_parse_iso_duration(value), minutes, value)
+
+    def test_total_time_wins_over_parts(self):
+        self.assertEqual(_total_minutes({"totalTime": "PT1H", "prepTime": "PT5M"}), 60)
+        self.assertEqual(_total_minutes({"prepTime": "PT10M", "cookTime": "PT20M"}), 30)
+        self.assertIsNone(_total_minutes({}))
+
+    @patch("recipes.services.reclip.pipeline.classify_recipe")
+    @patch("recipes.services.reclip.pipeline.extract_recipe_from_webpage")
+    def test_structured_page_gets_categories_and_estimated_time(self, extract, classify):
+        extract.return_value = dict(self.structured_recipe)
+        classify.return_value = {"tags": ["dinner", "meat"], "cooking_minutes": 75}
+
+        recipe = process_url("https://example.com/lasagne")["recipe"]
+
+        self.assertEqual(recipe["tags"], ["dinner", "meat"])
+        self.assertEqual(recipe["cooking_minutes"], 75)
+
+    @patch("recipes.services.reclip.pipeline.classify_recipe")
+    @patch("recipes.services.reclip.pipeline.extract_recipe_from_webpage")
+    def test_time_from_page_beats_estimate(self, extract, classify):
+        extract.return_value = {**self.structured_recipe, "cooking_minutes": 50}
+        classify.return_value = {"tags": [], "cooking_minutes": 75}
+
+        self.assertEqual(process_url("https://example.com/lasagne")["recipe"]["cooking_minutes"], 50)
+
+    @patch("recipes.services.reclip.pipeline.classify_recipe", side_effect=RuntimeError("API weg"))
+    @patch("recipes.services.reclip.pipeline.extract_recipe_from_webpage")
+    def test_import_survives_failed_classification(self, extract, classify):
+        extract.return_value = {**self.structured_recipe, "cooking_minutes": 50}
+
+        with self.assertLogs("recipes.services.reclip.pipeline", level="ERROR"):
+            recipe = process_url("https://example.com/lasagne")["recipe"]
+
+        self.assertEqual(recipe["title"], "Lasagne")
+        self.assertEqual(recipe["cooking_minutes"], 50)

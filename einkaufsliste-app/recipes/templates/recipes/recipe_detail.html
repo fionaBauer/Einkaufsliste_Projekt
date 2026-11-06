@@ -36,7 +36,7 @@
     <div class="recipe-header">
         <h1 class="recipe-title">{{ recipe.name }}</h1>
         <p class="recipe-subtitle">
-            Basisrezept für <span id="base-servings">{{ recipe.servings }}</span> Portion(en)
+            Basisrezept für <span id="base-servings">{{ recipe.servings }}</span> Portion(en){% if recipe.cooking_time_label %} · ca. {{ recipe.cooking_time_label }}{% endif %}
         </p>
         {% if recipe.tag_labels %}
         <ul class="recipe-tags">

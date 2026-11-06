@@ -176,10 +176,38 @@ def _normalize_recipe_json_ld(recipe_obj: dict) -> dict:
         "servings": str(servings).strip(),
         "prep_time": str(recipe_obj.get("prepTime") or "").strip(),
         "cook_time": str(recipe_obj.get("cookTime") or "").strip(),
+        "cooking_minutes": _total_minutes(recipe_obj),
         "ingredients": ingredients,
         "steps": steps,
         "tags": list(dict.fromkeys(tags)),
     }
+
+
+def _total_minutes(recipe_obj: dict) -> int | None:
+    total = _parse_iso_duration(recipe_obj.get("totalTime"))
+    if total:
+        return total
+    parts = _parse_iso_duration(recipe_obj.get("prepTime")), _parse_iso_duration(recipe_obj.get("cookTime"))
+    return sum(part or 0 for part in parts) or None
+
+
+def _parse_iso_duration(value) -> int | None:
+    """ISO-8601-Dauer aus den Rezeptdaten in Minuten, z.B. "PT1H30M" → 90."""
+    text = str(value or "").strip().upper()
+    if not text.startswith("P"):
+        return None
+
+    date_part, _, time_part = text[1:].partition("T")
+    days = re.search(r"(\d+)D", date_part)
+    hours = re.search(r"(\d+)H", time_part)
+    minutes = re.search(r"(\d+)M", time_part)
+
+    total = (
+        int(days.group(1) if days else 0) * 1440
+        + int(hours.group(1) if hours else 0) * 60
+        + int(minutes.group(1) if minutes else 0)
+    )
+    return total or None
 
 
 def _extract_from_visible_html(soup: BeautifulSoup, url: str) -> dict:
