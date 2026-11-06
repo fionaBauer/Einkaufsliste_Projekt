@@ -10,7 +10,7 @@
     {% if form.instance.pk %}data-recipe-id="{{ form.instance.pk }}"{% endif %}>
     {% csrf_token %}
 
-    {% for field in form %}
+    {% for field in form.regular_fields %}
         <div class="form-group">
             {{ field.label_tag }}
             {% if field.name == "image" and form.instance.image %}
@@ -20,6 +20,21 @@
                 </div>
             {% endif %}
             {{ field }}
+            {{ field.errors }}
+        </div>
+    {% endfor %}
+
+    {% for field in form.tag_fields %}
+        <div class="form-group">
+            <span class="tag-group-label">{{ field.label }}</span>
+            <div class="tag-chips">
+                {% for option in field %}
+                <label class="tag-chip">
+                    {{ option.tag }}
+                    <span>{{ option.choice_label }}</span>
+                </label>
+                {% endfor %}
+            </div>
             {{ field.errors }}
         </div>
     {% endfor %}

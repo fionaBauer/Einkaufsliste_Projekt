@@ -24,24 +24,26 @@
         </div>
     </div>
 
-    <form method="get" class="filter-bar">
+    <form method="get" class="filter-bar" id="recipe-filter-form">
         <div class="filter-group search-group">
-            <input type="text" name="search" value="{{ search }}"
-                placeholder="Rezept suchen..." class="search-input" enterkeyhint="search" autocomplete="off">
+            <input type="text" name="search" value="{{ filters.search }}"
+                placeholder="Rezept oder Zutat…" class="search-input" enterkeyhint="search" autocomplete="off">
         </div>
-        <div class="filter-group">
-            <select name="sort" class="sort-select" onchange="this.form.requestSubmit()">
-                <option value="name" {% if sort == "name" %}selected{% endif %}>Name A–Z</option>
-                <option value="-name" {% if sort == "-name" %}selected{% endif %}>Name Z–A</option>
-                <option value="created_at" {% if sort == "created_at" %}selected{% endif %}>Älteste zuerst</option>
-                <option value="-created_at" {% if sort == "-created_at" %}selected{% endif %}>Neueste zuerst</option>
-            </select>
-        </div>
-        <button type="submit" class="filter-btn">Anwenden</button>
-        {% if search or sort != "name" %}
-            <a href="{% url 'recipes:recipe_list' %}" class="reset-link">Zurücksetzen</a>
-        {% endif %}
+        <button type="button" class="filter-open-btn" id="openFilterBtn" aria-label="Filter öffnen">
+            <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" viewBox="0 0 24 24"><path d="M4 7h16M7 12h10M10 17h4"/></svg>
+            <span class="filter-open-label">Filter</span>
+            {% if filters.active_count %}<span class="filter-count">{{ filters.active_count }}</span>{% endif %}
+        </button>
     </form>
+
+    {% if filters.chips %}
+    <div class="active-filters">
+        {% for chip in filters.chips %}
+        <a href="{{ request.path }}?{{ chip.query }}" class="active-filter" data-morph-link data-key="chip-{{ chip.label }}"
+            aria-label="Filter {{ chip.label }} entfernen">{{ chip.label }} <span aria-hidden="true">×</span></a>
+        {% endfor %}
+    </div>
+    {% endif %}
 
     <form id="recipe-selection-form">
         {% if recipes %}
@@ -55,6 +57,9 @@
                             <img src="{{ recipe.thumbnail_url }}" alt="{{ recipe.name }}" class="recipe-card-img" loading="lazy" decoding="async">
                         {% else %}
                             <div class="recipe-card-img recipe-card-placeholder">🍽️</div>
+                        {% endif %}
+                        {% if recipe.deal_count %}
+                            <span class="recipe-deal-badge">{{ recipe.deal_count }} Rabatt{{ recipe.deal_count|pluralize:"e" }}</span>
                         {% endif %}
                     </div>
                 </a>
@@ -81,6 +86,18 @@
             {% endfor %}
         </div>
 
+        {% else %}
+            <div class="empty-card">
+                <p class="empty-icon">📖</p>
+                {% if filters.is_filtered %}
+                    <p class="empty-text">Keine Rezepte gefunden. Probier es mit weniger Filtern.</p>
+                    <a href="{{ request.path }}" class="btn btn-secondary" data-morph-link>Filter zurücksetzen</a>
+                {% else %}
+                    <p class="empty-text">Noch keine Rezepte. Lege eins an oder importiere es per Link.</p>
+                {% endif %}
+            </div>
+        {% endif %}
+
         <div class="selection-bar" id="selectionBar" data-morph-keep-class>
             <button type="button" class="selection-bar-btn" id="openShoppingModalBtn">
                 <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M5 7h14l-1.2 12.1a2 2 0 01-2 1.9H8.2a2 2 0 01-2-1.9z"/><path d="M9 10V6a3 3 0 016 0v4"/></svg>
@@ -88,45 +105,76 @@
                 <span class="selection-count" id="selectionCount" data-morph-skip>0</span>
             </button>
         </div>
-        {% else %}
-            <div class="empty-card">
-                <p class="empty-icon">📖</p>
-                <p class="empty-text">{% if search %}Keine Rezepte für „{{ search }}“ gefunden.{% else %}Noch keine Rezepte. Lege eins an oder importiere es per Link.{% endif %}</p>
-            </div>
-        {% endif %}
     </form>
+</div>
 
-    <!-- Suggested Recipes -->
-    {% if suggested_recipes %}
-    <section class="suggested-section">
-        <h2 class="section-title">Passend zu aktuellen Rabatten</h2>
-        <div class="recipe-grid">
-            {% for suggestion in suggested_recipes %}
-            <div class="recipe-card" data-key="sugg-{{ suggestion.recipe.pk }}">
-                <a href="{% url 'recipes:recipe_detail' suggestion.recipe.pk %}" class="recipe-card-link">
-                    <div class="recipe-card-img-wrap">
-                        {% if suggestion.recipe.image %}
-                            <img src="{{ suggestion.recipe.thumbnail_url }}" alt="{{ suggestion.recipe.name }}" class="recipe-card-img" loading="lazy" decoding="async">
-                        {% else %}
-                            <div class="recipe-card-img recipe-card-placeholder">🍽️</div>
-                        {% endif %}
-                    </div>
-                </a>
-                <div class="recipe-card-footer recipe-card-footer--suggestion">
-                    <a href="{% url 'recipes:recipe_detail' suggestion.recipe.pk %}" class="recipe-card-name">
-                        {{ suggestion.recipe.name }}
-                    </a>
-                    <div class="deal-tags">
-                        {% for deal in suggestion.deals %}
-                        <span class="deal-tag">{{ deal.title|truncatechars:20 }} · {{ deal.store.name }} {{ deal.deal_price }} €</span>
-                        {% endfor %}
-                    </div>
-                </div>
+<!-- Filter -->
+<div class="modal-overlay" id="recipeFilterModal" data-generic-close data-morph-keep-class>
+    <div class="modal">
+        <h2>Filter</h2>
+
+        {% for group in filters.groups %}
+        <div class="form-group">
+            <span class="tag-group-label">{{ group.label }}</span>
+            <div class="tag-chips">
+                {% for option in group.options %}
+                <label class="tag-chip">
+                    <input type="checkbox" name="tag" value="{{ option.value }}" form="recipe-filter-form" {% if option.selected %}checked{% endif %}>
+                    <span>{{ option.label }}</span>
+                </label>
+                {% endfor %}
             </div>
-            {% endfor %}
         </div>
-    </section>
-    {% endif %}
+        {% endfor %}
+
+        <div class="form-group">
+            <label for="recipe-ingredient-input">Zutaten</label>
+            <div class="tag-chips" id="recipeIngredientChips">
+                {% for name in filters.ingredients %}
+                <span class="ingredient-chip" data-key="ingredient-{{ name }}">
+                    <input type="hidden" name="ingredient" value="{{ name }}" form="recipe-filter-form">
+                    {{ name }}
+                    <button type="button" class="ingredient-chip-remove" aria-label="{{ name }} entfernen">×</button>
+                </span>
+                {% endfor %}
+            </div>
+            <input type="text" id="recipe-ingredient-input" placeholder="z. B. Hühnchen, Nudeln…"
+                enterkeyhint="done" autocomplete="off">
+            <div class="custom-search-dropdown hidden" id="recipeIngredientDropdown">
+                {% for name in ingredient_names %}
+                <button type="button" class="custom-search-option" data-name="{{ name }}">{{ name }}</button>
+                {% endfor %}
+            </div>
+        </div>
+
+        <div class="form-group">
+            <span class="tag-group-label">Angebote</span>
+            <div class="tag-chips">
+                <label class="tag-chip">
+                    <input type="checkbox" name="deals" value="1" form="recipe-filter-form" {% if filters.deals_only %}checked{% endif %}>
+                    <span>Mit Rabatt</span>
+                </label>
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label for="recipe-sort-select">Sortierung</label>
+            <select name="sort" id="recipe-sort-select" form="recipe-filter-form">
+                {% for value, label in filters.sort_options %}
+                <option value="{{ value }}" {% if filters.sort == value %}selected{% endif %}>{{ label }}</option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <div class="modal-actions sticky-modal-actions">
+            {% if filters.is_modified %}
+            <a href="{{ request.path }}" class="btn btn-secondary" data-morph-link>Zurücksetzen</a>
+            {% endif %}
+            <button type="button" class="btn btn-primary" data-close-modal>
+                {{ recipes|length }} Rezept{{ recipes|length|pluralize:"e" }} anzeigen
+            </button>
+        </div>
+    </div>
 </div>
 
 <!-- Shopping Modal -->
@@ -166,6 +214,19 @@
                     <label for="review-servings">Portionen</label>
                     <input type="number" id="review-servings" name="servings" min="1" value="1">
                 </div>
+                {% for group in tag_groups %}
+                <div class="form-group">
+                    <span class="tag-group-label">{{ group.label }}</span>
+                    <div class="tag-chips">
+                        {% for tag in group.tags %}
+                        <label class="tag-chip">
+                            <input type="checkbox" name="review_tags" value="{{ tag.value }}">
+                            <span>{{ tag.label }}</span>
+                        </label>
+                        {% endfor %}
+                    </div>
+                </div>
+                {% endfor %}
                 <div class="form-group">
                     <label for="review-instructions">Anleitung</label>
                     <textarea id="review-instructions" name="instructions" rows="8"></textarea>

@@ -38,6 +38,13 @@
         <p class="recipe-subtitle">
             Basisrezept für <span id="base-servings">{{ recipe.servings }}</span> Portion(en)
         </p>
+        {% if recipe.tag_labels %}
+        <ul class="recipe-tags">
+            {% for label in recipe.tag_labels %}
+            <li class="recipe-tag">{{ label }}</li>
+            {% endfor %}
+        </ul>
+        {% endif %}
     </div>
 
     <!-- Portionen -->
@@ -81,6 +88,25 @@
         {% endif %}
         {% endwith %}
     </section>
+
+    {% if deals %}
+    <!-- Rabatte -->
+    <section class="section">
+        <div class="section-header">
+            <h2 class="section-title">Aktuelle Rabatte</h2>
+        </div>
+        <ul class="recipe-deal-list">
+            {% for deal in deals %}
+            <li class="recipe-deal" data-key="deal-{{ deal.pk }}">
+                <span class="recipe-deal-title">{{ deal.title }}</span>
+                <span class="recipe-deal-meta">
+                    {{ deal.store.name }}{% if deal.deal_price %} · <strong>{{ deal.deal_price|floatformat:2 }} €</strong>{% endif %}
+                </span>
+            </li>
+            {% endfor %}
+        </ul>
+    </section>
+    {% endif %}
 
     <!-- Anleitung -->
     <section class="section">

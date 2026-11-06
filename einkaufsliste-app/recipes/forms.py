@@ -1,5 +1,5 @@
 from django import forms
-from .models import Recipe, RecipeIngredient
+from .models import Recipe, RecipeIngredient, TAG_GROUPS
 from ingredients.models import Ingredient
 
 
@@ -13,6 +13,32 @@ class RecipeForm(forms.ModelForm):
             "instructions": forms.Textarea(attrs={"class": "form-control", "rows": 5}),
             "image": forms.FileInput(attrs={"class": "form-control", "accept": "image/*"}),
         }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        saved_tags = set(self.instance.tags.values_list("tag", flat=True)) if self.instance.pk else set()
+
+        for group in TAG_GROUPS:
+            self.fields[f"tags_{group['key']}"] = forms.MultipleChoiceField(
+                label=group["label"],
+                required=False,
+                choices=[(tag.value, tag.label) for tag in group["tags"]],
+                initial=[tag.value for tag in group["tags"] if tag.value in saved_tags],
+                widget=forms.CheckboxSelectMultiple,
+            )
+
+    def regular_fields(self):
+        return [field for field in self if not field.name.startswith("tags_")]
+
+    def tag_fields(self):
+        return [field for field in self if field.name.startswith("tags_")]
+
+    def save(self, commit=True):
+        recipe = super().save(commit=commit)
+        if commit:
+            recipe.set_tags([tag for field in self.tag_fields() for tag in self.cleaned_data[field.name]])
+        return recipe
 
 
 class RecipeIngredientForm(forms.ModelForm):

@@ -3,22 +3,118 @@ document.addEventListener("DOMContentLoaded", () => {
     const modalBody = document.getElementById("modal-body");
 
     // ── Auswahl: Karte markieren + schwebende "Einkaufsliste erstellen"-Pille ──
-    function updateSelectionBar() {
-        const count = document.querySelectorAll('#recipe-selection-form input[name="recipes"]:checked').length;
-        document.getElementById("selectionBar")?.classList.toggle("visible", count > 0);
+    // Die Auswahl liegt hier statt nur in den Checkboxen: Sie soll erhalten bleiben, wenn
+    // ein Filter die Karte ausblendet (erst Frühstück auswählen, dann Abendessen dazu).
+    const selectedRecipes = new Map();
+
+    function syncSelection() {
+        document.querySelectorAll('#recipe-selection-form input[name="recipes"]').forEach((checkbox) => {
+            const selected = selectedRecipes.has(checkbox.value);
+            checkbox.checked = selected;
+            checkbox.closest(".recipe-card")?.classList.toggle("selected", selected);
+        });
+        document.getElementById("selectionBar")?.classList.toggle("visible", selectedRecipes.size > 0);
         const counter = document.getElementById("selectionCount");
-        if (counter) counter.textContent = String(count);
+        if (counter) counter.textContent = String(selectedRecipes.size);
     }
 
     document.addEventListener("change", (event) => {
         const checkbox = event.target;
         if (checkbox.name !== "recipes") return;
-        checkbox.closest(".recipe-card")?.classList.toggle("selected", checkbox.checked);
-        updateSelectionBar();
+        if (checkbox.checked) {
+            selectedRecipes.set(checkbox.value, {
+                id: checkbox.value,
+                name: checkbox.dataset.recipeName,
+                baseServings: checkbox.dataset.recipeServings,
+            });
+        } else {
+            selectedRecipes.delete(checkbox.value);
+        }
+        syncSelection();
     });
 
-    document.addEventListener("app:morphed", updateSelectionBar);
-    updateSelectionBar();
+    document.addEventListener("app:morphed", syncSelection);
+    syncSelection();
+
+    // ── Filter: jede Änderung wirkt sofort, die Anzahl im Button zählt live mit ──
+    const filterForm = document.getElementById("recipe-filter-form");
+    const filterModal = document.getElementById("recipeFilterModal");
+    const ingredientInput = document.getElementById("recipe-ingredient-input");
+    const ingredientDropdown = document.getElementById("recipeIngredientDropdown");
+    const ingredientChips = document.getElementById("recipeIngredientChips");
+
+    function selectedIngredients() {
+        return Array.from(ingredientChips.querySelectorAll('input[name="ingredient"]'), (input) => input.value);
+    }
+
+    function renderIngredientOptions() {
+        const typed = ingredientInput.value.trim().toLowerCase();
+        const selected = selectedIngredients();
+        let visibleCount = 0;
+
+        ingredientDropdown.querySelectorAll(".custom-search-option").forEach((option) => {
+            const name = option.dataset.name;
+            const matches = typed && name.toLowerCase().includes(typed) && !selected.includes(name);
+            option.classList.toggle("hidden", !matches);
+            if (matches) visibleCount += 1;
+        });
+
+        ingredientDropdown.classList.toggle("hidden", visibleCount === 0);
+    }
+
+    function addIngredient(name) {
+        const value = name.trim();
+        ingredientInput.value = "";
+        ingredientDropdown.classList.add("hidden");
+
+        if (!value || selectedIngredients().some((item) => item.toLowerCase() === value.toLowerCase())) return;
+
+        const input = document.createElement("input");
+        input.type = "hidden";
+        input.name = "ingredient";
+        input.value = value;
+        input.setAttribute("form", filterForm.id);
+        ingredientChips.appendChild(input);
+        filterForm.requestSubmit();
+    }
+
+    document.addEventListener("change", (event) => {
+        const control = event.target;
+        if (control.form === filterForm && !control.matches(".search-input")) filterForm.requestSubmit();
+    });
+
+    document.addEventListener("input", (event) => {
+        if (event.target === ingredientInput) renderIngredientOptions();
+    });
+
+    ingredientInput?.addEventListener("keydown", (event) => {
+        if (event.key !== "Enter") return;
+        event.preventDefault();
+        addIngredient(ingredientInput.value);
+    });
+
+    document.addEventListener("click", (event) => {
+        if (event.target.closest("#openFilterBtn")) {
+            filterModal?.classList.add("active");
+            return;
+        }
+
+        const option = event.target.closest("#recipeIngredientDropdown .custom-search-option");
+        if (option) {
+            addIngredient(option.dataset.name);
+            ingredientInput.focus();
+            return;
+        }
+
+        const removeButton = event.target.closest(".ingredient-chip-remove");
+        if (removeButton) {
+            removeButton.closest(".ingredient-chip").remove();
+            filterForm.requestSubmit();
+            return;
+        }
+
+        if (event.target !== ingredientInput) ingredientDropdown?.classList.add("hidden");
+    });
 
     const shoppingModal = document.getElementById("shoppingCreateModal");
     const openShoppingModalBtn = document.getElementById("openShoppingModalBtn");
@@ -181,13 +277,7 @@ let extractedRecipeData = null;
     }
 
     function getSelectedRecipes() {
-        const checkedBoxes = document.querySelectorAll('input[name="recipes"]:checked');
-
-        return Array.from(checkedBoxes).map((checkbox) => ({
-            id: checkbox.value,
-            name: checkbox.dataset.recipeName,
-            baseServings: checkbox.dataset.recipeServings,
-        }));
+        return Array.from(selectedRecipes.values());
     }
 
     function renderSelectedRecipes() {
@@ -475,6 +565,11 @@ let extractedRecipeData = null;
         reviewTitleInput.value = recipe.title || "";
         reviewServingsInput.value = extractServingsNumber(recipe.servings) || 1;
 
+        const suggestedTags = Array.isArray(recipe.tags) ? recipe.tags : [];
+        recipeReviewForm.querySelectorAll('input[name="review_tags"]').forEach((checkbox) => {
+            checkbox.checked = suggestedTags.includes(checkbox.value);
+        });
+
         const steps = Array.isArray(recipe.steps) ? recipe.steps : [];
         reviewInstructionsInput.value = steps
             .map((step) => step.instruction || "")
@@ -530,6 +625,7 @@ let extractedRecipeData = null;
             title: reviewTitleInput.value.trim(),
             servings: reviewServingsInput.value,
             instructions: reviewInstructionsInput.value.trim(),
+            tags: Array.from(recipeReviewForm.querySelectorAll('input[name="review_tags"]:checked'), (checkbox) => checkbox.value),
             ingredients: ingredients,
         };
     }

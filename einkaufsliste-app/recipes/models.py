@@ -10,6 +10,65 @@ def recipe_image_path(instance, filename):
     unique = uuid.uuid4().hex[:8]
     return f"recipe_images/household_{instance.household_id}/{unique}.{ext}"
 
+class Tag(models.TextChoices):
+    BREAKFAST = "breakfast", "Frühstück"
+    LUNCH = "lunch", "Mittagessen"
+    DINNER = "dinner", "Abendessen"
+    SNACK = "snack", "Snack"
+
+    MAIN = "main", "Hauptgericht"
+    SIDE = "side", "Beilage"
+    SOUP = "soup", "Suppe"
+    SALAD = "salad", "Salat"
+    CASSEROLE = "casserole", "Auflauf"
+    SAUCE = "sauce", "Sauce & Dip"
+    BREAD = "bread", "Brot & Gebäck"
+    CAKE = "cake", "Kuchen"
+    DESSERT = "dessert", "Dessert"
+    DRINK = "drink", "Getränk"
+
+    MEAT = "meat", "Fleisch"
+    FISH = "fish", "Fisch"
+    VEGETARIAN = "vegetarian", "Vegetarisch"
+    VEGAN = "vegan", "Vegan"
+
+    GLUTEN_FREE = "gluten_free", "Glutenfrei"
+    LACTOSE_FREE = "lactose_free", "Laktosefrei"
+    LOW_CARB = "low_carb", "Low Carb"
+    HIGH_PROTEIN = "high_protein", "High Protein"
+    QUICK = "quick", "Schnell"
+
+
+# Innerhalb einer Gruppe reicht beim Filtern eine Kategorie ("Fleisch" oder "Fisch").
+# match_all: alle gewählten müssen zutreffen ("glutenfrei" und "laktosefrei").
+TAG_GROUPS = [
+    {
+        "key": "meal",
+        "label": "Mahlzeit",
+        "tags": [Tag.BREAKFAST, Tag.LUNCH, Tag.DINNER, Tag.SNACK],
+    },
+    {
+        "key": "course",
+        "label": "Art",
+        "tags": [
+            Tag.MAIN, Tag.SIDE, Tag.SOUP, Tag.SALAD, Tag.CASSEROLE,
+            Tag.SAUCE, Tag.BREAD, Tag.CAKE, Tag.DESSERT, Tag.DRINK,
+        ],
+    },
+    {
+        "key": "content",
+        "label": "Inhalt",
+        "tags": [Tag.MEAT, Tag.FISH, Tag.VEGETARIAN, Tag.VEGAN],
+    },
+    {
+        "key": "special",
+        "label": "Besonderheiten",
+        "tags": [Tag.GLUTEN_FREE, Tag.LACTOSE_FREE, Tag.LOW_CARB, Tag.HIGH_PROTEIN, Tag.QUICK],
+        "match_all": True,
+    },
+]
+
+
 class Recipe(models.Model):
     household = models.ForeignKey(
         "households.Household",
@@ -54,10 +113,37 @@ class Recipe(models.Model):
             return self.image.storage.url(thumb)
         return self.image.url
 
+    @property
+    def tag_labels(self):
+        saved = {recipe_tag.tag for recipe_tag in self.tags.all()}
+        return [tag.label for tag in Tag if tag.value in saved]
+
+    def set_tags(self, tags):
+        self.tags.exclude(tag__in=tags).delete()
+        RecipeTag.objects.bulk_create(
+            [RecipeTag(recipe=self, tag=tag) for tag in tags],
+            ignore_conflicts=True,
+        )
+
     def scale_factor(self, target_servings: int) -> Decimal:
         if self.servings <= 0:
             return Decimal("1")
         return Decimal(target_servings) / Decimal(self.servings)
+
+
+class RecipeTag(models.Model):
+    recipe = models.ForeignKey(
+        Recipe,
+        on_delete=models.CASCADE,
+        related_name="tags",
+    )
+    tag = models.CharField(max_length=20, choices=Tag.choices)
+
+    class Meta:
+        unique_together = ("recipe", "tag")
+
+    def __str__(self):
+        return f"{self.get_tag_display()} ({self.recipe.name})"
 
 
 class RecipeIngredient(models.Model):

@@ -349,7 +349,6 @@
         // POST nur einmal gleichzeitig (Doppelklick); GET (Suche) darf überholen
         if (method === "post" && form.dataset.submitting) return;
         form.dataset.submitting = "1";
-        setBusy(submitter, true);
 
         let formData;
         try {
@@ -359,6 +358,9 @@
             formData = new FormData(form);
             if (submitter?.name) formData.append(submitter.name, submitter.value);
         }
+
+        // Erst jetzt: deaktivierte Buttons landen nicht in den FormData (name/value ginge verloren)
+        setBusy(submitter, true);
 
         try {
             if (method === "get") {

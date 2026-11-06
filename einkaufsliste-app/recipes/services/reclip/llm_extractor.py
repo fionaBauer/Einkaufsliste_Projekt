@@ -3,6 +3,8 @@ import os
 
 from openai import OpenAI
 
+from recipes.models import Tag
+
 SYSTEM_PROMPT = """Du bist ein Rezept-Extraktions-Experte. Du bekommst den Transcript-Text und/oder die Caption eines Koch-Videos.
 
 Extrahiere daraus ein strukturiertes Rezept als JSON mit exakt diesem Schema:
@@ -26,9 +28,11 @@ Regeln:
 - Extrahiere NUR was im Video/Caption tatsächlich genannt wird
 - Wenn Mengen nicht genannt werden, setze amount und unit auf null
 - Schreibe die Schritte in der Reihenfolge wie im Video gezeigt
-- Tags: Küche-Stil, Diät-Info, Schwierigkeit etc.
+- Tags: Ordne das Rezept passenden Kategorien aus der Liste unten zu und gib nur deren Kürzel an. Die Kategorien darfst du aus Zutaten und Zubereitung ableiten; lass sie weg, wenn du unsicher bist
 - Antworte NUR mit dem JSON, kein anderer Text
-"""
+
+Erlaubte Tags:
+""" + "\n".join(f"- {tag.value}: {tag.label}" for tag in Tag)
 
 
 def extract_recipe(transcript: str | None, caption: str | None, source_url: str) -> dict:

@@ -288,10 +288,12 @@ def get_suggested_recipes_by_deals(recipes, limit=5):
         for recipe_ingredient in recipe.recipe_ingredients.all():
             deals = find_deals_for_ingredient(recipe_ingredient.ingredient, active_deals)[:2]
             matched_deals.extend(deals)
+        # Ein Angebot kann zu mehreren Zutaten passen, zählt aber nur einmal
+        matched_deals = list({deal.pk: deal for deal in matched_deals}.values())
         if matched_deals:
             suggestions.append({
                 "recipe": recipe,
-                "deals": matched_deals[:4],
+                "deals": matched_deals,
                 "match_count": len(matched_deals),
             })
     suggestions.sort(key=lambda item: item["match_count"], reverse=True)

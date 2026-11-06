@@ -16,7 +16,8 @@ from ingredients.models import Ingredient, Unit
 from ingredients.categories import guess_category
 from deals.services import get_suggested_recipes_by_deals
 
-from .models import Recipe, RecipeIngredient
+from .filters import RecipeFilters
+from .models import Recipe, RecipeIngredient, Tag, TAG_GROUPS
 from .forms import RecipeForm, RecipeIngredientForm
 from .services.reclip.pipeline import process_url
 
@@ -32,32 +33,34 @@ class RecipeListView(LoginRequiredMixin, ListView):
 
     def get_queryset(self):
         household = self.request.user.households.first()
-        queryset = Recipe.objects.filter(household=household)
+        recipes = Recipe.objects.filter(household=household)
 
-        search = self.request.GET.get("search", "").strip()
-        sort = self.request.GET.get("sort", "name")
-
-        if search:
-            queryset = queryset.filter(name__icontains=search)
-
-        allowed_sort_fields = {
-            "name": "name",
-            "-name": "-name",
-            "created_at": "created_at",
-            "-created_at": "-created_at",
+        self.deal_counts = {
+            suggestion["recipe"].pk: suggestion["match_count"]
+            for suggestion in get_suggested_recipes_by_deals(recipes, limit=None)
         }
+        self.filters = RecipeFilters(self.request.GET)
 
-        return queryset.order_by(allowed_sort_fields.get(sort, "name"))
+        return self.filters.apply(recipes, self.deal_counts.keys())
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context["search"] = self.request.GET.get("search", "")
-        context["sort"] = self.request.GET.get("sort", "name")
+        context["filters"] = self.filters
         context["form"] = RecipeForm()
+        context["tag_groups"] = TAG_GROUPS
+
         household = self.request.user.households.first()
-        context["suggested_recipes"] = get_suggested_recipes_by_deals(
-            Recipe.objects.filter(household=household)
+        context["ingredient_names"] = (
+            Ingredient.objects.filter(ingredient_recipes__recipe__household=household)
+            .order_by("name")
+            .values_list("name", flat=True)
+            .distinct()
         )
+
+        recipes = list(context["recipes"])
+        for recipe in recipes:
+            recipe.deal_count = self.deal_counts.get(recipe.pk, 0)
+        context["recipes"] = recipes
         return context
 
 
@@ -69,11 +72,13 @@ class RecipeDetailView(LoginRequiredMixin, DetailView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context["ingredient_form"] = RecipeIngredientForm()
+        suggestions = get_suggested_recipes_by_deals(Recipe.objects.filter(pk=self.object.pk))
+        context["deals"] = suggestions[0]["deals"] if suggestions else []
         return context
 
     def get_queryset(self):
         household = self.request.user.households.first()
-        return Recipe.objects.filter(household=household).prefetch_related("recipe_ingredients__ingredient")
+        return Recipe.objects.filter(household=household).prefetch_related("recipe_ingredients__ingredient", "tags")
 
 
 class RecipeCreateView(LoginRequiredMixin, CreateView):
@@ -386,6 +391,7 @@ def create_recipe_from_extracted_data(request):
             servings=max(servings, 1),
             instructions=instructions.strip(),
         )
+        recipe.set_tags([tag for tag in Tag.values if tag in (data.get("tags") or [])])
 
         merged_recipe_ingredients = {}
 
