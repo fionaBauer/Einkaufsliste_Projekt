@@ -10,13 +10,14 @@ import yt_dlp
 def _get_ffmpeg_location() -> str:
     """
     Gibt einen Pfad zurück, den yt-dlp für ffmpeg/ffprobe benutzen kann.
-    Auf Render liegen beide unter /usr/bin.
+    Auf Render liegen beide unter /usr/bin, auf dem Mac z.B. unter /opt/homebrew/bin.
     """
     env_value = os.getenv("FFMPEG_LOCATION", "").strip()
     if env_value:
         return env_value
 
-    return "/usr/bin"
+    ffmpeg_path = shutil.which("ffmpeg")
+    return os.path.dirname(ffmpeg_path) if ffmpeg_path else "/usr/bin"
 
 
 def extract_metadata(url: str) -> dict:

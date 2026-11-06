@@ -1,6 +1,8 @@
 import logging
 from urllib.parse import urlparse
 
+from yt_dlp.utils import DownloadError
+
 from .llm_extractor import classify_recipe, extract_recipe, extract_recipe_from_webpage_text
 from .transcriber import transcribe_video
 from .video_extractor import extract_metadata, extract_subtitles
@@ -37,13 +39,21 @@ def _is_video_url(url: str) -> bool:
 
 
 def _process_video_url(url: str) -> dict:
-    metadata = extract_metadata(url)
-    caption = metadata.get("description", "")
+    try:
+        metadata = extract_metadata(url)
+        caption = metadata.get("description", "")
 
-    transcript = extract_subtitles(url)
+        transcript = extract_subtitles(url)
 
-    if not transcript:
-        transcript = transcribe_video(url)
+        if not transcript:
+            transcript = transcribe_video(url)
+    except DownloadError as error:
+        logger.warning("Video konnte nicht geladen werden: %s", error)
+        raise ValueError(
+            "Das Video konnte nicht geladen werden. Der Beitrag ist vielleicht privat oder die "
+            "Plattform blockiert gerade den Zugriff. Du kannst die Beschreibung kopieren und "
+            "unter „Text einfügen“ importieren."
+        ) from error
 
     recipe = extract_recipe(
         transcript=transcript,

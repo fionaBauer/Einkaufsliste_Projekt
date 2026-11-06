@@ -28,7 +28,7 @@ tqdm==4.67.3
 typing-inspection==0.4.2
 typing_extensions==4.15.0
 urllib3==2.6.3
-yt-dlp==2026.3.17
+yt-dlp==2026.10.26
 gunicorn
 whitenoise
 psycopg[binary]

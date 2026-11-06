@@ -2,6 +2,8 @@ import json
 from datetime import timedelta
 from unittest.mock import patch
 
+from yt_dlp.utils import DownloadError
+
 from django.contrib.auth import get_user_model
 from django.test import TestCase, override_settings
 from django.urls import reverse
@@ -14,6 +16,7 @@ from ingredients.models import Ingredient, IngredientCategory, Unit
 from .filters import ingredient_terms
 from .models import Recipe, RecipeIngredient, Tag
 from .services.reclip.pipeline import process_url
+from .services.reclip.video_extractor import _get_ffmpeg_location
 from .services.reclip.web_extractor import _parse_iso_duration, _total_minutes
 
 
@@ -246,6 +249,22 @@ class RecipeImportTests(TestCase):
         "tags": ["Italienisch"],
         "cooking_minutes": None,
     }
+
+    @patch("recipes.services.reclip.pipeline.extract_metadata", side_effect=DownloadError("login required"))
+    def test_blocked_video_gives_a_readable_error(self, metadata):
+        with self.assertLogs("recipes.services.reclip.pipeline", level="WARNING"):
+            with self.assertRaisesMessage(ValueError, "Text einfügen"):
+                process_url("https://www.instagram.com/reel/abc/")
+
+    def test_ffmpeg_location(self):
+        with patch.dict("os.environ", {"FFMPEG_LOCATION": "/custom"}):
+            self.assertEqual(_get_ffmpeg_location(), "/custom")
+
+        with patch.dict("os.environ", {"FFMPEG_LOCATION": ""}):
+            with patch("shutil.which", return_value="/opt/homebrew/bin/ffmpeg"):
+                self.assertEqual(_get_ffmpeg_location(), "/opt/homebrew/bin")
+            with patch("shutil.which", return_value=None):
+                self.assertEqual(_get_ffmpeg_location(), "/usr/bin")
 
     def test_iso_durations(self):
         cases = {
