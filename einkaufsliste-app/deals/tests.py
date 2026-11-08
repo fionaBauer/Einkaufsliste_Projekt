@@ -225,3 +225,45 @@ class RecipeDetailTabTests(DealTestCase):
 
         self.deal("Paprika", "Lidl", "1.29")
         self.assertContains(self.client.get(url), 'id="pane-deals"')
+
+
+class IngredientMatchingTests(DealTestCase):
+    def matches(self, ingredient_name, category):
+        from types import SimpleNamespace
+        from .services import find_deals_for_ingredient
+
+        ingredient = SimpleNamespace(name=ingredient_name, category=category)
+        return [d.title for d in find_deals_for_ingredient(ingredient, list(get_user_deals(self.user)))]
+
+    def test_marzipan_potatoes_are_not_potatoes(self):
+        self.deal("Speisekartoffeln", "Lidl", "2.49")
+        self.deal("Marzipankartoffeln", "Lidl", "1.99")
+        sweets = self.deal("Niederegger Marzipankartoffeln", "REWE", "2.99", product_name="Marzipankartoffeln")
+        sweets.source_categories = "Süßwaren"
+        sweets.save()
+        self.deal("Süßkartoffeln", "REWE", "1.79")
+
+        self.assertEqual(self.matches("Kartoffeln", "fruit_veg"), ["Speisekartoffeln"])
+
+    def test_frozen_vegetables_still_count(self):
+        self.deal("TK Erbsen", "Lidl", "1.19", product_name="TK Erbsen")
+        self.assertEqual(self.matches("Erbsen", "fruit_veg"), ["TK Erbsen"])
+
+    def test_cheese_still_matches_by_compound(self):
+        self.deal("Gouda", "Lidl", "1.99")
+        self.deal("Mozzarella", "Lidl", "0.79")
+        self.assertEqual(self.matches("Mozzarella", "dairy"), ["Mozzarella"])
+
+    def test_last_word_decides(self):
+        self.deal("Bernbacher Eiernudeln", "Lidl", "1.49", product_name="Eiernudeln")
+        self.deal("Heinz Tomaten Ketchup", "Lidl", "2.49", product_name="Tomaten Ketchup")
+        self.deal("Mais-Hähnchen", "REWE", "6.99")
+        self.assertEqual(self.matches("Nudeln", "grains"), ["Bernbacher Eiernudeln"])
+        self.assertEqual(self.matches("Tomaten", "fruit_veg"), [])
+        self.assertEqual(self.matches("Hähnchen", "meat_fish"), ["Mais-Hähnchen"])
+
+    def test_chocolate_is_not_milk(self):
+        self.deal("Vollmilch", "Lidl", "0.99")
+        self.deal("Puda Schoko Tröpfchen Vollmilch", "Lidl", "1.29", product_name="Schoko Tröpfchen Vollmilch")
+        self.deal("Bio-Kokosnuss\xadmilch", "REWE", "1.99")
+        self.assertEqual(self.matches("Milch", "dairy"), ["Vollmilch"])

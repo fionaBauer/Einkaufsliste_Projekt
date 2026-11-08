@@ -30,7 +30,10 @@ CATEGORY_KEYWORDS = [
     (IngredientCategory.CANNED, ["kokosmilch", "dose", "konserve", "kidneybohnen", "kichererbsen",
                                  "linsen", "passierte", "gehackte tomaten", "tomatenmark", "mais"]),
     (IngredientCategory.SNACKS, ["erdnussbutter", "nutella", "schoko", "chips", "keks", "gummibär",
-                                 "riegel", "nüsse", "nuss", "mandel", "popcorn", "cracker", "praline"]),
+                                 "riegel", "nüsse", "nuss", "mandel", "popcorn", "cracker", "praline",
+                                 # Süßwaren vor Obst & Gemüse: "Marzipankartoffeln" sind keine Kartoffeln
+                                 "marzipan", "nougat", "süßware", "süßigkeit", "konfekt", "lebkuchen",
+                                 "dominostein", "bonbon", "fruchtgummi", "lakritz"]),
     (IngredientCategory.FREEZER, ["tiefkühl", "tk", "pommes", "gemüsepfanne", "eis", "fischstäbchen"]),
     (IngredientCategory.MEAT_FISH, ["hähnchen", "hühnchen", "huhn", "chicken", "pute", "rind", "schwein",
                                     "hack", "steak", "schnitzel", "wurst", "würstchen", "salami",
@@ -61,6 +64,33 @@ CATEGORY_KEYWORDS = [
                                     "bohnen", "erbsen", "gemüse", "obst", "melone", "pfirsich",
                                     "frucht", "früchte", "zitrusfrüchte", "kräuter"]),
 ]
+
+
+_HEAD_PLURALS = ("", "n", "en", "e", "s", "er", "nen")
+
+
+def guess_category_from_head(word, default=IngredientCategory.OTHER):
+    """Kategorie eines einzelnen Worts anhand seiner Endung (dem Kopf des Kompositums).
+
+    "Eiernudeln" sind Nudeln, keine Eier: anders als guess_category() zählt hier nur ein
+    Stichwort, auf das das Wort endet – bei mehreren das längste ("tomatensauce" → "sauce").
+    """
+    word = (word or "").lower().strip()
+    if not word:
+        return default
+    seeded = _seed_category(word)
+    if seeded:
+        return seeded
+    if word.endswith("öl"):
+        return IngredientCategory.SPICES
+    best, best_len = default, 0
+    for category, keywords in CATEGORY_KEYWORDS:
+        for keyword in keywords:
+            if " " in keyword or len(keyword) <= 2 or len(keyword) <= best_len:
+                continue
+            if any(word.endswith(keyword + suffix) for suffix in _HEAD_PLURALS):
+                best, best_len = category, len(keyword)
+    return best
 
 
 def _matches(name, words, keyword):

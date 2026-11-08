@@ -3,6 +3,8 @@ from functools import lru_cache
 from django.db.models import Q
 from django.utils import timezone
 
+from ingredients.models import IngredientCategory
+
 from .models import Deal
 
 
@@ -72,9 +74,11 @@ DEAL_EXCLUSIONS = {
     "äpfel": ("granatäpfel",),
     "nuss": ("muskatnuss", "kokosnuss"),
     "kohl": ("blumenkohl", "rosenkohl", "grünkohl"),
-    "milch": ("buttermilch", "kokosmilch", "hafermilch", "sojamilch", "mandelmilch", "kondensmilch", "sonnenmilch"),
+    "milch": ("buttermilch", "kokosmilch", "kokosnussmilch", "hafermilch", "sojamilch", "mandelmilch", "kondensmilch", "sonnenmilch"),
     "sahne": ("sprühsahne",),
     "zucker": ("puderzucker", "vanillezucker"),
+    "kartoffel": ("süßkartoffel", "süßkartoffeln"),
+    "kartoffeln": ("süßkartoffel", "süßkartoffeln"),
 }
 
 
@@ -140,7 +144,8 @@ def _product_heads(deal):
     "Butter-Mandel-Stollen" → ["stollen"], "Bio-Vollmilch" → ["vollmilch"],
     "Meersalz Butter" → ["meersalz", "butter"].
     """
-    name = (deal.product_name or deal.title or "").lower()
+    # weiches Trennzeichen (U+00AD) aus Marktguru-Namen: "Kokosnuss\xadmilch"
+    name = (deal.product_name or deal.title or "").lower().replace("\xad", "")
     heads = []
     for token in _TOKEN_SPLIT.split(name):
         token = token.strip(".-")
@@ -164,6 +169,26 @@ def _deal_categories(deal):
     return {_map_source_category(n) for n in names} - {IngredientCategory.OTHER}
 
 
+# Ein Süßwaren-Wort irgendwo im Namen macht das Produkt zu Süßem – egal, worauf der Name
+# endet: "Marzipankartoffeln", "Schoko Tröpfchen Vollmilch"
+SWEETS_WORDS = ("marzipan", "schoko", "nougat", "praline", "süßware", "konfekt", "lebkuchen",
+                "dominostein", "bonbon", "fruchtgummi", "lakritz", "gummibär", "keks")
+
+
+def _name_signals(deal):
+    """(ist Süßes?, Kategorie des letzten Worts) aus dem Produktnamen ohne Marke.
+
+    Im Deutschen sagt das letzte Wort, was ein Produkt ist: "Tomaten Ketchup" ist Ketchup,
+    "Mais-Hähnchen" Hähnchen.
+    """
+    from ingredients.categories import guess_category_from_head
+
+    name = (deal.product_name or deal.title or "").lower().replace("\xad", "")
+    words = [w for w in re.split(r"[^a-zäöüß]+", name) if w]
+    is_sweet = any(sweet in name for sweet in SWEETS_WORDS)
+    return is_sweet, guess_category_from_head(words[-1]) if words else IngredientCategory.OTHER
+
+
 def _match_info(deal):
     """Pro Angebot nur einmal berechnen (Wortköpfe, Nicht-Lebensmittel, Kategorien).
 
@@ -176,9 +201,19 @@ def _match_info(deal):
             tuple(_product_heads(deal)),
             is_non_food(f"{deal.title} {deal.product_name or ''}", getattr(deal, "source_categories", "")),
             frozenset(_deal_categories(deal)),
+            *_name_signals(deal),
         )
         deal._match_info = info
     return info
+
+
+# Gleiche Zutat, andere Abteilung: TK-Erbsen oder Dosenmais taugen für "Erbsen"/"Mais"
+COMPATIBLE_CATEGORIES = {
+    IngredientCategory.FRUIT_VEG: {IngredientCategory.FREEZER, IngredientCategory.CANNED},
+    IngredientCategory.CANNED: {IngredientCategory.FRUIT_VEG},
+    IngredientCategory.FREEZER: {IngredientCategory.FRUIT_VEG, IngredientCategory.MEAT_FISH},
+    IngredientCategory.MEAT_FISH: {IngredientCategory.FREEZER},
+}
 
 
 def deal_matches(deal, terms, ingredient_category=None):
@@ -188,11 +223,12 @@ def deal_matches(deal, terms, ingredient_category=None):
     "Butterschmalz" aber keine Butter.
 
     … und die Kategorie nicht widerspricht: Für "Banane" (Obst) zählt "Joghurt Banane"
-    (laut Marktguru ein Joghurt) nicht.
+    (laut Marktguru ein Joghurt) nicht, für "Kartoffeln" keine "Marzipankartoffeln"
+    (laut Produktname Süßes).
     """
     from ingredients.models import IngredientCategory
 
-    heads, non_food, deal_categories = _match_info(deal)
+    heads, non_food, deal_categories, is_sweet, head_category = _match_info(deal)
 
     if ingredient_category != IngredientCategory.OTHER and non_food:
         return False
@@ -212,6 +248,13 @@ def deal_matches(deal, terms, ingredient_category=None):
 
     if ingredient_category and ingredient_category != IngredientCategory.OTHER:
         if deal_categories and ingredient_category not in deal_categories:
+            return False
+        # Zweite Meinung aus dem Produktnamen, falls Marktguru nichts Brauchbares liefert
+        if is_sweet and ingredient_category not in (IngredientCategory.SNACKS, IngredientCategory.BAKING):
+            return False
+        if head_category not in (IngredientCategory.OTHER, ingredient_category) and (
+            head_category not in COMPATIBLE_CATEGORIES.get(ingredient_category, ())
+        ):
             return False
     return True
 
