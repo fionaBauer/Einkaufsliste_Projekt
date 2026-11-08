@@ -59,7 +59,7 @@ def inventory_list(request):
             grouped_inventory_items.append({
                 "value": category_value,
                 "label": category_label,
-                "icon": CATEGORY_ICONS.get(category_value, "📦"),
+                "icon": CATEGORY_ICONS.get(category_value, "box"),
                 "items": category_items,
             })
 

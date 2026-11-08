@@ -7,48 +7,48 @@
 
 /* ── Design Tokens ── */
 :root {
-    /* Flächen */
-    --bg-app: #f4f2ee;
+    /* Flächen – ruhig, fast farblos */
+    --bg-app: #f5f4f1;
     --surface: #ffffff;
-    --surface-2: #f7f5f1;
-    --surface-3: #eeebe5;
+    --surface-2: #f3f2ef;
+    --surface-3: #eae8e4;
     --surface-glass: rgba(255, 255, 255, 0.82);
 
     /* Text */
-    --text-main: #1d1b18;
-    --text-soft: #5f5a52;
-    --text-muted: #8f897f;
-    --text-faint: #b8b2a8;
+    --text-main: #1c1c1a;
+    --text-soft: #57554f;
+    --text-muted: #8c8982;
+    --text-faint: #bbb8b1;
 
     /* Linien */
-    --border-light: #ebe7e0;
-    --border-strong: #ddd8cf;
+    --border-light: #ecebe7;
+    --border-strong: #dcdad5;
 
-    /* Akzent: Basilikum-Grün */
-    --accent: #23845b;
-    --accent-strong: #1b6a49;
-    --accent-soft: #e2f1e8;
-    --accent-ink: #145238;
+    /* Akzent: gedecktes Dunkelgrün – sparsam (Haken, aktive Zustände) */
+    --accent: #3d5a4c;
+    --accent-strong: #2f4a3d;
+    --accent-soft: #eceeeb;
+    --accent-ink: #2f4a3d;
 
-    /* Warm: Tomate (Rabatte, Hinweise) */
-    --warm: #e8622f;
-    --warm-soft: #fdebe2;
-    --warm-ink: #a8401a;
+    /* Warm: gedämpftes Terrakotta – nur für Angebote, als Schriftfarbe */
+    --warm: #a4573a;
+    --warm-soft: #f3eeeb;
+    --warm-ink: #92492e;
 
-    --danger: #d64545;
-    --danger-soft: #fdecec;
-    --danger-ink: #a12c2c;
+    --danger: #b94a48;
+    --danger-soft: #f7eceb;
+    --danger-ink: #93302e;
 
-    --info-soft: #e7eefc;
-    --info-ink: #2d55b8;
+    --info-soft: #efefec;
+    --info-ink: #4b4a46;
 
     /* Alte Namen (werden von Auth-Seiten & Inline-Styles genutzt) */
     --pastel-green: var(--accent-soft);
     --pastel-green-text: var(--accent-ink);
-    --pastel-amber: #fdf1d6;
-    --pastel-amber-text: #8a5a0f;
-    --pastel-purple: #efeafd;
-    --pastel-purple-text: #5b3cc4;
+    --pastel-amber: #f3f0e9;
+    --pastel-amber-text: #6f5f43;
+    --pastel-purple: #efeff0;
+    --pastel-purple-text: #4b4a52;
 
     /* Formen */
     --radius-xl: 28px;
@@ -59,14 +59,14 @@
     --radius-pill: 999px;
 
     /* Schatten */
-    --shadow-card: 0 1px 2px rgba(29, 27, 24, 0.04), 0 6px 20px rgba(29, 27, 24, 0.05);
+    --shadow-card: 0 1px 2px rgba(28, 28, 26, 0.03), 0 4px 16px rgba(28, 28, 26, 0.04);
     --shadow-soft: var(--shadow-card);
     --shadow-raised: 0 2px 6px rgba(29, 27, 24, 0.06), 0 14px 36px rgba(29, 27, 24, 0.10);
     --shadow-float: 0 8px 24px rgba(29, 27, 24, 0.10), 0 24px 60px rgba(29, 27, 24, 0.14);
 
     /* Typo */
     --font-body: -apple-system, BlinkMacSystemFont, "Inter", "Segoe UI", system-ui, sans-serif;
-    --font-display: ui-rounded, "SF Pro Rounded", "Nunito", -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+    --font-display: var(--font-body);
 
     /* Bewegung */
     --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
@@ -75,7 +75,7 @@
     /* Seitenränder (werden von den mitlaufenden Kopfzeilen gebraucht) */
     --content-pad-top: 36px;
     --gutter: 40px;
-    --sticky-bg: rgba(244, 242, 238, 0.95);
+    --sticky-bg: rgba(245, 244, 241, 0.95);
 
     /* Navigation */
     --tabbar-height: 64px;
@@ -158,7 +158,7 @@ button { font-family: inherit; color: inherit; }
     width: 100%;
     z-index: 9999;
     pointer-events: none;
-    background: linear-gradient(90deg, var(--accent), #5cc48f);
+    background: var(--text-main);
     transform-origin: left;
     transform: scaleX(0);
     opacity: 0;
@@ -228,7 +228,7 @@ body.is-scrolled .recipe-topbar { box-shadow: 0 1px 0 var(--border-light); }
 .page-title {
     margin: 0;
     font-size: 32px;
-    font-weight: 800;
+    font-weight: 700;
     letter-spacing: -0.025em;
     color: var(--text-main);
 }
@@ -322,7 +322,7 @@ body.is-scrolled .recipe-topbar { box-shadow: 0 1px 0 var(--border-light); }
 .sidebar-title {
     margin: 0;
     font-size: 20px;
-    font-weight: 800;
+    font-weight: 700;
     letter-spacing: -0.02em;
 }
 
@@ -875,17 +875,6 @@ input[type="checkbox"]:disabled { opacity: 0.4; cursor: not-allowed; }
     box-shadow: var(--shadow-card);
 }
 
-.empty-icon {
-    margin: 0;
-    width: 60px;
-    height: 60px;
-    border-radius: 20px;
-    display: grid;
-    place-items: center;
-    font-size: 28px;
-    background: var(--surface-2);
-}
-
 .empty-text { margin: 0; color: var(--text-muted); font-size: 14.5px; max-width: 280px; }
 
 /* ── Kategorie-Kacheln (Inventar & Zutaten) ── */
@@ -919,9 +908,8 @@ input[type="checkbox"]:disabled { opacity: 0.4; cursor: not-allowed; }
     border-radius: 16px;
     display: grid;
     place-items: center;
-    font-size: 25px;
-    line-height: 1;
     background: var(--surface-2);
+    color: var(--text-soft);
     flex-shrink: 0;
 }
 
@@ -984,9 +972,12 @@ input[type="checkbox"]:disabled { opacity: 0.4; cursor: not-allowed; }
 .detail-back-btn:active { transform: scale(0.95); }
 
 .detail-title {
+    display: flex;
+    align-items: center;
+    gap: 10px;
     margin: 0;
     font-size: 22px;
-    font-weight: 800;
+    font-weight: 700;
 }
 
 /* Listenzeilen (Inventar & Zutaten) */
@@ -1078,7 +1069,7 @@ input[type="checkbox"]:disabled { opacity: 0.4; cursor: not-allowed; }
 .modal-title {
     margin: 0 0 18px;
     font-size: 22px;
-    font-weight: 800;
+    font-weight: 700;
 }
 
 .modal p { color: var(--text-soft); }
@@ -1156,13 +1147,13 @@ input[type="checkbox"]:disabled { opacity: 0.4; cursor: not-allowed; }
     place-items: center;
     flex-shrink: 0;
     font-size: 12px;
-    font-weight: 800;
+    font-weight: 700;
     background: var(--accent);
     color: white;
 }
 
 .toast.error .toast-icon { background: var(--danger); }
-.toast.warning .toast-icon, .toast.info .toast-icon { background: #e0a526; }
+.toast.warning .toast-icon, .toast.info .toast-icon { background: var(--text-soft); }
 .toast-text { flex: 1; }
 .toast.hide { animation: toast-out 0.25s ease-in forwards; }
 
@@ -1536,7 +1527,7 @@ input[type="file"] {
     padding: 18px 22px;
 }
 
-.barcode-modal-title { margin: 0 !important; font-size: 19px; font-weight: 800; }
+.barcode-modal-title { margin: 0 !important; font-size: 19px; font-weight: 700; }
 
 .barcode-close-btn {
     width: 36px;
@@ -1573,7 +1564,7 @@ input[type="file"] {
 
 .barcode-manual-input { flex: 1; }
 
-.barcode-result-title { margin: 0 0 14px; font-size: 20px; font-weight: 800; }
+.barcode-result-title { margin: 0 0 14px; font-size: 20px; font-weight: 700; }
 
 .barcode-result-inventory {
     display: flex;

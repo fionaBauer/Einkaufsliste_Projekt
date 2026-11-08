@@ -19,7 +19,6 @@ const urls = {
 };
 const MEALS = ["breakfast", "lunch", "dinner"];
 const MEAL_LABELS = { breakfast: "Früh", lunch: "Mittag", dinner: "Abend" };
-const MEAL_ICONS = { breakfast: "☀️", lunch: "🌤️", dinner: "🌙" };
 const DAY_NAMES = ["Mo", "Di", "Mi", "Do", "Fr", "Sa", "So"];
 const DAY_NAMES_LONG = ["Montag", "Dienstag", "Mittwoch", "Donnerstag", "Freitag", "Samstag", "Sonntag"];
 const mobileQuery = window.matchMedia("(max-width: 768px)");
@@ -259,7 +258,7 @@ function renderMonth() {
         MEALS.forEach(meal => {
             slotsFor(dateStr, meal).forEach(slot => {
                 const chip = mkEl("div", "month-chip");
-                chip.textContent = `${MEAL_ICONS[meal]} ${slot.recipe_name}`;
+                chip.textContent = slot.recipe_name;
                 chip.title = slot.recipe_name;
                 chip.addEventListener("click", () => openSlotModal(slot));
                 cell.appendChild(chip);
@@ -303,8 +302,9 @@ function makeChip(slot) {
         img.className = "recipe-chip-thumb";
         chip.appendChild(img);
     } else {
+        // Ohne Bild: Anfangsbuchstabe statt Emoji
         const icon = mkEl("span", "recipe-chip-icon");
-        icon.textContent = MEAL_ICONS[slot.meal] || "🍽️";
+        icon.textContent = (slot.recipe_name || "?").charAt(0).toUpperCase();
         chip.appendChild(icon);
     }
 
@@ -448,7 +448,7 @@ recipeSearch.addEventListener("input", () => {
             opt.appendChild(img);
         } else {
             const icon = mkEl("span", "recipe-option-icon");
-            icon.textContent = "🍽️";
+            icon.textContent = (r.name || "?").charAt(0).toUpperCase();
             opt.appendChild(icon);
         }
         const name = document.createElement("span");

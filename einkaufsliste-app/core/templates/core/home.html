@@ -14,7 +14,7 @@
 
     <header class="home-greeting">
         <p class="greeting-sub">{{ today_label }}</p>
-        <h1 class="greeting-title">Hallo {{ request.user.username }} 👋<br><span>Was kochst du heute?</span></h1>
+        <h1 class="greeting-title">Hallo {{ request.user.username }}<br><span>Was kochst du heute?</span></h1>
     </header>
 
     <div class="quick-actions-row">
@@ -45,7 +45,7 @@
                     {% if slot.recipe.image %}
                         <img src="{{ slot.recipe.thumbnail_url }}" alt="" class="today-meal-img" loading="lazy" decoding="async">
                     {% else %}
-                        <div class="today-meal-img today-meal-placeholder">🍽️</div>
+                        <div class="today-meal-img today-meal-placeholder">{% include "includes/icon.html" with name="dish" %}</div>
                     {% endif %}
                     <div class="today-meal-info">
                         <span class="today-meal-time">{{ slot.get_meal_display }}</span>
@@ -57,7 +57,7 @@
             </div>
         {% else %}
             <a href="{% url 'meal_plan:planner' %}" class="home-empty-row">
-                <span class="home-empty-icon">🗓️</span>
+                <span class="home-empty-icon">{% include "includes/icon.html" with name="calendar" %}</span>
                 <span>Für heute ist noch nichts geplant. <strong>Jetzt planen</strong></span>
             </a>
         {% endif %}
@@ -76,7 +76,7 @@
                     {% if s.recipe.image %}
                         <img src="{{ s.recipe.thumbnail_url }}" alt="" class="suggestion-img" loading="lazy" decoding="async">
                     {% else %}
-                        <div class="suggestion-img suggestion-placeholder">🍽️</div>
+                        <div class="suggestion-img suggestion-placeholder">{% include "includes/icon.html" with name="dish" size=30 %}</div>
                     {% endif %}
                     <span class="suggestion-badge">{{ s.match_count }}/{{ s.total }} Zutaten</span>
                 </div>
@@ -93,7 +93,6 @@
     {% elif not has_inventory %}
     <section class="home-section">
         <div class="empty-card">
-            <p class="empty-icon">📦</p>
             <p class="empty-text">Trag dein Inventar ein, um Rezeptvorschläge aus deinem Vorrat zu sehen.</p>
             <a href="{% url 'inventory:list' %}" class="btn btn-primary">Inventar pflegen</a>
         </div>
@@ -113,7 +112,7 @@
                     {% if s.recipe.image %}
                         <img src="{{ s.recipe.thumbnail_url }}" alt="" class="suggestion-img" loading="lazy" decoding="async">
                     {% else %}
-                        <div class="suggestion-img suggestion-placeholder">🍽️</div>
+                        <div class="suggestion-img suggestion-placeholder">{% include "includes/icon.html" with name="dish" size=30 %}</div>
                     {% endif %}
                     <span class="suggestion-badge suggestion-badge--deal">{{ s.ingredients|length }} Zutat{{ s.ingredients|length|pluralize:"en" }} im Angebot</span>
                 </div>
@@ -160,7 +159,7 @@
     {% elif has_deals and not has_favorites %}
     <section class="home-section">
         <a href="{% url 'user_settings:deals' %}" class="home-empty-row">
-            <span class="home-empty-icon">🏷️</span>
+            <span class="home-empty-icon">{% include "includes/icon.html" with name="tag" %}</span>
             <span>Was kaufst du regelmäßig? <strong>Favoriten festlegen</strong> und sehen, wann sie im Angebot sind.</span>
         </a>
     </section>

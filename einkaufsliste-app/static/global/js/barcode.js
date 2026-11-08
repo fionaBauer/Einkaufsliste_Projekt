@@ -134,7 +134,7 @@ function showBarcodeResult(data) {
     if (data.in_inventory) {
         inventoryInfo = `
             <div class="barcode-result-inventory">
-                📦 Im Inventar: ${data.inventory_quantity || "Vorhanden"} ${data.inventory_unit || ""}
+                Im Inventar: ${data.inventory_quantity || "Vorhanden"} ${data.inventory_unit || ""}
             </div>`;
     }
 

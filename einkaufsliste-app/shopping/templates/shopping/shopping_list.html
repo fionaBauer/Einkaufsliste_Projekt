@@ -112,7 +112,6 @@
 
     {% if not to_buy and not check_quantity %}
         <div class="empty-card shopping-empty">
-            <p class="empty-icon">🧺</p>
             <p class="empty-text">Deine Einkaufsliste ist leer. Füge etwas hinzu oder erstelle eine Liste aus deinen Rezepten.</p>
             <a href="{% url 'recipes:recipe_list' %}" class="btn btn-secondary">Zu den Rezepten</a>
         </div>

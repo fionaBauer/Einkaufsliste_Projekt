@@ -12,15 +12,16 @@
     padding: 14px 18px 14px 14px;
     border: none;
     border-radius: var(--radius-lg);
-    background: var(--text-main);
-    color: white;
+    background: var(--surface);
+    color: var(--text-main);
     text-align: left;
     cursor: pointer;
-    box-shadow: var(--shadow-raised);
+    box-shadow: var(--shadow-card);
     transition: transform 0.18s var(--ease-out), box-shadow 0.2s;
 }
 
 .consume-recipe-link:active { transform: scale(0.98); }
+.consume-recipe-link > svg { color: var(--text-faint); flex-shrink: 0; }
 
 .consume-recipe-icon {
     width: 44px;
@@ -28,14 +29,14 @@
     border-radius: 15px;
     display: grid;
     place-items: center;
-    background: rgba(255, 255, 255, 0.12);
-    font-size: 22px;
+    background: var(--surface-2);
+    color: var(--text-soft);
     flex-shrink: 0;
 }
 
 .consume-recipe-text { flex: 1; display: flex; flex-direction: column; gap: 2px; min-width: 0; }
-.consume-recipe-title { font-size: 15.5px; font-weight: 700; }
-.consume-recipe-sub { font-size: 13px; color: rgba(255, 255, 255, 0.65); }
+.consume-recipe-title { font-size: 15.5px; font-weight: 650; }
+.consume-recipe-sub { font-size: 13px; color: var(--text-muted); }
 
 /* ── "Rezept verbrauchen"-Modal ── */
 .consume-preview-container {
@@ -70,7 +71,7 @@
     text-align: right;
 }
 
-.consume-preview-heading { margin: 0 0 6px; font-size: 18px; font-weight: 800; }
+.consume-preview-heading { margin: 0 0 6px; font-size: 18px; font-weight: 700; }
 .consume-preview-subtext { margin: 0 0 14px; color: var(--text-muted); font-size: 14px; }
 
 .consume-preview-status {
@@ -114,7 +115,7 @@
     display: grid;
     place-items: center;
     background: var(--surface);
-    font-size: 22px;
+    color: var(--text-soft);
     flex-shrink: 0;
 }
 

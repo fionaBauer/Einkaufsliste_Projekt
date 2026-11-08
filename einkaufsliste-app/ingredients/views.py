@@ -29,7 +29,7 @@ def _build_grouped_ingredients(search_query, sort):
             grouped.append({
                 "value": category_value,
                 "label": category_label,
-                "icon": CATEGORY_ICONS.get(category_value, "📦"),
+                "icon": CATEGORY_ICONS.get(category_value, "box"),
                 "items": category_items,
             })
 

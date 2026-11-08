@@ -25,7 +25,7 @@
     </div>
 
     <button type="button" class="consume-recipe-link" id="openConsumeRecipeModalBtn">
-        <span class="consume-recipe-icon">🍳</span>
+        <span class="consume-recipe-icon">{% include "includes/icon.html" with name="pan" %}</span>
         <span class="consume-recipe-text">
             <span class="consume-recipe-title">Rezept gekocht?</span>
             <span class="consume-recipe-sub">Zutaten automatisch vom Inventar abziehen</span>
@@ -52,7 +52,7 @@
             {% with group.items|length as count %}
             <div class="category-card" data-category="{{ group.value }}" data-key="card-{{ group.value }}">
                 <div class="category-card-icon">
-                    {{ group.icon }}
+                    {% include "includes/icon.html" with name=group.icon %}
                 </div>
                 <div class="category-card-info">
                     <span class="category-card-name">{{ group.label }}</span>
@@ -73,7 +73,7 @@
                     Zurück
                 </button>
                 <h2 class="detail-title">
-                    {{ group.icon }}
+                    {% include "includes/icon.html" with name=group.icon %}
                     {{ group.label }}
                 </h2>
             </div>
@@ -118,7 +118,6 @@
 
     {% else %}
         <div class="empty-card">
-            <p class="empty-icon">📦</p>
             <p class="empty-text">
                 {% if search_query %}
                     Keine Einträge für „{{ search_query }}" gefunden.
@@ -136,21 +135,21 @@
         <h2>Eintrag hinzufügen</h2>
         <div class="add-chooser-options">
             <button type="button" class="add-chooser-option" id="chooseReceiptScanBtn">
-                <span class="add-chooser-icon">🧾</span>
+                <span class="add-chooser-icon">{% include "includes/icon.html" with name="receipt" %}</span>
                 <span class="add-chooser-text">
                     <span class="add-chooser-title">Kassenzettel scannen</span>
                     <span class="add-chooser-subtitle">Foto mit der Kamera aufnehmen</span>
                 </span>
             </button>
             <button type="button" class="add-chooser-option" id="chooseReceiptUploadBtn">
-                <span class="add-chooser-icon">📁</span>
+                <span class="add-chooser-icon">{% include "includes/icon.html" with name="folder" %}</span>
                 <span class="add-chooser-text">
                     <span class="add-chooser-title">Datei hochladen</span>
                     <span class="add-chooser-subtitle">Foto oder PDF auswählen</span>
                 </span>
             </button>
             <button type="button" class="add-chooser-option" id="chooseManualAddBtn">
-                <span class="add-chooser-icon">✏️</span>
+                <span class="add-chooser-icon">{% include "includes/icon.html" with name="pencil" %}</span>
                 <span class="add-chooser-text">
                     <span class="add-chooser-title">Manuell eingeben</span>
                     <span class="add-chooser-subtitle">Einzelnen Artikel eintragen</span>

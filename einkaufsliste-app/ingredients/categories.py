@@ -1,22 +1,11 @@
-"""Kategorie-Icons und automatische Kategorie-Erkennung anhand des Zutatennamens."""
+"""Kategorie-Icons (Namen der Linien-Icons) und automatische Kategorie-Erkennung anhand des Zutatennamens."""
 import re
 
 from .models import IngredientCategory
 
-CATEGORY_ICONS = {
-    IngredientCategory.FRUIT_VEG: "🥦",
-    IngredientCategory.BREAD: "🥖",
-    IngredientCategory.MEAT_FISH: "🥩",
-    IngredientCategory.DAIRY: "🧀",
-    IngredientCategory.GRAINS: "🍝",
-    IngredientCategory.CANNED: "🥫",
-    IngredientCategory.SPICES: "🧂",
-    IngredientCategory.BAKING: "🧁",
-    IngredientCategory.SNACKS: "🍫",
-    IngredientCategory.FREEZER: "🧊",
-    IngredientCategory.DRINKS: "🥤",
-    IngredientCategory.OTHER: "📦",
-}
+# Name des Linien-Icons in templates/includes/icon.html (gleich dem Kategorie-Wert)
+CATEGORY_ICONS = {category: category.value for category in IngredientCategory}
+CATEGORY_ICONS[IngredientCategory.OTHER] = "box"
 
 # Reihenfolge ist wichtig: spezifische Begriffe zuerst (z.B. "Paprikapulver" ist ein Gewürz,
 # kein Gemüse; "Kokosmilch" eine Konserve, kein Milchprodukt; "Erdnussbutter" ein Aufstrich).

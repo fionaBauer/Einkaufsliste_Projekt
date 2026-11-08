@@ -5,7 +5,7 @@
             {% for group in grouped_ingredients %}
             <div class="category-card" data-category="{{ group.value }}" data-key="card-{{ group.value }}">
                 <div class="category-card-icon">
-                    {{ group.icon }}
+                    {% include "includes/icon.html" with name=group.icon %}
                 </div>
                 <div class="category-card-info">
                     <span class="category-card-name">{{ group.label }}</span>
@@ -25,7 +25,7 @@
                     Zurück
                 </button>
                 <h2 class="detail-title">
-                    {{ group.icon }}
+                    {% include "includes/icon.html" with name=group.icon %}
                     {{ group.label }}
                 </h2>
             </div>
@@ -60,7 +60,6 @@
         {% endfor %}
     {% else %}
         <div class="empty-card">
-            <p class="empty-icon">🥕</p>
             <p class="empty-text">
                 {% if search_query %}
                     Keine Zutaten für „{{ search_query }}“ gefunden.

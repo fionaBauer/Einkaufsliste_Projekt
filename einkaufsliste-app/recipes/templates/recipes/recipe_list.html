@@ -56,7 +56,7 @@
                         {% if recipe.image %}
                             <img src="{{ recipe.thumbnail_url }}" alt="{{ recipe.name }}" class="recipe-card-img" loading="lazy" decoding="async">
                         {% else %}
-                            <div class="recipe-card-img recipe-card-placeholder">🍽️</div>
+                            <div class="recipe-card-img recipe-card-placeholder">{% include "includes/icon.html" with name="dish" size=30 %}</div>
                         {% endif %}
                         {% if recipe.deal_count %}
                             <span class="recipe-deal-badge">{{ recipe.deal_count }} Rabatt{{ recipe.deal_count|pluralize:"e" }}</span>
@@ -93,7 +93,6 @@
 
         {% else %}
             <div class="empty-card">
-                <p class="empty-icon">📖</p>
                 {% if filters.is_filtered %}
                     <p class="empty-text">Keine Rezepte gefunden. Probier es mit weniger Filtern.</p>
                     <a href="{{ request.path }}" class="btn btn-secondary" data-morph-link>Filter zurücksetzen</a>

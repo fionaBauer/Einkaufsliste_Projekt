@@ -15,7 +15,7 @@
 
     <div class="settings-card settings-menu">
         <a href="{% url 'user_settings:account' %}" class="settings-link-row">
-            <span class="settings-link-icon">👤</span>
+            <span class="settings-link-icon">{% include "includes/icon.html" with name="user" %}</span>
             <span class="settings-link-text">
                 <span class="settings-link-title">Konto & Standort</span>
                 <span class="settings-help">{{ account_summary }}</span>
@@ -23,7 +23,7 @@
             <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"/></svg>
         </a>
         <a href="{% url 'households:detail' %}" class="settings-link-row">
-            <span class="settings-link-icon">🏠</span>
+            <span class="settings-link-icon">{% include "includes/icon.html" with name="home" %}</span>
             <span class="settings-link-text">
                 <span class="settings-link-title">Haushalt</span>
                 <span class="settings-help">{{ household_summary|default:"Mitglieder und Einladungslink" }}</span>
@@ -31,7 +31,7 @@
             <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"/></svg>
         </a>
         <a href="{% url 'user_settings:deals' %}" class="settings-link-row">
-            <span class="settings-link-icon">🏷️</span>
+            <span class="settings-link-icon">{% include "includes/icon.html" with name="tag" %}</span>
             <span class="settings-link-text">
                 <span class="settings-link-title">Angebote & Läden</span>
                 <span class="settings-help">{{ deals_summary }}</span>
@@ -39,7 +39,7 @@
             <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"/></svg>
         </a>
         <a href="{% url 'ingredients:list' %}" class="settings-link-row">
-            <span class="settings-link-icon">🥕</span>
+            <span class="settings-link-icon">{% include "includes/icon.html" with name="list" %}</span>
             <span class="settings-link-text">
                 <span class="settings-link-title">Zutaten & Kategorien</span>
                 <span class="settings-help">Umbenennen, löschen, Kategorie ändern</span>

@@ -122,7 +122,7 @@
     background: var(--accent-soft);
     color: var(--accent-ink);
     font-family: var(--font-display);
-    font-weight: 800;
+    font-weight: 700;
     text-transform: uppercase;
 }
 
@@ -152,7 +152,7 @@
     display: grid;
     place-items: center;
     background: var(--surface-2);
-    font-size: 20px;
+    color: var(--text-soft);
     flex-shrink: 0;
 }
 
