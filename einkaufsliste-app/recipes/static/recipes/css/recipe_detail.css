@@ -173,10 +173,22 @@
 .reset-servings-btn:hover { color: var(--text-main); background: var(--surface-2); }
 
 /* ── Reiter: Zutaten · Angebote · Anleitung ── */
+/* Bleibt unter der Kopfzeile (Zurück/Bearbeiten/Löschen, 44px hoch) stehen – so lässt sich
+   auch weiter unten im Rezept der Bereich wechseln */
+.recipe-tabs-bar {
+    position: sticky;
+    top: calc(var(--content-pad-top) + 44px + 12px);
+    z-index: 49;
+    margin: 0 calc(-1 * var(--gutter)) 10px;
+    padding: 0 var(--gutter) 8px;
+    background: var(--sticky-bg);
+    -webkit-backdrop-filter: blur(18px) saturate(170%);
+    backdrop-filter: blur(18px) saturate(170%);
+}
+
 .recipe-tabs {
     display: flex;
     gap: 4px;
-    margin-bottom: 14px;
     padding: 4px;
     border-radius: var(--radius-pill);
     background: var(--surface-2);
@@ -217,30 +229,27 @@
     font-weight: 750;
 }
 
-/* Seiten nebeneinander, seitlich wischbar; die Höhe folgt der aktiven Seite (JS) */
+/* Seiten nebeneinander; recipe_detail.js verschiebt die Leiste (#recipe-track) per Wischen
+   immer um genau eine Seite. Der Rahmen ist so hoch wie die aktive Seite. */
 .recipe-panes {
-    position: relative;
+    margin: 0 calc(-1 * var(--gutter));
+    padding: 4px var(--gutter) 20px;
+    overflow: hidden;
+    touch-action: pan-y; /* senkrecht scrollt der Browser, waagerecht übernimmt das Skript */
+}
+
+.recipe-track {
     display: flex;
     align-items: flex-start;
     gap: calc(2 * var(--gutter));
-    margin: 0 calc(-1 * var(--gutter));
-    padding: 4px var(--gutter) 20px;
-    overflow-x: auto;
-    overflow-y: hidden;
-    scroll-snap-type: x mandatory;
-    scroll-padding-inline: var(--gutter);
-    overscroll-behavior-x: contain;
-    scrollbar-width: none;
-    transition: height 0.25s var(--ease-out);
+    will-change: transform;
 }
 
-.recipe-panes::-webkit-scrollbar { display: none; }
+.recipe-track.is-animating { transition: transform 0.3s var(--ease-out); }
 
 .recipe-pane {
     flex: 0 0 100%;
     min-width: 0;
-    scroll-snap-align: start;
-    scroll-snap-stop: always;
 }
 
 .pane-add-btn {

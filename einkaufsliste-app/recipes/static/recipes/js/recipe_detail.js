@@ -632,48 +632,77 @@ document.addEventListener("DOMContentLoaded", () => {
     });
 }
 
+
 /**
- * Reiter Zutaten · Angebote · Anleitung.
+ * Reiter Zutaten · Anleitung · Angebote.
  *
- * Die Seiten liegen nebeneinander in #recipe-panes (CSS scroll-snap) – seitlich wischen
- * oder auf einen Reiter tippen. Der Container bekommt die Höhe der aktiven Seite, sonst
- * stünde unter einer kurzen Seite der Leerraum der längsten. Alles wird bei jedem Aufruf
- * frisch gesucht, weil stille Seiten-Updates (app:morphed) Reiter hinzufügen/entfernen können.
+ * Die Seiten liegen nebeneinander in #recipe-track. Wischen verschiebt die Leiste selbst
+ * (statt CSS scroll-snap, das auf dem Handy mehrere Seiten übersprang oder zwischen zwei
+ * Seiten hängen blieb): pro Wisch genau eine Seite, ab 1/5 Breite oder schnellem Wisch.
+ *
+ * Jede Seite merkt sich, wie weit sie heruntergescrollt war – zurück auf "Zutaten" landet
+ * man wieder an derselben Stelle. Der Rahmen ist immer so hoch wie die aktive Seite.
+ * Elemente werden bei jedem Aufruf frisch gesucht, weil stille Seiten-Updates (app:morphed)
+ * den Angebote-Reiter hinzufügen/entfernen können.
  */
 document.addEventListener("DOMContentLoaded", () => {
-    const container = () => document.getElementById("recipe-panes");
-    const panes = () => Array.from(container()?.querySelectorAll(".recipe-pane") || []);
+    const frame = () => document.getElementById("recipe-panes");
+    const track = () => document.getElementById("recipe-track");
+    const panes = () => Array.from(track()?.querySelectorAll(".recipe-pane") || []);
     const tabs = () => Array.from(document.querySelectorAll(".recipe-tab"));
-    if (!container()) return;
+    if (!track()) return;
 
-    function activeIndex() {
+    let current = 0;
+    const savedScroll = {}; // Seiten-id → window.scrollY
+
+    function step() {
         const list = panes();
-        if (list.length < 2) return 0;
-        const step = list[1].offsetLeft - list[0].offsetLeft;
-        return Math.max(0, Math.min(list.length - 1, Math.round(container().scrollLeft / step)));
+        return list.length > 1 ? list[1].offsetLeft - list[0].offsetLeft : frame().clientWidth;
     }
 
-    function sync() {
-        const index = activeIndex();
+    function setOffset(px, animate) {
+        track().classList.toggle("is-animating", animate);
+        track().style.transform = `translate3d(${px}px, 0, 0)`;
+    }
+
+    function fitHeight() {
+        const pane = panes()[current];
+        if (!pane) return;
+        const style = getComputedStyle(frame());
+        frame().style.height =
+            `${pane.offsetHeight + parseFloat(style.paddingTop) + parseFloat(style.paddingBottom)}px`;
+    }
+
+    function render(animate) {
+        current = Math.max(0, Math.min(current, panes().length - 1));
         tabs().forEach((tab, i) => {
-            tab.classList.toggle("active", i === index);
-            tab.setAttribute("aria-selected", String(i === index));
+            tab.classList.toggle("active", i === current);
+            tab.setAttribute("aria-selected", String(i === current));
         });
-        const pane = panes()[index];
-        if (pane) {
-            const style = getComputedStyle(container());
-            container().style.height =
-                `${pane.offsetHeight + parseFloat(style.paddingTop) + parseFloat(style.paddingBottom)}px`;
-        }
+        setOffset(-current * step(), animate);
+        fitHeight();
     }
 
-    function show(index, smooth = true) {
+    // Scrollposition, ab der die Reiter oben kleben – höher springt ein Seitenwechsel nie
+    function tabsAnchor() {
+        const bar = document.querySelector(".recipe-tabs-bar");
+        const frameTop = frame().getBoundingClientRect().top + window.scrollY;
+        return Math.max(0, frameTop - parseFloat(getComputedStyle(bar).top) - bar.offsetHeight - 10);
+    }
+
+    function show(index) {
         const list = panes();
         if (!list[index]) return;
-        container().scrollTo({
-            left: list[index].offsetLeft - list[0].offsetLeft,
-            behavior: smooth ? "smooth" : "auto",
-        });
+        if (index === current) return render(true);
+
+        savedScroll[list[current].id] = window.scrollY;
+        const anchor = tabsAnchor();
+        const target = savedScroll[list[index].id] ?? Math.min(window.scrollY, anchor);
+
+        current = index;
+        render(true);
+        // Höhe steht schon (fitHeight), sonst würde der Browser das Scrollziel abschneiden
+        window.scrollTo(0, target);
     }
 
     document.addEventListener("click", (event) => {
@@ -681,22 +710,63 @@ document.addEventListener("DOMContentLoaded", () => {
         if (tab) show(Number(tab.dataset.pane));
     });
 
-    let frame = null;
-    container().addEventListener("scroll", () => {
-        if (frame) return;
-        frame = requestAnimationFrame(() => { frame = null; sync(); });
+    /* ── Wischen ── */
+    let start = null; // {x, y, t, horizontal}
+
+    frame().addEventListener("touchstart", (event) => {
+        if (event.touches.length !== 1) return;
+        const touch = event.touches[0];
+        start = { x: touch.clientX, y: touch.clientY, t: Date.now(), horizontal: null };
     }, { passive: true });
 
-    // Inhalt ändert sich (Portionen, neue Zutat, Fenstergröße) → Höhe nachziehen
-    const resizeObserver = new ResizeObserver(sync);
+    frame().addEventListener("touchmove", (event) => {
+        if (!start) return;
+        const touch = event.touches[0];
+        const dx = touch.clientX - start.x;
+        const dy = touch.clientY - start.y;
+
+        // Richtung erst nach ein paar Pixeln festlegen – senkrecht bleibt normales Scrollen
+        if (start.horizontal === null) {
+            if (Math.abs(dx) < 8 && Math.abs(dy) < 8) return;
+            start.horizontal = Math.abs(dx) > Math.abs(dy);
+        }
+        if (!start.horizontal) return;
+
+        event.preventDefault();
+        const atEdge = (current === 0 && dx > 0) || (current === panes().length - 1 && dx < 0);
+        setOffset(-current * step() + (atEdge ? dx / 3 : dx), false); // am Rand nur zäh nachgeben
+    }, { passive: false });
+
+    function endSwipe(event) {
+        if (!start) return;
+        const swipe = start;
+        start = null;
+        if (!swipe.horizontal) return;
+
+        const dx = (event.changedTouches[0]?.clientX ?? swipe.x) - swipe.x;
+        const fast = Math.abs(dx) / Math.max(1, Date.now() - swipe.t) > 0.4;
+        const far = Math.abs(dx) > step() / 5;
+        if (fast || far) {
+            const next = current + (dx < 0 ? 1 : -1);
+            if (next >= 0 && next < panes().length) return show(next);
+        }
+        render(true); // zurückfedern
+    }
+
+    frame().addEventListener("touchend", endSwipe);
+    frame().addEventListener("touchcancel", endSwipe);
+
+    // Inhalt ändert sich (Portionen, neue Zutat) → Höhe nachziehen
+    const resizeObserver = new ResizeObserver(fitHeight);
     function observe() {
         resizeObserver.disconnect();
         panes().forEach((pane) => resizeObserver.observe(pane));
     }
 
-    document.addEventListener("app:morphed", () => { observe(); sync(); });
-    window.addEventListener("resize", () => show(activeIndex(), false));
+    // Stilles Update setzt Reiter-Klassen und inline-Styles zurück → wiederherstellen
+    document.addEventListener("app:morphed", () => { observe(); render(false); });
+    window.addEventListener("resize", () => render(false));
 
     observe();
-    sync();
+    render(false);
 });

@@ -47,18 +47,21 @@
         {% endif %}
     </div>
 
-    {# Zutaten · Angebote · Anleitung: Tippen auf den Reiter oder seitlich wischen (recipe_detail.js) #}
-    <nav class="recipe-tabs" role="tablist" aria-label="Rezeptbereiche">
-        <button type="button" class="recipe-tab active" role="tab" aria-selected="true" aria-controls="pane-ingredients" data-pane="0">Zutaten</button>
-        {% if deals %}
-        <button type="button" class="recipe-tab" role="tab" aria-selected="false" aria-controls="pane-deals" data-pane="1">
-            Angebote <span class="recipe-tab-count">{{ deals|length }}</span>
-        </button>
-        {% endif %}
-        <button type="button" class="recipe-tab" role="tab" aria-selected="false" aria-controls="pane-instructions" data-pane="{% if deals %}2{% else %}1{% endif %}">Anleitung</button>
-    </nav>
+    {# Zutaten · Anleitung · Angebote: Tippen auf den Reiter oder seitlich wischen (recipe_detail.js) #}
+    <div class="recipe-tabs-bar">
+        <nav class="recipe-tabs" role="tablist" aria-label="Rezeptbereiche">
+            <button type="button" class="recipe-tab active" role="tab" aria-selected="true" aria-controls="pane-ingredients" data-pane="0">Zutaten</button>
+            <button type="button" class="recipe-tab" role="tab" aria-selected="false" aria-controls="pane-instructions" data-pane="1">Anleitung</button>
+            {% if deals %}
+            <button type="button" class="recipe-tab" role="tab" aria-selected="false" aria-controls="pane-deals" data-pane="2">
+                Angebote <span class="recipe-tab-count">{{ deals|length }}</span>
+            </button>
+            {% endif %}
+        </nav>
+    </div>
 
     <div class="recipe-panes" id="recipe-panes">
+        <div class="recipe-track" id="recipe-track">
         <section class="recipe-pane" id="pane-ingredients" role="tabpanel" aria-label="Zutaten">
             <div class="servings-box">
                 <span class="servings-label">Portionen</span>
@@ -95,6 +98,14 @@
                 data-url="{% url 'recipes:recipeingredient_create' recipe.pk %}">+ Zutat hinzufügen</button>
         </section>
 
+        <section class="recipe-pane" id="pane-instructions" role="tabpanel" aria-label="Anleitung">
+            {% if recipe.instructions %}
+                <div class="instructions-box">{{ recipe.instructions|linebreaks }}</div>
+            {% else %}
+                <div class="empty-card"><p class="empty-text">Keine Anleitung hinterlegt.</p></div>
+            {% endif %}
+        </section>
+
         {% if deals %}
         <section class="recipe-pane" id="pane-deals" role="tabpanel" aria-label="Angebote">
             <ul class="recipe-deal-list">
@@ -112,14 +123,7 @@
             <p class="pane-hint">Tippen öffnet die Angebotsseite des Händlers.</p>
         </section>
         {% endif %}
-
-        <section class="recipe-pane" id="pane-instructions" role="tabpanel" aria-label="Anleitung">
-            {% if recipe.instructions %}
-                <div class="instructions-box">{{ recipe.instructions|linebreaks }}</div>
-            {% else %}
-                <div class="empty-card"><p class="empty-text">Keine Anleitung hinterlegt.</p></div>
-            {% endif %}
-        </section>
+        </div>
     </div>
 </div>
 
