@@ -54,7 +54,7 @@
             <svg fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><rect class="tab-fill" x="3.5" y="5" width="17" height="15.5" rx="3.5"/><path d="M8 3v4M16 3v4"/><path class="tab-cut" d="M3.5 10h17"/></svg>
             <span class="tab-label">Planung</span>
         </a>
-        <button type="button" class="tab-more-btn {% if '/deals' in path or '/inventory' in path or '/ingredients' in path or '/households' in path or '/settings' in path %}active{% endif %}" id="tab-more-trigger" aria-label="Mehr" aria-expanded="false" aria-controls="tab-more-menu">
+        <button type="button" class="tab-more-btn {% if '/inventory' in path or '/ingredients' in path or '/households' in path or '/settings' in path %}active{% endif %}" id="tab-more-trigger" aria-label="Mehr" aria-expanded="false" aria-controls="tab-more-menu">
             <svg fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><rect class="tab-fill" x="3.5" y="3.5" width="7" height="7" rx="2.2"/><rect class="tab-fill" x="13.5" y="3.5" width="7" height="7" rx="2.2"/><rect class="tab-fill" x="3.5" y="13.5" width="7" height="7" rx="2.2"/><rect class="tab-fill" x="13.5" y="13.5" width="7" height="7" rx="2.2"/></svg>
             <span class="tab-label">Mehr</span>
         </button>
@@ -63,16 +63,10 @@
     <div class="tab-more-overlay" id="tab-more-overlay"></div>
     <div class="tab-more-menu" id="tab-more-menu" role="dialog" aria-label="Mehr">
         <div class="sheet-grabber"></div>
-        <div class="tab-more-grid">
-            <a href="{% url 'deals:list' %}" class="tab-more-item {% if '/deals' in path %}active{% endif %}">
-                <span class="tab-more-icon"><svg fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M20.6 13.4l-7.2 7.2a2 2 0 01-2.8 0L3 13V3h10l7.6 7.6a2 2 0 010 2.8z"/><circle cx="7.5" cy="7.5" r="1.2" fill="currentColor"/></svg></span>
-                Rabatte
-            </a>
-            <a href="{% url 'inventory:list' %}" class="tab-more-item {% if '/inventory' in path %}active{% endif %}">
-                <span class="tab-more-icon"><svg fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><rect x="4" y="3" width="16" height="18" rx="3"/><path d="M4 10h16M8 6.5h1M8 13.5h1"/></svg></span>
-                Inventar
-            </a>
-        </div>
+        <a href="{% url 'inventory:list' %}" class="tab-more-row">
+            <svg fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><rect x="4" y="3" width="16" height="18" rx="3"/><path d="M4 10h16M8 6.5h1M8 13.5h1"/></svg>
+            Inventar
+        </a>
         <a href="{% url 'households:detail' %}" class="tab-more-row">
             <svg fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20a6.5 6.5 0 0113 0"/><path d="M16 4.5a3.5 3.5 0 010 7M18.5 14.5a6.5 6.5 0 013 5.5"/></svg>
             Haushalt

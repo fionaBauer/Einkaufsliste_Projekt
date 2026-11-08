@@ -14,7 +14,7 @@ from django.http import JsonResponse
 from decimal import Decimal, InvalidOperation
 from ingredients.models import Ingredient, Unit
 from ingredients.categories import guess_category
-from deals.services import get_suggested_recipes_by_deals
+from deals.services import get_suggested_recipes_by_deals, get_user_deals
 
 from .filters import RecipeFilters
 from .models import MAX_COOKING_MINUTES, Recipe, RecipeIngredient, Tag, TAG_GROUPS
@@ -37,7 +37,9 @@ class RecipeListView(LoginRequiredMixin, ListView):
 
         self.deal_counts = {
             suggestion["recipe"].pk: suggestion["match_count"]
-            for suggestion in get_suggested_recipes_by_deals(recipes, limit=None)
+            for suggestion in get_suggested_recipes_by_deals(
+                recipes, limit=None, active_deals=get_user_deals(self.request.user),
+            )
         }
         self.filters = RecipeFilters(self.request.GET)
 
@@ -72,7 +74,9 @@ class RecipeDetailView(LoginRequiredMixin, DetailView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context["ingredient_form"] = RecipeIngredientForm()
-        suggestions = get_suggested_recipes_by_deals(Recipe.objects.filter(pk=self.object.pk))
+        suggestions = get_suggested_recipes_by_deals(
+            Recipe.objects.filter(pk=self.object.pk), active_deals=get_user_deals(self.request.user),
+        )
         context["deals"] = suggestions[0]["deals"] if suggestions else []
         return context
 

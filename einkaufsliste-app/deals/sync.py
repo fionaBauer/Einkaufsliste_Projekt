@@ -85,8 +85,20 @@ def used_ingredient_names(household=None):
     return names
 
 
+def favorite_product_names(household=None):
+    """Favoriten aus den Einstellungen ("Das kaufe ich regelmäßig") – von allen
+    Haushaltsmitgliedern bzw. ohne Haushalt von allen Nutzern."""
+    from user_settings.models import UserSettings
+
+    settings_qs = UserSettings.objects.all()
+    if household is not None:
+        settings_qs = settings_qs.filter(user__households=household)
+    return {name for names in settings_qs.values_list("favorite_products", flat=True) for name in names or []}
+
+
 def build_search_terms(household=None):
     terms = {search_name(name) for name in used_ingredient_names(household)}
+    terms.update(search_name(name) for name in favorite_product_names(household))
 
     if household is None:
         # Ohne konkreten Haushalt (z.B. Cron/Command): zusätzlich gängige Produkte

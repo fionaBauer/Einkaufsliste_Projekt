@@ -39,6 +39,31 @@ class Store(models.Model):
         return " - ".join(parts)
 
 
+# Angebotsseiten der Händler – auf dem Handy öffnen viele davon direkt die Händler-App.
+# Schlüssel: Namensanfang des Markts in Kleinbuchstaben (Marktguru: "ALDI SÜD", "Netto Marken-Discount" …)
+STORE_OFFER_URLS = {
+    "aldi süd": "https://www.aldi-sued.de/",
+    "aldi nord": "https://www.aldi-nord.de/angebote.html",
+    "lidl": "https://www.lidl.de/",
+    "kaufland": "https://filiale.kaufland.de/angebote.html",
+    "rewe": "https://www.rewe.de/angebote/",
+    "penny": "https://www.penny.de/angebote",
+    "netto": "https://www.netto-online.de/angebote",
+    "edeka": "https://www.edeka.de/",
+    "marktkauf": "https://www.marktkauf.de/",
+    "norma": "https://www.norma-online.de/de/angebote/",
+    "globus": "https://www.globus.de/",
+}
+
+
+def store_offer_url(store_name):
+    name = (store_name or "").lower()
+    for prefix, url in STORE_OFFER_URLS.items():
+        if name.startswith(prefix):
+            return url
+    return ""
+
+
 class Deal(models.Model):
     source = models.ForeignKey(
         DealSource,
@@ -109,6 +134,11 @@ class Deal(models.Model):
         if self.original_price is None or self.deal_price is None:
             return None
         return self.original_price - self.deal_price
+
+    @property
+    def offer_url(self):
+        """Direkter Link zum Angebot, sonst die Angebotsseite des Händlers."""
+        return self.product_url or store_offer_url(self.store.name)
 
     @property
     def reference_label(self):

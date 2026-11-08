@@ -1,6 +1,5 @@
 import re
 from functools import lru_cache
-from decimal import Decimal
 from django.db.models import Q
 from django.utils import timezone
 
@@ -17,12 +16,49 @@ SYNONYMS = {
 }
 
 
-def get_active_deals():
+def get_active_deals(stores=None):
+    """stores: optionale Liste von Marktnamen – nur deren Angebote."""
     today = timezone.now().date()
 
-    return Deal.objects.select_related("store", "source").filter(
+    deals = Deal.objects.select_related("store", "source").filter(
         Q(valid_until__isnull=True) | Q(valid_until__gte=today)
     )
+    if stores:
+        deals = deals.filter(store__name__in=stores)
+    return deals
+
+
+def _user_settings(user):
+    from user_settings.models import UserSettings
+
+    return UserSettings.objects.filter(user=user).first()
+
+
+def get_user_deals(user):
+    """Aktive Angebote der Märkte, die der Nutzer in den Einstellungen ausgewählt hat."""
+    settings_obj = _user_settings(user)
+    return get_active_deals(stores=settings_obj.preferred_stores if settings_obj else None)
+
+
+def available_store_names():
+    """Märkte, für die es gerade Angebote gibt – zur Auswahl in den Einstellungen."""
+    names = get_active_deals().values_list("store__name", flat=True).distinct()
+    return sorted(set(names), key=str.lower)
+
+
+def find_favorite_deals(user, active_deals):
+    """[{"name": "Kaffee", "deal": <günstigstes Angebot>}, …] für die Favoriten des Nutzers."""
+    from types import SimpleNamespace
+
+    settings_obj = _user_settings(user)
+    if not settings_obj or not settings_obj.favorite_products:
+        return []
+    hits = []
+    for name in settings_obj.favorite_products:
+        matched = find_deals_for_ingredient(SimpleNamespace(name=name, category=None), active_deals)
+        if matched:
+            hits.append({"name": name, "deal": matched[0], "more": len(matched) - 1})
+    return hits
 
 
 _PAREN = re.compile(r"\(.*?\)")
@@ -248,45 +284,41 @@ def attach_deals_to_shopping_items(items, active_deals=None):
     return items
 
 
-def calculate_store_savings(items):
-    savings_by_store = {}
+def group_items_by_store(items):
+    """Einkaufsliste nach Markt: jeder Artikel landet beim Markt seines besten Angebots.
 
+    Märkte mit den meisten Angeboten zuerst; Artikel ohne Angebot kommen in eine
+    eigene Gruppe am Ende (store=None).
+    """
+    groups = {}
+    rest = []
     for item in items:
-        for deal in getattr(item, "discount_deals", []):
-            if deal.savings is None:
-                continue
-
-            store_name = deal.store.name
-
-            if store_name not in savings_by_store:
-                savings_by_store[store_name] = {
-                    "store": deal.store,
-                    "total_savings": Decimal("0.00"),
-                    "deals": [],
-                }
-
-            savings_by_store[store_name]["total_savings"] += deal.savings
-            savings_by_store[store_name]["deals"].append({
-                "item": item,
-                "deal": deal,
-                "savings": deal.savings,
-            })
-
-    return sorted(
-        savings_by_store.values(),
-        key=lambda entry: entry["total_savings"],
-        reverse=True,
-    )
+        deals = getattr(item, "discount_deals", [])
+        if deals:
+            groups.setdefault(deals[0].store.name, []).append(item)
+        else:
+            rest.append(item)
+    ordered = [
+        {"store": store, "items": store_items}
+        for store, store_items in sorted(groups.items(), key=lambda g: (-len(g[1]), g[0].lower()))
+    ]
+    if rest:
+        ordered.append({"store": None, "items": rest})
+    return ordered
 
 
-
-def get_suggested_recipes_by_deals(recipes, limit=5):
-    active_deals = DealIndex(get_active_deals())
+def get_suggested_recipes_by_deals(recipes, limit=5, active_deals=None):
+    active_deals = active_deals if active_deals is not None else get_active_deals()
+    if not isinstance(active_deals, DealIndex):
+        active_deals = DealIndex(active_deals)
     suggestions = []
     for recipe in recipes.prefetch_related("recipe_ingredients__ingredient"):
         matched_deals = []
+        ingredients = []
         for recipe_ingredient in recipe.recipe_ingredients.all():
             deals = find_deals_for_ingredient(recipe_ingredient.ingredient, active_deals)[:2]
+            if deals and recipe_ingredient.ingredient.name not in ingredients:
+                ingredients.append(recipe_ingredient.ingredient.name)
             matched_deals.extend(deals)
         # Ein Angebot kann zu mehreren Zutaten passen, zählt aber nur einmal
         matched_deals = list({deal.pk: deal for deal in matched_deals}.values())
@@ -295,6 +327,8 @@ def get_suggested_recipes_by_deals(recipes, limit=5):
                 "recipe": recipe,
                 "deals": matched_deals,
                 "match_count": len(matched_deals),
+                # Zutaten im Angebot – danach wird sortiert ("günstig kochen")
+                "ingredients": ingredients,
             })
-    suggestions.sort(key=lambda item: item["match_count"], reverse=True)
+    suggestions.sort(key=lambda item: (len(item["ingredients"]), item["match_count"]), reverse=True)
     return suggestions[:limit]

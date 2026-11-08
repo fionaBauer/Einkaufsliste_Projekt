@@ -7,11 +7,13 @@ from django.contrib.auth import login
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import redirect, render
 
-from deals.services import get_active_deals, find_deals_for_ingredient
+from deals.services import DealIndex, find_favorite_deals, get_suggested_recipes_by_deals, get_user_deals
+from deals.views import refresh_deals_if_stale
 from inventory.models import InventoryItem
 from meal_plan.models import MealSlot
 from recipes.models import Recipe
 from shopping.models import ShoppingList
+from user_settings.models import UserSettings
 
 
 WEEKDAYS_DE = ["Montag", "Dienstag", "Mittwoch", "Donnerstag", "Freitag", "Samstag", "Sonntag"]
@@ -30,11 +32,15 @@ def home(request):
         household=household, date=today
     ).select_related("recipe").order_by("meal")
 
-    # Top deals (max 4, with savings)
-    top_deals = get_active_deals().filter(
-        deal_price__isnull=False,
-        original_price__isnull=False,
-    ).order_by("deal_price")[:4]
+    # Angebote: nur aus den eigenen Läden, einmal als Stichwortverzeichnis aufbauen
+    refresh_deals_if_stale(request.user)
+    deals = DealIndex(get_user_deals(request.user))
+    favorite_deals = find_favorite_deals(request.user, deals)
+    cheap_recipes = get_suggested_recipes_by_deals(
+        Recipe.objects.filter(household=household), limit=3, active_deals=deals,
+    )
+    settings_obj = UserSettings.objects.filter(user=request.user).first()
+    has_favorites = bool(settings_obj and settings_obj.favorite_products)
 
     # Inventory-based recipe suggestions
     inventory_items = InventoryItem.objects.filter(
@@ -81,7 +87,10 @@ def home(request):
 
     return render(request, "core/home.html", {
         "todays_meals": todays_meals,
-        "top_deals": top_deals,
+        "favorite_deals": favorite_deals,
+        "cheap_recipes": cheap_recipes,
+        "has_favorites": has_favorites,
+        "has_deals": bool(deals.deals),
         "inventory_suggestions": inventory_suggestions,
         "shopping_list": shopping_list,
         "shopping_count": shopping_count,

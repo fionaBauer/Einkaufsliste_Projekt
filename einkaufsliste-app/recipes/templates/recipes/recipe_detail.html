@@ -98,10 +98,12 @@
         <ul class="recipe-deal-list">
             {% for deal in deals %}
             <li class="recipe-deal" data-key="deal-{{ deal.pk }}">
-                <span class="recipe-deal-title">{{ deal.title }}</span>
-                <span class="recipe-deal-meta">
-                    {{ deal.store.name }}{% if deal.deal_price %} · <strong>{{ deal.deal_price|floatformat:2 }} €</strong>{% endif %}
-                </span>
+                <a class="recipe-deal-link" {% if deal.offer_url %}href="{{ deal.offer_url }}" target="_blank" rel="noopener"{% endif %}>
+                    <span class="recipe-deal-title">{{ deal.title }}</span>
+                    <span class="recipe-deal-meta">
+                        {{ deal.store.name }}{% if deal.deal_price %} · <strong>{{ deal.deal_price|floatformat:2 }} €</strong>{% endif %}{% if deal.valid_until_label %} · {{ deal.valid_until_label }}{% endif %}
+                    </span>
+                </a>
             </li>
             {% endfor %}
         </ul>

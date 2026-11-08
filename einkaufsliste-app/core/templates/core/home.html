@@ -100,38 +100,69 @@
     </section>
     {% endif %}
 
-    {% if top_deals %}
+    {% if cheap_recipes %}
     <section class="home-section">
         <div class="section-header-row">
-            <h2 class="home-section-title">Aktuelle Rabatte</h2>
-            <a href="{% url 'deals:list' %}" class="section-link">Alle</a>
+            <h2 class="home-section-title">Günstig kochen</h2>
+            <a href="{% url 'recipes:recipe_list' %}?deals=1" class="section-link">Alle</a>
+        </div>
+        <div class="suggestion-cards">
+            {% for s in cheap_recipes %}
+            <a href="{% url 'recipes:recipe_detail' s.recipe.pk %}" class="suggestion-card" data-key="cheap-{{ s.recipe.pk }}">
+                <div class="suggestion-img-wrap">
+                    {% if s.recipe.image %}
+                        <img src="{{ s.recipe.thumbnail_url }}" alt="" class="suggestion-img" loading="lazy" decoding="async">
+                    {% else %}
+                        <div class="suggestion-img suggestion-placeholder">🍽️</div>
+                    {% endif %}
+                    <span class="suggestion-badge suggestion-badge--deal">{{ s.ingredients|length }} Zutat{{ s.ingredients|length|pluralize:"en" }} im Angebot</span>
+                </div>
+                <div class="suggestion-info">
+                    <span class="suggestion-name">{{ s.recipe.name }}</span>
+                    <span class="suggestion-meta">{{ s.ingredients|join:", " }}</span>
+                </div>
+            </a>
+            {% endfor %}
+        </div>
+    </section>
+    {% endif %}
+
+    {% if favorite_deals %}
+    <section class="home-section">
+        <div class="section-header-row">
+            <h2 class="home-section-title">Deine Favoriten im Angebot</h2>
+            <a href="{% url 'user_settings:settings' %}" class="section-link">Bearbeiten</a>
         </div>
         <div class="deals-grid">
-            {% for deal in top_deals %}
-            <div class="deal-card" data-key="deal-{{ deal.pk }}">
+            {% for hit in favorite_deals %}
+            {% with deal=hit.deal %}
+            <a class="deal-card" data-key="fav-{{ deal.pk }}" {% if deal.offer_url %}href="{{ deal.offer_url }}" target="_blank" rel="noopener"{% endif %}>
                 <div class="deal-card-top">
                     {% if deal.image_url %}
                         <img src="{{ deal.image_url }}" alt="" class="deal-card-img" loading="lazy" decoding="async">
                     {% else %}
                         <div class="deal-card-img deal-card-placeholder">%</div>
                     {% endif %}
-                    {% if deal.savings %}
-                        <span class="deal-savings-badge">−{{ deal.savings|floatformat:2 }} €</span>
-                    {% endif %}
                 </div>
                 <div class="deal-card-body">
-                    <span class="deal-card-store">{{ deal.store.name }}</span>
+                    <span class="deal-card-store">{{ deal.store.name }}{% if deal.valid_until_label %} · {{ deal.valid_until_label }}{% endif %}</span>
                     <span class="deal-card-title">{{ deal.title|truncatechars:40 }}</span>
                     <div class="deal-card-prices">
-                        <span class="deal-price">{{ deal.deal_price|floatformat:2 }} €</span>
-                        {% if deal.original_price %}
-                            <span class="deal-original">{{ deal.original_price|floatformat:2 }} €</span>
-                        {% endif %}
+                        {% if deal.deal_price %}<span class="deal-price">{{ deal.deal_price|floatformat:2 }} €</span>{% endif %}
+                        {% if deal.original_price %}<span class="deal-original">{{ deal.original_price|floatformat:2 }} €</span>{% endif %}
                     </div>
                 </div>
-            </div>
+            </a>
+            {% endwith %}
             {% endfor %}
         </div>
+    </section>
+    {% elif has_deals and not has_favorites %}
+    <section class="home-section">
+        <a href="{% url 'user_settings:settings' %}" class="home-empty-row">
+            <span class="home-empty-icon">🏷️</span>
+            <span>Was kaufst du regelmäßig? <strong>Favoriten festlegen</strong> und sehen, wann sie im Angebot sind.</span>
+        </a>
     </section>
     {% endif %}
 

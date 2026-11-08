@@ -52,6 +52,28 @@
 
 .settings-save { align-self: flex-start; min-width: 160px; }
 
+.settings-chips { margin-top: 8px; }
+
+.settings-deals-status {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 4px 10px;
+    margin: 14px 0 0 6px;
+    font-size: 13px;
+    color: var(--text-muted);
+}
+
+.settings-deals-status .btn-link {
+    padding: 0;
+    border: 0;
+    background: none;
+    color: var(--accent-ink);
+    font: inherit;
+    font-weight: 650;
+    cursor: pointer;
+}
+
 /* Zeile mit Eingabe + Button (Haushalt) */
 .settings-inline {
     display: flex;

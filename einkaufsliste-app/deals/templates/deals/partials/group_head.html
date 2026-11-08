@@ -1,8 +1,0 @@
-<div class="deal-group-head">
-    <h3 class="deal-group-title">{{ group.ingredient.name }}</h3>
-    {% if group.recipes %}
-        <span class="deal-group-recipes">für
-            {% for recipe in group.recipes %}<a href="{% url 'recipes:recipe_detail' recipe.id %}">{{ recipe.name }}</a>{% if not forloop.last %}, {% endif %}{% endfor %}{% if group.more_recipes %} +{{ group.more_recipes }}{% endif %}
-        </span>
-    {% endif %}
-</div>

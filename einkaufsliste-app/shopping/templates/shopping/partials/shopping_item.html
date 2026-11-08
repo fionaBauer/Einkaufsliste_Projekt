@@ -8,37 +8,37 @@
             {% if item.is_checked %}checked{% endif %}
         >
         <span class="shopping-content">
-            <span class="shopping-name-with-info">
-                <span class="shopping-name">{{ item.ingredient.name }}</span>
+            <span class="shopping-main">
+                <span class="shopping-name-with-info">
+                    <span class="shopping-name">{{ item.ingredient.name }}</span>
 
-                {% if item.source_details %}
-                    <span class="shopping-info-wrapper">
-                        <button type="button" class="info-button" aria-label="Verwendung anzeigen" title="Verwendung anzeigen">i</button>
-                        <span class="shopping-tooltip">
-                            {% for source in item.source_details %}
-                                <span class="shopping-tooltip-line">{{ source.recipe_name }} – {{ source.quantity }} {{ source.unit }}</span>
-                            {% endfor %}
+                    {% if item.source_details %}
+                        <span class="shopping-info-wrapper">
+                            <button type="button" class="info-button" aria-label="Verwendung anzeigen" title="Verwendung anzeigen">i</button>
+                            <span class="shopping-tooltip">
+                                {% for source in item.source_details %}
+                                    <span class="shopping-tooltip-line">{{ source.recipe_name }} – {{ source.quantity }} {{ source.unit }}</span>
+                                {% endfor %}
+                            </span>
                         </span>
-                    </span>
-                {% endif %}
-                {% if item.discount_deals %}
-                    <span class="shopping-info-wrapper">
-                        <button type="button" class="info-button info-button--deal" aria-label="Rabatte anzeigen" title="Rabatte anzeigen">%</button>
-                        <span class="shopping-tooltip">
-                            {% for deal in item.discount_deals %}
-                                <span class="shopping-tooltip-line">{{ deal.store.name }} – {{ deal.deal_price|floatformat:2 }} €{% if deal.reference_label %} ({{ deal.reference_label }}){% endif %}</span>
-                            {% endfor %}
-                        </span>
-                    </span>
-                {% endif %}
+                    {% endif %}
+                </span>
+                {% with deal=item.discount_deals.0 %}
+                    {% if deal %}
+                        {# Bestes Angebot (günstigster Grundpreis); Tippen öffnet die Seite bzw. App des Händlers #}
+                        <a class="shopping-deal" {% if deal.offer_url %}href="{{ deal.offer_url }}" target="_blank" rel="noopener"{% endif %}
+                            title="{{ deal.title }}{% if deal.valid_until_label %}, {{ deal.valid_until_label }}{% endif %}">
+                            <span class="shopping-deal-tag">Angebot</span>
+                            {% if not group_by_store %}{{ deal.store.name }}{% endif %}
+                            {% if deal.deal_price %}<strong>{{ deal.deal_price|floatformat:2 }} €</strong>{% endif %}
+                            {% if deal.package_size %}<span class="shopping-deal-note">{{ deal.package_size }}</span>{% endif %}
+                            {% if deal.requires_loyalty %}<span class="shopping-deal-note">mit App</span>{% endif %}
+                        </a>
+                    {% endif %}
+                {% endwith %}
             </span>
-            <span class="shopping-quantity">
-                {% if item.quantity %}
-                    {{ item.quantity|floatformat:"-2" }} {{ item.get_unit_display }}
-                {% elif check %}
-                    Menge prüfen
-                {% endif %}
-            </span>
+            {# ohne Leerraum, damit :empty greift und ohne Menge kein leerer Kreis erscheint #}
+            <span class="shopping-quantity">{% if item.quantity %}{{ item.quantity|floatformat:"-2" }} {{ item.get_unit_display }}{% elif check %}Menge prüfen{% endif %}</span>
         </span>
     </label>
     <button type="submit"

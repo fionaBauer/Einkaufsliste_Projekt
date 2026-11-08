@@ -141,17 +141,6 @@ document.addEventListener("DOMContentLoaded", () => {
             return;
         }
 
-        const savingsCard = event.target.closest(".savings-card");
-        if (savingsCard) {
-            const template = document.getElementById(savingsCard.dataset.savingsDetail);
-            const body = document.getElementById("savingsDetailBody");
-            document.getElementById("savingsDetailTitle").textContent = savingsCard.dataset.storeName;
-            body.innerHTML = "";
-            if (template) body.appendChild(template.content.cloneNode(true));
-            document.getElementById("savingsDetailModal").classList.add("active");
-            return;
-        }
-
         const ingredientCreateTrigger = event.target.closest(".open-ingredient-create-btn");
         if (ingredientCreateTrigger) {
             try {

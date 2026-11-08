@@ -38,10 +38,6 @@
                     <svg fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><rect x="3.5" y="5" width="17" height="15.5" rx="3.5"/><path d="M8 3v4M16 3v4M3.5 10h17"/></svg>
                     Planung
                 </a>
-                <a href="{% url 'deals:list' %}" class="sidebar-link {% if '/deals' in request.path %}active{% endif %}">
-                    <svg fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M20.6 13.4l-7.2 7.2a2 2 0 01-2.8 0L3 13V3h10l7.6 7.6a2 2 0 010 2.8z"/><circle cx="7.5" cy="7.5" r="1.2" fill="currentColor"/></svg>
-                    Rabatte
-                </a>
                 <a href="{% url 'inventory:list' %}" class="sidebar-link {% if '/inventory' in request.path %}active{% endif %}">
                     <svg fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><rect x="4" y="3" width="16" height="18" rx="3"/><path d="M4 10h16M8 6.5h1M8 13.5h1"/></svg>
                     Inventar

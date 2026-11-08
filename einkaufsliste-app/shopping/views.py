@@ -9,7 +9,8 @@ from django.views.decorators.http import require_POST
 
 from inventory.models import InventoryItem, Unit
 from recipes.models import Recipe
-from deals.services import attach_deals_to_shopping_items, calculate_store_savings, get_active_deals
+from deals.services import attach_deals_to_shopping_items, get_user_deals, group_items_by_store
+from deals.views import refresh_deals_if_stale
 from .forms import ShoppingListItemForm
 from .models import ShoppingList, ShoppingListItem
 from .utils import to_base_unit, from_base_unit, merge_units
@@ -109,7 +110,13 @@ def shopping_list_detail(request, pk):
 
             return redirect("shopping:detail", pk=shopping_list_obj.pk)
         
-    active_deals = list(get_active_deals())
+    refresh_deals_if_stale(request.user)
+    active_deals = list(get_user_deals(request.user))
+
+    # Ansicht "Nach Laden" merken, damit sie nach Abhaken/Löschen erhalten bleibt
+    if "group" in request.GET:
+        request.session["shopping_group_by_store"] = request.GET["group"] == "store"
+    group_by_store = request.session.get("shopping_group_by_store", False)
 
     to_buy = attach_deals_to_shopping_items(
         list(shopping_list_obj.items.filter(status=ShoppingListItem.STATUS_TO_BUY).select_related("ingredient")),
@@ -121,16 +128,18 @@ def shopping_list_detail(request, pk):
         active_deals,
     )
 
-    store_savings = calculate_store_savings(to_buy)
+    has_deals = any(item.discount_deals for item in to_buy)
 
     return render(request, "shopping/shopping_list.html", {
         "shopping_list_obj": shopping_list_obj,
         "to_buy": to_buy,
+        "has_deals": has_deals,
+        "group_by_store": group_by_store and has_deals,
+        "store_groups": group_items_by_store(to_buy) if group_by_store and has_deals else [],
         "check_quantity": check_quantity,
         "item_count": len(to_buy) + len(check_quantity),
         "create_form": create_form,
         "create_modal_open": create_modal_open,
-        "store_savings": store_savings,
     })
 
 
