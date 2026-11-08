@@ -631,3 +631,72 @@ document.addEventListener("DOMContentLoaded", () => {
         App.visit(`/recipes/${recipeId}/`);
     });
 }
+
+/**
+ * Reiter Zutaten · Angebote · Anleitung.
+ *
+ * Die Seiten liegen nebeneinander in #recipe-panes (CSS scroll-snap) – seitlich wischen
+ * oder auf einen Reiter tippen. Der Container bekommt die Höhe der aktiven Seite, sonst
+ * stünde unter einer kurzen Seite der Leerraum der längsten. Alles wird bei jedem Aufruf
+ * frisch gesucht, weil stille Seiten-Updates (app:morphed) Reiter hinzufügen/entfernen können.
+ */
+document.addEventListener("DOMContentLoaded", () => {
+    const container = () => document.getElementById("recipe-panes");
+    const panes = () => Array.from(container()?.querySelectorAll(".recipe-pane") || []);
+    const tabs = () => Array.from(document.querySelectorAll(".recipe-tab"));
+    if (!container()) return;
+
+    function activeIndex() {
+        const list = panes();
+        if (list.length < 2) return 0;
+        const step = list[1].offsetLeft - list[0].offsetLeft;
+        return Math.max(0, Math.min(list.length - 1, Math.round(container().scrollLeft / step)));
+    }
+
+    function sync() {
+        const index = activeIndex();
+        tabs().forEach((tab, i) => {
+            tab.classList.toggle("active", i === index);
+            tab.setAttribute("aria-selected", String(i === index));
+        });
+        const pane = panes()[index];
+        if (pane) {
+            const style = getComputedStyle(container());
+            container().style.height =
+                `${pane.offsetHeight + parseFloat(style.paddingTop) + parseFloat(style.paddingBottom)}px`;
+        }
+    }
+
+    function show(index, smooth = true) {
+        const list = panes();
+        if (!list[index]) return;
+        container().scrollTo({
+            left: list[index].offsetLeft - list[0].offsetLeft,
+            behavior: smooth ? "smooth" : "auto",
+        });
+    }
+
+    document.addEventListener("click", (event) => {
+        const tab = event.target.closest(".recipe-tab");
+        if (tab) show(Number(tab.dataset.pane));
+    });
+
+    let frame = null;
+    container().addEventListener("scroll", () => {
+        if (frame) return;
+        frame = requestAnimationFrame(() => { frame = null; sync(); });
+    }, { passive: true });
+
+    // Inhalt ändert sich (Portionen, neue Zutat, Fenstergröße) → Höhe nachziehen
+    const resizeObserver = new ResizeObserver(sync);
+    function observe() {
+        resizeObserver.disconnect();
+        panes().forEach((pane) => resizeObserver.observe(pane));
+    }
+
+    document.addEventListener("app:morphed", () => { observe(); sync(); });
+    window.addEventListener("resize", () => show(activeIndex(), false));
+
+    observe();
+    sync();
+});

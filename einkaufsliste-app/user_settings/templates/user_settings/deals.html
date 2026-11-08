@@ -1,0 +1,67 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Angebote & Läden{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'user_settings/css/settings.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="page settings-page">
+    {% include "user_settings/partials/back_header.html" with title="Angebote & Läden" %}
+
+    {% if not postal_code %}
+        <a href="{% url 'user_settings:account' %}" class="alert alert-error settings-alert-link">
+            Hinterlege zuerst deine Postleitzahl, damit Angebote aus deiner Umgebung geladen werden.
+        </a>
+    {% endif %}
+
+    <form method="post" class="settings-form">
+        {% csrf_token %}
+
+        <section class="settings-section">
+            <h2 class="settings-section-title">Meine Läden</h2>
+            <div class="settings-card">
+                <div class="settings-item">
+                    {% if stores %}
+                        <div class="tag-chips">
+                            {% for store in stores %}
+                                <label class="tag-chip">
+                                    <input type="checkbox" name="stores" value="{{ store }}" {% if store in selected_stores %}checked{% endif %}>
+                                    <span>{{ store }}</span>
+                                </label>
+                            {% endfor %}
+                        </div>
+                        <p class="settings-help">Nur Angebote dieser Läden werden angezeigt. Nichts ausgewählt = alle.</p>
+                    {% else %}
+                        <p class="settings-help">Sobald Angebote für deine Postleitzahl geladen sind, kannst du hier deine Läden auswählen.</p>
+                    {% endif %}
+                </div>
+            </div>
+        </section>
+
+        <section class="settings-section">
+            <h2 class="settings-section-title">Favoriten</h2>
+            <div class="settings-card">
+                <div class="settings-item">
+                    <label class="settings-label" for="favorites">Das kaufe ich regelmäßig</label>
+                    <input type="text" id="favorites" name="favorites" value="{{ favorites_text }}"
+                        class="settings-input" placeholder="z.B. Kaffee, Butter, Hähnchen" autocomplete="off">
+                    <p class="settings-help">Mit Komma trennen. Ist etwas davon im Angebot, siehst du es auf der Startseite.</p>
+                </div>
+            </div>
+        </section>
+
+        <button type="submit" class="btn btn-primary settings-save">Speichern</button>
+    </form>
+
+    {% if postal_code %}
+    <form method="post" action="{% url 'deals:sync' %}" class="settings-deals-status">
+        {% csrf_token %}
+        <span>{{ deals_status }}</span>
+        <button type="submit" class="btn-link">Jetzt aktualisieren</button>
+    </form>
+    {% endif %}
+</div>
+{% endblock %}

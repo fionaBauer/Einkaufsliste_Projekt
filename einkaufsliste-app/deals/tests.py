@@ -79,14 +79,39 @@ class StoreSelectionTests(DealTestCase):
     def test_settings_save_stores_and_favorites(self):
         self.deal("Butter", "Lidl", "1.49")
         with patch("user_settings.views.start_deal_sync") as start:
-            self.client.post(reverse("user_settings:settings"), {
-                "username": "fiona", "postal_code": "89231",
+            self.client.post(reverse("user_settings:deals"), {
                 "stores": ["Lidl"], "favorites": "Kaffee, Butter,  kaffee ",
             })
         self.settings.refresh_from_db()
         self.assertEqual(self.settings.preferred_stores, ["Lidl"])
         self.assertEqual(self.settings.favorite_products, ["Kaffee", "Butter"])
         start.assert_called_once()  # neue Favoriten → Angebote dafür nachladen
+
+    def test_settings_overview_summarizes_sections(self):
+        self.settings.preferred_stores = ["Lidl", "REWE"]
+        self.settings.favorite_products = ["Kaffee"]
+        self.settings.save()
+
+        response = self.client.get(reverse("user_settings:settings"))
+
+        self.assertContains(response, "fiona · PLZ 89231")
+        self.assertContains(response, "Zuhause · 1 Mitglied")
+        self.assertContains(response, "2 Läden · 1 Favorit")
+
+    def test_account_change_postal_code_loads_deals(self):
+        with patch("user_settings.views.start_deal_sync") as start:
+            self.client.post(reverse("user_settings:account"), {"username": "fiona2", "postal_code": "80331"})
+        self.settings.refresh_from_db()
+        self.user.refresh_from_db()
+        self.assertEqual((self.user.username, self.settings.postal_code), ("fiona2", "80331"))
+        start.assert_called_once()
+
+    def test_account_rejects_taken_username(self):
+        get_user_model().objects.create_user("vergeben", "x@example.com", "pw")
+        response = self.client.post(reverse("user_settings:account"), {"username": "vergeben", "postal_code": "1"})
+        self.assertContains(response, "bereits vergeben")
+        self.settings.refresh_from_db()
+        self.assertEqual(self.settings.postal_code, "89231")
 
     def test_parse_favorites(self):
         self.assertEqual(parse_favorites("Kaffee;Butter\nHähnchen, ,Kaffee"), ["Kaffee", "Butter", "Hähnchen"])
@@ -184,3 +209,19 @@ class StoreLinkTests(TestCase):
         self.assertEqual(store_offer_url("ALDI SÜD"), "https://www.aldi-sued.de/")
         self.assertEqual(store_offer_url("Netto Marken-Discount"), "https://www.netto-online.de/angebote")
         self.assertEqual(store_offer_url("Unbekannter Markt"), "")
+
+
+class RecipeDetailTabTests(DealTestCase):
+    def test_deals_tab_only_with_deals(self):
+        recipe = Recipe.objects.create(household=self.household, name="Chili", instructions="Kochen.")
+        ingredient = Ingredient.objects.create(name="Paprika")
+        RecipeIngredient.objects.create(recipe=recipe, ingredient=ingredient, quantity=1)
+        url = reverse("recipes:recipe_detail", args=[recipe.pk])
+
+        response = self.client.get(url)
+        self.assertContains(response, 'id="pane-ingredients"')
+        self.assertContains(response, 'id="pane-instructions"')
+        self.assertNotContains(response, 'id="pane-deals"')
+
+        self.deal("Paprika", "Lidl", "1.29")
+        self.assertContains(self.client.get(url), 'id="pane-deals"')

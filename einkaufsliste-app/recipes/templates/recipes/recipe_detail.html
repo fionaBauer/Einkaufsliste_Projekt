@@ -47,80 +47,80 @@
         {% endif %}
     </div>
 
-    <!-- Portionen -->
-    <div class="servings-box">
-        <span class="servings-label">Portionen</span>
-        <div class="servings-controls">
-            <button type="button" class="servings-btn" id="decrease-servings" aria-label="Weniger Portionen">−</button>
-            <input type="number" id="target-servings" class="servings-input"
-                min="1" value="{{ recipe.servings }}" aria-label="Portionen">
-            <button type="button" class="servings-btn" id="increase-servings" aria-label="Mehr Portionen">+</button>
-        </div>
-        <button type="button" class="reset-servings-btn" id="reset-servings">Zurücksetzen</button>
-    </div>
-
-    <!-- Zutaten -->
-    <section class="section">
-        <div class="section-header">
-            <h2 class="section-title">Zutaten</h2>
-            <button type="button" class="btn-icon-add open-modal-btn"
-                data-url="{% url 'recipes:recipeingredient_create' recipe.pk %}"
-                title="Zutat hinzufügen" aria-label="Zutat hinzufügen">+</button>
-        </div>
-
-        {% with items=recipe.recipe_ingredients.all %}
-        {% if items %}
-        <ul class="ingredient-list">
-            {% for item in items %}
-            <li class="ingredient-item" data-key="ri-{{ item.pk }}">
-                <span class="ingredient-name">{{ item.ingredient.name }}{% if item.notes %} <span class="ingredient-notes">{{ item.notes }}</span>{% endif %}</span>
-                <span class="ingredient-meta">
-                    <span class="scaled-quantity"
-                        data-base-quantity="{{ item.quantity|stringformat:'s' }}"
-                        data-unit="{{ item.unit }}">{{ item.quantity|floatformat:"-2" }}</span>
-                    {{ item.get_unit_display }}
-                </span>
-            </li>
-            {% endfor %}
-        </ul>
-        {% else %}
-            <div class="empty-card"><p class="empty-text">Noch keine Zutaten hinzugefügt.</p></div>
+    {# Zutaten · Angebote · Anleitung: Tippen auf den Reiter oder seitlich wischen (recipe_detail.js) #}
+    <nav class="recipe-tabs" role="tablist" aria-label="Rezeptbereiche">
+        <button type="button" class="recipe-tab active" role="tab" aria-selected="true" aria-controls="pane-ingredients" data-pane="0">Zutaten</button>
+        {% if deals %}
+        <button type="button" class="recipe-tab" role="tab" aria-selected="false" aria-controls="pane-deals" data-pane="1">
+            Angebote <span class="recipe-tab-count">{{ deals|length }}</span>
+        </button>
         {% endif %}
-        {% endwith %}
-    </section>
+        <button type="button" class="recipe-tab" role="tab" aria-selected="false" aria-controls="pane-instructions" data-pane="{% if deals %}2{% else %}1{% endif %}">Anleitung</button>
+    </nav>
 
-    {% if deals %}
-    <!-- Rabatte -->
-    <section class="section">
-        <div class="section-header">
-            <h2 class="section-title">Aktuelle Rabatte</h2>
-        </div>
-        <ul class="recipe-deal-list">
-            {% for deal in deals %}
-            <li class="recipe-deal" data-key="deal-{{ deal.pk }}">
-                <a class="recipe-deal-link" {% if deal.offer_url %}href="{{ deal.offer_url }}" target="_blank" rel="noopener"{% endif %}>
-                    <span class="recipe-deal-title">{{ deal.title }}</span>
-                    <span class="recipe-deal-meta">
-                        {{ deal.store.name }}{% if deal.deal_price %} · <strong>{{ deal.deal_price|floatformat:2 }} €</strong>{% endif %}{% if deal.valid_until_label %} · {{ deal.valid_until_label }}{% endif %}
+    <div class="recipe-panes" id="recipe-panes">
+        <section class="recipe-pane" id="pane-ingredients" role="tabpanel" aria-label="Zutaten">
+            <div class="servings-box">
+                <span class="servings-label">Portionen</span>
+                <div class="servings-controls">
+                    <button type="button" class="servings-btn" id="decrease-servings" aria-label="Weniger Portionen">−</button>
+                    <input type="number" id="target-servings" class="servings-input"
+                        min="1" value="{{ recipe.servings }}" aria-label="Portionen">
+                    <button type="button" class="servings-btn" id="increase-servings" aria-label="Mehr Portionen">+</button>
+                </div>
+                <button type="button" class="reset-servings-btn" id="reset-servings">Zurücksetzen</button>
+            </div>
+
+            {% with items=recipe.recipe_ingredients.all %}
+            {% if items %}
+            <ul class="ingredient-list">
+                {% for item in items %}
+                <li class="ingredient-item" data-key="ri-{{ item.pk }}">
+                    <span class="ingredient-name">{{ item.ingredient.name }}{% if item.notes %} <span class="ingredient-notes">{{ item.notes }}</span>{% endif %}</span>
+                    <span class="ingredient-meta">
+                        <span class="scaled-quantity"
+                            data-base-quantity="{{ item.quantity|stringformat:'s' }}"
+                            data-unit="{{ item.unit }}">{{ item.quantity|floatformat:"-2" }}</span>
+                        {{ item.get_unit_display }}
                     </span>
-                </a>
-            </li>
-            {% endfor %}
-        </ul>
-    </section>
-    {% endif %}
+                </li>
+                {% endfor %}
+            </ul>
+            {% else %}
+                <div class="empty-card"><p class="empty-text">Noch keine Zutaten hinzugefügt.</p></div>
+            {% endif %}
+            {% endwith %}
 
-    <!-- Anleitung -->
-    <section class="section">
-        <div class="section-header">
-            <h2 class="section-title">Anleitung</h2>
-        </div>
-        {% if recipe.instructions %}
-            <div class="instructions-box">{{ recipe.instructions|linebreaks }}</div>
-        {% else %}
-            <div class="empty-card"><p class="empty-text">Keine Anleitung hinterlegt.</p></div>
+            <button type="button" class="pane-add-btn open-modal-btn"
+                data-url="{% url 'recipes:recipeingredient_create' recipe.pk %}">+ Zutat hinzufügen</button>
+        </section>
+
+        {% if deals %}
+        <section class="recipe-pane" id="pane-deals" role="tabpanel" aria-label="Angebote">
+            <ul class="recipe-deal-list">
+                {% for deal in deals %}
+                <li class="recipe-deal" data-key="deal-{{ deal.pk }}">
+                    <a class="recipe-deal-link" {% if deal.offer_url %}href="{{ deal.offer_url }}" target="_blank" rel="noopener"{% endif %}>
+                        <span class="recipe-deal-title">{{ deal.title }}</span>
+                        <span class="recipe-deal-meta">
+                            {{ deal.store.name }}{% if deal.deal_price %} · <strong>{{ deal.deal_price|floatformat:2 }} €</strong>{% endif %}{% if deal.valid_until_label %} · {{ deal.valid_until_label }}{% endif %}
+                        </span>
+                    </a>
+                </li>
+                {% endfor %}
+            </ul>
+            <p class="pane-hint">Tippen öffnet die Angebotsseite des Händlers.</p>
+        </section>
         {% endif %}
-    </section>
+
+        <section class="recipe-pane" id="pane-instructions" role="tabpanel" aria-label="Anleitung">
+            {% if recipe.instructions %}
+                <div class="instructions-box">{{ recipe.instructions|linebreaks }}</div>
+            {% else %}
+                <div class="empty-card"><p class="empty-text">Keine Anleitung hinterlegt.</p></div>
+            {% endif %}
+        </section>
+    </div>
 </div>
 
 <div id="modal-overlay" class="modal-overlay">

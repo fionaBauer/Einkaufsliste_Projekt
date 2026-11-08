@@ -154,7 +154,7 @@ class RecipeDealTests(RecipeTestCase):
 
         detail = self.client.get(reverse("recipes:recipe_detail", args=[with_deal.pk]))
         self.assertEqual(len(detail.context["deals"]), 2)
-        self.assertContains(detail, "Aktuelle Rabatte")
+        self.assertContains(detail, 'id="pane-deals"')
 
 
 class RecipeTagEditingTests(RecipeTestCase):

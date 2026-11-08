@@ -114,22 +114,22 @@ def deals_status_label():
 @login_required
 def sync_deals_view(request):
     if request.method != "POST":
-        return redirect("user_settings:settings")
+        return redirect("user_settings:deals")
 
     if not _postal_code(request.user):
         messages.error(request, "Bitte speichere zuerst deine Postleitzahl.")
-        return redirect("user_settings:settings")
+        return redirect("user_settings:account")
 
     # Nur ein optimistischer Hinweis - die race-sichere Pruefung passiert atomar in sync_marktguru().
     if _is_syncing(_get_source()):
         messages.info(request, "Die Angebote werden bereits geladen.")
-        return redirect("user_settings:settings")
+        return redirect("user_settings:deals")
 
     try:
         start_deal_sync(request.user)
     except Exception as error:
         messages.error(request, f"Angebote konnten nicht geladen werden: {error}")
-        return redirect("user_settings:settings")
+        return redirect("user_settings:deals")
 
     messages.success(request, "Angebote werden im Hintergrund geladen.")
-    return redirect("user_settings:settings")
+    return redirect("user_settings:deals")

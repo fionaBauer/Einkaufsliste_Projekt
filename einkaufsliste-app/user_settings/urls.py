@@ -5,4 +5,6 @@ app_name = "user_settings"
 
 urlpatterns = [
     path("", views.settings_view, name="settings"),
+    path("account/", views.account_view, name="account"),
+    path("deals/", views.deals_view, name="deals"),
 ]

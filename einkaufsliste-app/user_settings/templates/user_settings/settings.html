@@ -13,85 +13,39 @@
         <h1 class="page-title">Einstellungen</h1>
     </div>
 
-    {% if error %}
-        <div class="alert alert-error">{{ error }}</div>
-    {% endif %}
-
-    <form method="post" class="settings-form">
-        {% csrf_token %}
-
-        <section class="settings-section">
-            <h2 class="settings-section-title">Konto</h2>
-            <div class="settings-card">
-                <div class="settings-item">
-                    <label class="settings-label" for="username">Benutzername</label>
-                    <input type="text" id="username" name="username" value="{{ request.user.username }}" class="settings-input">
-                </div>
-            </div>
-        </section>
-
-        <section class="settings-section">
-            <h2 class="settings-section-title">Standort</h2>
-            <div class="settings-card">
-                <div class="settings-item">
-                    <label class="settings-label" for="{{ form.postal_code.id_for_label }}">{{ form.postal_code.label }}</label>
-                    {{ form.postal_code }}
-                    <p class="settings-help">Wird genutzt, um Angebote in deiner Umgebung zu laden.</p>
-                </div>
-            </div>
-        </section>
-
-        <section class="settings-section">
-            <h2 class="settings-section-title">Angebote</h2>
-            <div class="settings-card">
-                <div class="settings-item">
-                    <span class="settings-label">Meine Läden</span>
-                    {% if stores %}
-                        <div class="tag-chips settings-chips">
-                            {% for store in stores %}
-                                <label class="tag-chip">
-                                    <input type="checkbox" name="stores" value="{{ store }}" {% if store in selected_stores %}checked{% endif %}>
-                                    <span>{{ store }}</span>
-                                </label>
-                            {% endfor %}
-                        </div>
-                        <p class="settings-help">Nur Angebote dieser Läden werden angezeigt. Nichts ausgewählt = alle.</p>
-                    {% else %}
-                        <p class="settings-help">Sobald Angebote für deine Postleitzahl geladen sind, kannst du hier deine Läden auswählen.</p>
-                    {% endif %}
-                </div>
-                <div class="settings-item">
-                    <label class="settings-label" for="favorites">Das kaufe ich regelmäßig</label>
-                    <input type="text" id="favorites" name="favorites" value="{{ favorites_text }}"
-                        class="settings-input" placeholder="z.B. Kaffee, Butter, Hähnchen" autocomplete="off">
-                    <p class="settings-help">Mit Komma trennen. Ist etwas davon im Angebot, siehst du es auf der Startseite.</p>
-                </div>
-            </div>
-        </section>
-
-        <button type="submit" class="btn btn-primary settings-save">Speichern</button>
-    </form>
-
-    {% if form.instance.postal_code %}
-    <form method="post" action="{% url 'deals:sync' %}" class="settings-deals-status">
-        {% csrf_token %}
-        <span>{{ deals_status }}</span>
-        <button type="submit" class="btn-link">Jetzt aktualisieren</button>
-    </form>
-    {% endif %}
-
-    <section class="settings-section settings-section--spaced">
-        <h2 class="settings-section-title">Daten</h2>
-        <div class="settings-card">
-            <a href="{% url 'ingredients:list' %}" class="settings-link-row">
-                <span class="settings-link-icon">🥕</span>
-                <span class="settings-link-text">
-                    <span class="settings-link-title">Zutaten & Kategorien</span>
-                    <span class="settings-help">Zutaten umbenennen, löschen oder einer anderen Kategorie zuordnen</span>
-                </span>
-                <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"/></svg>
-            </a>
-        </div>
-    </section>
+    <div class="settings-card settings-menu">
+        <a href="{% url 'user_settings:account' %}" class="settings-link-row">
+            <span class="settings-link-icon">👤</span>
+            <span class="settings-link-text">
+                <span class="settings-link-title">Konto & Standort</span>
+                <span class="settings-help">{{ account_summary }}</span>
+            </span>
+            <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"/></svg>
+        </a>
+        <a href="{% url 'households:detail' %}" class="settings-link-row">
+            <span class="settings-link-icon">🏠</span>
+            <span class="settings-link-text">
+                <span class="settings-link-title">Haushalt</span>
+                <span class="settings-help">{{ household_summary|default:"Mitglieder und Einladungslink" }}</span>
+            </span>
+            <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"/></svg>
+        </a>
+        <a href="{% url 'user_settings:deals' %}" class="settings-link-row">
+            <span class="settings-link-icon">🏷️</span>
+            <span class="settings-link-text">
+                <span class="settings-link-title">Angebote & Läden</span>
+                <span class="settings-help">{{ deals_summary }}</span>
+            </span>
+            <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"/></svg>
+        </a>
+        <a href="{% url 'ingredients:list' %}" class="settings-link-row">
+            <span class="settings-link-icon">🥕</span>
+            <span class="settings-link-text">
+                <span class="settings-link-title">Zutaten & Kategorien</span>
+                <span class="settings-help">Umbenennen, löschen, Kategorie ändern</span>
+            </span>
+            <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"/></svg>
+        </a>
+    </div>
 </div>
 {% endblock %}

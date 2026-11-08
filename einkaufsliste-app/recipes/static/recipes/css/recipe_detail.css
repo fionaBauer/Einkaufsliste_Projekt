@@ -73,7 +73,7 @@
     font-weight: 650;
 }
 
-/* ── Rabatte ── */
+/* ── Angebote ── */
 .recipe-deal-list {
     display: flex;
     flex-direction: column;
@@ -108,7 +108,7 @@
     display: flex;
     align-items: center;
     gap: 14px;
-    margin-bottom: 28px;
+    margin-bottom: 14px;
     padding: 10px 10px 10px 20px;
     border-radius: var(--radius-pill);
     background: var(--surface);
@@ -172,18 +172,94 @@
 
 .reset-servings-btn:hover { color: var(--text-main); background: var(--surface-2); }
 
-/* ── Abschnitte ── */
-.section { margin-bottom: 28px; }
-
-.section-header {
+/* ── Reiter: Zutaten · Angebote · Anleitung ── */
+.recipe-tabs {
     display: flex;
-    align-items: center;
-    justify-content: space-between;
-    margin-bottom: 12px;
-    padding: 0 2px;
+    gap: 4px;
+    margin-bottom: 14px;
+    padding: 4px;
+    border-radius: var(--radius-pill);
+    background: var(--surface-2);
 }
 
-.section-header .section-title { margin: 0; font-size: 21px; font-weight: 800; }
+.recipe-tab {
+    flex: 1;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    min-height: 40px;
+    padding: 6px 10px;
+    border: none;
+    border-radius: var(--radius-pill);
+    background: none;
+    color: var(--text-muted);
+    font: inherit;
+    font-size: 14.5px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: background 0.2s, color 0.2s, box-shadow 0.2s;
+}
+
+.recipe-tab.active {
+    background: var(--surface);
+    color: var(--text-main);
+    box-shadow: var(--shadow-card);
+}
+
+.recipe-tab-count {
+    min-width: 20px;
+    padding: 1px 6px;
+    border-radius: var(--radius-pill);
+    background: var(--warm-soft);
+    color: var(--warm-ink);
+    font-size: 12px;
+    font-weight: 750;
+}
+
+/* Seiten nebeneinander, seitlich wischbar; die Höhe folgt der aktiven Seite (JS) */
+.recipe-panes {
+    position: relative;
+    display: flex;
+    align-items: flex-start;
+    gap: calc(2 * var(--gutter));
+    margin: 0 calc(-1 * var(--gutter));
+    padding: 4px var(--gutter) 20px;
+    overflow-x: auto;
+    overflow-y: hidden;
+    scroll-snap-type: x mandatory;
+    scroll-padding-inline: var(--gutter);
+    overscroll-behavior-x: contain;
+    scrollbar-width: none;
+    transition: height 0.25s var(--ease-out);
+}
+
+.recipe-panes::-webkit-scrollbar { display: none; }
+
+.recipe-pane {
+    flex: 0 0 100%;
+    min-width: 0;
+    scroll-snap-align: start;
+    scroll-snap-stop: always;
+}
+
+.pane-add-btn {
+    width: 100%;
+    margin-top: 10px;
+    padding: 13px;
+    border: 1.5px dashed var(--border-strong);
+    border-radius: var(--radius-lg);
+    background: none;
+    color: var(--text-soft);
+    font: inherit;
+    font-size: 14.5px;
+    font-weight: 650;
+    cursor: pointer;
+}
+
+.pane-add-btn:hover { color: var(--text-main); background: var(--surface); }
+
+.pane-hint { margin: 10px 4px 0; font-size: 13px; color: var(--text-muted); }
 
 .ingredient-item { min-height: 54px; }
 

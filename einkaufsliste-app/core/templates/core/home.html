@@ -131,7 +131,7 @@
     <section class="home-section">
         <div class="section-header-row">
             <h2 class="home-section-title">Deine Favoriten im Angebot</h2>
-            <a href="{% url 'user_settings:settings' %}" class="section-link">Bearbeiten</a>
+            <a href="{% url 'user_settings:deals' %}" class="section-link">Bearbeiten</a>
         </div>
         <div class="deals-grid">
             {% for hit in favorite_deals %}
@@ -159,7 +159,7 @@
     </section>
     {% elif has_deals and not has_favorites %}
     <section class="home-section">
-        <a href="{% url 'user_settings:settings' %}" class="home-empty-row">
+        <a href="{% url 'user_settings:deals' %}" class="home-empty-row">
             <span class="home-empty-icon">🏷️</span>
             <span>Was kaufst du regelmäßig? <strong>Favoriten festlegen</strong> und sehen, wann sie im Angebot sind.</span>
         </a>

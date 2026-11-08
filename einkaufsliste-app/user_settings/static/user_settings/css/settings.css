@@ -52,7 +52,14 @@
 
 .settings-save { align-self: flex-start; min-width: 160px; }
 
-.settings-chips { margin-top: 8px; }
+/* Übersicht: eine Karte, Zeilen mit Trennlinie */
+.settings-menu { display: flex; flex-direction: column; }
+.settings-menu .settings-link-row { border-radius: 0; }
+.settings-menu .settings-link-row:first-child { border-radius: var(--radius-lg) var(--radius-lg) 0 0; }
+.settings-menu .settings-link-row:last-child { border-radius: 0 0 var(--radius-lg) var(--radius-lg); }
+.settings-menu .settings-link-row + .settings-link-row { border-top: 1px solid var(--border-light); }
+
+.settings-alert-link { display: block; text-decoration: none; }
 
 .settings-deals-status {
     display: flex;
@@ -122,8 +129,6 @@
 .member-role { margin-left: auto; color: var(--text-muted); font-size: 13px; font-weight: 550; }
 
 .danger-zone { padding-top: 4px; }
-
-.settings-section--spaced { margin-top: 32px; }
 
 .settings-link-row {
     display: flex;
